@@ -1,19 +1,13 @@
-import React from 'react';
+import { AppProvider } from './context/AppProvider';
 import { AuthProvider } from './context/AuthContext';
-import { AppProvider } from './context/AppContext';
-import { ToastProvider } from './context/ToastContext';
-import AppRouter from './router/AppRouter/AppRouter';
-import ToastContainer from './components/ui/ToastContainer';
 import './index.css';
+import AppRouter from './router/AppRouter/AppRouter';
 
 function App() {
   return (
     <AuthProvider>
       <AppProvider>
-        <ToastProvider>
-          <AppRouter />
-          <ToastContainer />
-        </ToastProvider>
+        <AppRouter />
       </AppProvider>
     </AuthProvider>
   );

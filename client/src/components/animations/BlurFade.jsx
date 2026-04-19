@@ -1,4 +1,3 @@
-import React from 'react';
 
 const BlurFade = ({ children, delay = 0, duration = 500, className = '' }) => {
   return (

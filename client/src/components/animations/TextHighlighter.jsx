@@ -1,10 +1,10 @@
 import React from 'react';
 
-const TextHighlighter = ({ text, color = 'bg-yellow-400', className = '', children }) => {
+const TextHighlighter = ({ text, color = '#ff0', className = '' }) => {
   return (
     <span className={`relative inline-block ${className}`}>
-      <span className={`absolute bottom-0 left-0 w-full h-4 ${color} -z-10 opacity-70 transition-all duration-500 rounded-sm`}></span>
-      <span className="relative">{text || children}</span>
+      <span className="absolute bottom-0 left-0 w-full h-full bg-yellow-400 -z-10 animate-pulse rounded" style={{ opacity: '0.3' }}></span>
+      <span className="relative">{text}</span>
     </span>
   );
 };
