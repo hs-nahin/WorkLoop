@@ -1,10 +1,10 @@
 import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router';
 import { useContext } from 'react';
-import { AuthContext } from '../../context/AuthContext';
-import { AppContext } from '../../context/AppContext';
-import { MagicCard } from '../../components/animations/MagicCard';
-import { TextHighlighter } from '../../components/animations/TextHighlighter';
+import { AuthContext } from '../../../context/AuthContext';
+import { AppContext } from '../../../context/AppContext';
+import MagicCard from '../../../components/animations/MagicCard';
+import TextHighlighter from '../../../components/animations/TextHighlighter';
 
 const Sidebar = () => {
   const { sidebarOpen, toggleSidebar } = useContext(AppContext);

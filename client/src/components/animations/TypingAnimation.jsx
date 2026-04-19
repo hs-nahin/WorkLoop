@@ -16,7 +16,7 @@ const TypingAnimation = ({ text, speed = 50, delay = 0, className = '' }) => {
     return () => clearTimeout(timer);
   }, [text, speed, delay]);
 
-  return <<spanspan className={className}>{displayText}</span>;
+  return <span className={className}>{displayText}</span>;
 };
 
 export default TypingAnimation;

@@ -1,13 +1,13 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { AuthContext } from '../../../context/AuthContext';
 import { AppContext } from '../../../context/AppContext';
-import { MagicCard } from '../../../components/animations/MagicCard';
-import { TextHighlighter } from '../../../components/animations/TextHighlighter';
-import { GradientText } from '../../../components/animations/GradientText';
-import { BlurFade } from '../../../components/animations/BlurFade';
-import { NumberTicker } from '../../../components/animations/NumberTicker';
-import { TypingAnimation } from '../../../components/animations/TypingAnimation';
-import { WordRotate } from '../../../components/animations/WordRotate';
+import MagicCard from '../../../components/animations/MagicCard';
+import TextHighlighter from '../../../components/animations/TextHighlighter';
+import GradientText from '../../../components/animations/GradientText';
+import BlurFade from '../../../components/animations/BlurFade';
+import NumberTicker from '../../../components/animations/NumberTicker';
+import TypingAnimation from '../../../components/animations/TypingAnimation';
+import WordRotate from '../../../components/animations/WordRotate';
 import { apiRequest } from '../../../api/apiClient';
 
 const Dashboard = () => {
@@ -41,7 +41,11 @@ const Dashboard = () => {
           <TextHighlighter text="Operational Overview" className="text-3xl font-bold tracking-tight" />
           <TypingAnimation text="|" className="text-yellow-400 font-bold" />
         </div>
-        <GradientText text={`System ${new WordRotate words={['Ready', 'Optimized', 'Secure']} className="text-yellow-400 font-bold" /> : ${user?.role}`} className="text-sm opacity-70" />
+        <div className="flex items-center gap-2">
+          <GradientText text="System" className="text-sm opacity-70" />
+          <WordRotate words={['Ready', 'Optimized', 'Secure']} className="text-sm font-bold text-yellow-400" />
+          <GradientText text={` : ${user?.role}`} className="text-sm opacity-70" />
+        </div>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

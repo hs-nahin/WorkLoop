@@ -3,10 +3,10 @@ import { useNavigate, useParams } from 'react-router';
 import { AuthContext } from '../../../context/AuthContext';
 import { ToastContext } from '../../../context/ToastContext';
 import { apiRequest } from '../../../api/apiClient';
-import { MagicCard } from '../../../components/animations/MagicCard';
-import { TextHighlighter } from '../../../components/animations/TextHighlighter';
-import { GradientText } from '../../../components/animations/GradientText';
-import { BlurFade } from '../../../components/animations/BlurFade';
+import MagicCard from '../../../components/animations/MagicCard';
+import TextHighlighter from '../../../components/animations/TextHighlighter';
+import GradientText from '../../../components/animations/GradientText';
+import BlurFade from '../../../components/animations/BlurFade';
 
 const TaskDetail = () => {
   const { id } = useParams();
