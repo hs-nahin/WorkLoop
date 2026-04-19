@@ -1,0 +1,8 @@
+[
+  {
+    "userId": "admin",
+    "name": "System Administrator",
+    "password": "$2a$10$R1C6Z6LpA.x9nLInJ8pZau6jO7A2T1Ua9yFvS9S7nS/1C3iV9d6y2",
+    "role": "ADMIN"
+  }
+]
