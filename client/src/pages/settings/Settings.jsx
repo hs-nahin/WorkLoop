@@ -1,16 +1,14 @@
-import React, { useState, useEffect, useContext } from 'react';
+import { useContext, useEffect, useState } from 'react';
+import { apiRequest } from '../../api/apiClient';
+import BlurFade from '../../components/animations/BlurFade';
+import GradientText from '../../components/animations/GradientText';
 import MagicCard from '../../components/animations/MagicCard';
 import TextHighlighter from '../../components/animations/TextHighlighter';
-import GradientText from '../../components/animations/GradientText';
-import BlurFade from '../../components/animations/BlurFade';
-import { AuthContext } from '../../context/AuthContext';
-import { ToastContext } from '../../context/ToastContext';
-import { apiRequest } from '../../api/apiClient';
 import Button from '../../components/ui/Button/Button';
 import Input from '../../components/ui/Input/Input';
+import { ToastContext } from '../../context/ToastContext';
 
 const Settings = () => {
-  const { user } = useContext(AuthContext);
   const { showToast } = useContext(ToastContext);
   const [profile, setProfile] = useState({
     name: '',
