@@ -1,6 +1,3 @@
-import React, { useState } from 'react';
-import Button from './Button/Button';
-
 const Modal = ({ isOpen, onClose, title, children, footer }) => {
   if (!isOpen) return null;
 

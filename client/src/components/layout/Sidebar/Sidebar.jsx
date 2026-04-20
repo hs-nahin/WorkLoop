@@ -1,15 +1,14 @@
-import React from "react";
-import { Link, useNavigate, useLocation } from "react-router";
+
 import { useContext } from "react";
-import MagicCard from "../../components/animations/MagicCard.jsx";
-import TextHighlighter from "../../components/animations/TextHighlighter.jsx";
-import { AppContext } from "../../../context/AppContext";
-import { AuthContext } from "../../../context/AuthContext";
+import { Link, useLocation } from "react-router";
+import { AppContext } from "../../../context/AppContext.jsx";
+import { AuthContext } from "../../../context/AuthContextInstance.js";
+import MagicCard from "../../animations/MagicCard.jsx";
+import TextHighlighter from "../../animations/TextHighlighter.jsx";
 
 const Sidebar = () => {
   const { sidebarOpen, toggleSidebar } = useContext(AppContext);
   const { user, logout } = useContext(AuthContext);
-  const navigate = useNavigate();
   const location = useLocation();
 
   const menuItems = [

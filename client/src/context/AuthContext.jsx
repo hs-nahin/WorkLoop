@@ -1,31 +1,51 @@
-import React, { createContext, useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { apiRequest } from '../api/apiClient';
+import { AuthContext } from './AuthContextInstance';
 
-export const AuthContext = createContext();
+export { AuthContext };
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
 
-  const fetchMe = async () => {
+  const logout = useCallback(() => {
+    setToken(null);
+    setUser(null);
+    localStorage.removeItem('token');
+  }, []);
+
+  const fetchMe = useCallback(async () => {
     try {
       const data = await apiRequest({ endpoint: '/users/me' });
       setUser(data);
     } catch (error) {
+      console.error('Session expired or invalid:', error);
       logout();
     } finally {
       setLoading(false);
     }
-  };
+  }, [logout]);
 
   useEffect(() => {
-    if (token) {
-      fetchMe();
-    } else {
-      setLoading(false);
-    }
-  }, [token]);
+    let isMounted = true;
+
+    const initializeAuth = async () => {
+      if (token) {
+        try {
+          await fetchMe();
+        } catch {
+          // Error handled inside fetchMe
+        }
+      } else {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    initializeAuth();
+
+    return () => { isMounted = false; };
+  }, [token, fetchMe]);
 
   const login = async (credentials) => {
     const data = await apiRequest({
@@ -36,12 +56,6 @@ export const AuthProvider = ({ children }) => {
     setToken(data.token);
     setUser(data.user);
     localStorage.setItem('token', data.token);
-  };
-
-  const logout = () => {
-    setToken(null);
-    setUser(null);
-    localStorage.removeItem('token');
   };
 
   return (
