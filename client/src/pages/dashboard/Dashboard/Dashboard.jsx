@@ -1,21 +1,18 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { AuthContext } from '../../../context/AuthContext';
-import { AppContext } from '../../../context/AppContext';
-import MagicCard from '../../../components/animations/MagicCard';
-import TextHighlighter from '../../../components/animations/TextHighlighter';
-import GradientText from '../../../components/animations/GradientText';
+import { useContext, useEffect, useState } from 'react';
+import { apiRequest } from '../../../api/apiClient';
 import BlurFade from '../../../components/animations/BlurFade';
+import GradientText from '../../../components/animations/GradientText';
+import MagicCard from '../../../components/animations/MagicCard';
 import NumberTicker from '../../../components/animations/NumberTicker';
+import TextHighlighter from '../../../components/animations/TextHighlighter';
 import TypingAnimation from '../../../components/animations/TypingAnimation';
 import WordRotate from '../../../components/animations/WordRotate';
-import { apiRequest } from '../../../api/apiClient';
 import Button from '../../../components/ui/Button/Button';
+import { AuthContext } from '../../../context/AuthContext';
 
 const Dashboard = () => {
-  const { user, token } = useContext(AuthContext);
-  const { setGlobalLoading } = useContext(AppContext);
+  const { user } = useContext(AuthContext);
   const [stats, setStats] = useState({ totalTasks: 0, pendingTasks: 0, completedTasks: 0 });
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -27,8 +24,6 @@ const Dashboard = () => {
         setStats({ totalTasks: total, pendingTasks: pending, completedTasks: completed });
       } catch (err) {
         console.error("Error fetching dashboard stats:", err);
-      } finally {
-        setIsLoading(false);
       }
     };
 
