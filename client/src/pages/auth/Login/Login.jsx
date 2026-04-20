@@ -27,11 +27,12 @@ const Login = () => {
     }
     setIsLoading(true);
     try {
-      await login({ email, password });
+      await login(email, password);
       showToast('Welcome back to WorkLoop', 'success');
       navigate('/dashboard');
     } catch (error) {
-      showToast(error.message || 'Invalid credentials. Please try again.', 'error');
+      const errorMessage = error.message || 'Invalid credentials. Please try again.';
+      showToast(errorMessage, 'error');
     } finally {
       setIsLoading(false);
     }

@@ -1,65 +1,58 @@
-import { useCallback, useEffect, useState } from 'react';
-import { apiRequest } from '../api/apiClient';
+import { useEffect, useState } from 'react';
 import { AuthContext } from './AuthContextInstance';
-
-export { AuthContext };
+import { authService } from '../services/authService';
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
 
-  const logout = useCallback(() => {
-    setToken(null);
-    setUser(null);
-    localStorage.removeItem('token');
+  useEffect(() => {
+    const unsubscribe = authService.subscribeToAuthChanges((firebaseUser) => {
+      if (firebaseUser) {
+        // Map Firebase user to application user object
+        // In a real app, you'd fetch additional profile data from Firestore here
+        setUser({
+          uid: firebaseUser.uid,
+          email: firebaseUser.email,
+          name: firebaseUser.displayName || 'Administrator',
+          role: 'ADMIN', // Defaulting to ADMIN for now as specified for testing
+        });
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  const fetchMe = useCallback(async () => {
+  const login = async (email, password) => {
     try {
-      const data = await apiRequest({ endpoint: '/users/me' });
-      setUser(data);
+      const firebaseUser = await authService.login(email, password);
+      setUser({
+        uid: firebaseUser.uid,
+        email: firebaseUser.email,
+        name: firebaseUser.displayName || 'Administrator',
+        role: 'ADMIN',
+      });
+      return firebaseUser;
     } catch (error) {
-      console.error('Session expired or invalid:', error);
-      logout();
-    } finally {
-      setLoading(false);
+      throw error;
     }
-  }, [logout]);
+  };
 
-  useEffect(() => {
-    let isMounted = true;
-
-    const initializeAuth = async () => {
-      if (token) {
-        try {
-          await fetchMe();
-        } catch {
-          // Error handled inside fetchMe
-        }
-      } else {
-        if (isMounted) setLoading(false);
-      }
-    };
-
-    initializeAuth();
-
-    return () => { isMounted = false; };
-  }, [token, fetchMe]);
-
-  const login = async (credentials) => {
-    const data = await apiRequest({
-      endpoint: '/auth/login',
-      method: 'POST',
-      body: credentials,
-    });
-    setToken(data.token);
-    setUser(data.user);
-    localStorage.setItem('token', data.token);
+  const logout = async () => {
+    try {
+      await authService.logout();
+      setUser(null);
+    } catch (error) {
+      console.error('Logout error:', error);
+      throw error;
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, logout, fetchMe }}>
+    <AuthContext.Provider value={{ user, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
