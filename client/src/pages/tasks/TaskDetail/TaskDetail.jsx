@@ -103,7 +103,8 @@ const TaskDetail = () => {
                 </div>
 
                 <div className="pt-6 border-t border-white/5 flex items-center gap-4">
-                  <div className="text-xs text-gray-500">Assigned To: <span className="text-white font-medium">{task.assignedTo?.name}</span></div>
+                    <div className="text-xs text-gray-500">Assigned To: <span className="text-white font-medium">{task.officerId?.name || task.officerId}</span></div>
+
                   <div className="text-xs text-gray-500">Created: <span className="text-white font-medium">{new Date(task.createdAt).toLocaleDateString()}</span></div>
                 </div>
               </div>

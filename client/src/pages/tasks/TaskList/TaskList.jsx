@@ -18,7 +18,7 @@ const TaskList = () => {
   const [tasks, setTasks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newTask, setNewTask] = useState({ title: '', description: '', assignedTo: '' });
+  const [newTask, setNewTask] = useState({ title: '', description: '', officerId: '', priority: 'medium', deadline: '', location: '' });
   const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
@@ -50,7 +50,7 @@ const TaskList = () => {
       });
       setTasks([createdTask, ...tasks]);
       setIsModalOpen(false);
-      setNewTask({ title: '', description: '', assignedTo: '' });
+      setNewTask({ title: '', description: '', officerId: '', priority: 'medium', deadline: '', location: '' });
     } catch (error) {
       console.error('Creation failed:', error.message);
     } finally {
@@ -91,14 +91,14 @@ const TaskList = () => {
       ) : (
         <<divdiv className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {tasks.map((task, index) => (
-            <<BlurBlurFade key={task._id} delay={index * 50}>
-              <<MagicMagicCard className="cursor-pointer group" onClick={() => navigate(`/tasks/${task._id}`)}>
+            <<BlurBlurFade key={task.id} delay={index * 50}>
+              <<MagicMagicCard className="cursor-pointer group" onClick={() => navigate(`/tasks/${task.id}`)}>
                 <<divdiv className="flex flex-col gap-4">
                   <<divdiv className="flex justify-between items-start">
                     <<divdiv className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase border ${getStatusColor(task.status)}`}>
                       {task.status}
                     </div>
-                    <<spanspan className="text-[10px] font-mono text-gray-500">{task._id.slice(-6).toUpperCase()}</span>
+                    <<spanspan className="text-[10px] font-mono text-gray-500">{task.id.slice(-6).toUpperCase()}</span>
                   </div>
                   
                   <<hh3 className="text-lg font-bold group-hover:text-yellow-400 transition-colors line-clamp-1">
@@ -162,14 +162,41 @@ const TaskList = () => {
               className="h-32"
             />
           </div>
-          <<divdiv className="space-y-2">
-            <<labellabel className="text-xs font-bold text-gray-500 uppercase">Assign IT Officer (UserID)</label>
-            <<InputInput 
-              placeholder=" Officer ID..." 
-              value={newTask.assignedTo}
-              onChange={(e) => setNewTask({...newTask, assignedTo: e.target.value})}
-            />
-          </div>
+            <<divdiv className="space-y-2">
+              <<labellabel className="text-xs font-bold text-gray-500 uppercase">Assign IT Officer (UserID)</label>
+              <<InputInput 
+                placeholder=" Officer ID..." 
+                value={newTask.officerId}
+                onChange={(e) => setNewTask({...newTask, officerId: e.target.value})}
+              />
+            </div>
+            <<divdiv className="grid grid-cols-2 gap-4">
+              <<divdiv className="space-y-2">
+                <<labellabel className="text-xs font-bold text-gray-500 uppercase">Priority</label>
+                <<InputInput 
+                  placeholder="Low/Medium/High" 
+                  value={newTask.priority}
+                  onChange={(e) => setNewTask({...newTask, priority: e.target.value})}
+                />
+              </div>
+              <<divdiv className="space-y-2">
+                <<labellabel className="text-xs font-bold text-gray-500 uppercase">Deadline</label>
+                <<InputInput 
+                  type="date"
+                  value={newTask.deadline}
+                  onChange={(e) => setNewTask({...newTask, deadline: e.target.value})}
+                />
+              </div>
+            </div>
+            <<divdiv className="space-y-2">
+              <<labellabel className="text-xs font-bold text-gray-500 uppercase">Location</label>
+              <<InputInput 
+                placeholder="Office/Floor/Room" 
+                value={newTask.location}
+                onChange={(e) => setNewTask({...newTask, location: e.target.value})}
+              />
+            </div>
+
         </div>
       </Modal>
     </div>
