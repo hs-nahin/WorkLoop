@@ -1,22 +1,26 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
-const TypingAnimation = ({ text, speed = 50, delay = 0, className = '' }) => {
-  const [displayText, setDisplayText] = React.useState('');
+const TypingAnimation = ({ text, speed = 100, delay = 0 }) => {
+  const [displayText, setDisplayText] = useState('');
+  const [index, setIndex] = useState(0);
 
-  React.useEffect(() => {
-    let currentIndex = 0;
+  useEffect(() => {
     const timer = setTimeout(() => {
-      const interval = setInterval(() => {
-        setDisplayText((prev) => prev + text.charAt(currentIndex));
-        currentIndex++;
-        if (currentIndex >= text.length) clearInterval(interval);
-      }, speed);
-      return () => clearInterval(interval);
-    }, delay);
-    return () => clearTimeout(timer);
-  }, [text, speed, delay]);
+      if (index < text.length) {
+        setDisplayText((prev) => prev + text.charAt(index));
+        setIndex((prev) => prev + 1);
+      }
+    }, speed);
 
-  return <span className={className}>{displayText}</span>;
+    return () => clearTimeout(timer);
+  }, [index, text, speed]);
+
+  return (
+    <span className="font-mono">
+      {displayText}
+      <span className="animate-blink ml-1">|</span>
+    </span>
+  );
 };
 
 export default TypingAnimation;

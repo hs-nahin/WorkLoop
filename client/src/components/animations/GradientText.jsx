@@ -1,9 +1,9 @@
 import React from 'react';
 
-const GradientText = ({ text, className = '' }) => {
+const GradientText = ({ children, className = '' }) => {
   return (
-    <span className={`font-bold bg-gradient-to-r from-white via-yellow-400 to-white bg-clip-text text-transparent animate-gradient-x ${className}`}>
-      {text}
+    <span className={`bg-gradient-to-r from-yellow-400 via-orange-400 to-yellow-600 bg-clip-text text-transparent font-bold ${className}`}>
+      {children}
     </span>
   );
 };

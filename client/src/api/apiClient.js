@@ -1,6 +1,7 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-export const apiRequest = async ({ endpoint, method = 'GET', body = null, token = null }) => {
+export const apiRequest = async ({ endpoint, method = 'GET', body = null }) => {
+  const token = localStorage.getItem('token');
   const headers = {
     'Content-Type': 'application/json',
   };
@@ -15,6 +16,11 @@ export const apiRequest = async ({ endpoint, method = 'GET', body = null, token 
       headers,
       body: body ? JSON.stringify(body) : null,
     });
+
+    if (response.status === 401) {
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
 
     const data = await response.json();
 

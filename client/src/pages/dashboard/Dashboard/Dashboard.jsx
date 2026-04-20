@@ -9,6 +9,7 @@ import NumberTicker from '../../../components/animations/NumberTicker';
 import TypingAnimation from '../../../components/animations/TypingAnimation';
 import WordRotate from '../../../components/animations/WordRotate';
 import { apiRequest } from '../../../api/apiClient';
+import Button from '../../../components/ui/Button/Button';
 
 const Dashboard = () => {
   const { user, token } = useContext(AuthContext);
@@ -19,7 +20,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const data = await apiRequest({ endpoint: '/tasks', token });
+        const data = await apiRequest({ endpoint: '/tasks' });
         const total = data.length || 0;
         const pending = data.filter(t => t.status === 'pending').length || 0;
         const completed = data.filter(t => t.status === 'completed').length || 0;
@@ -32,7 +33,7 @@ const Dashboard = () => {
     };
 
     fetchStats();
-  }, [token]);
+  }, []);
 
   return (
     <div className="space-y-8">
@@ -97,12 +98,12 @@ const Dashboard = () => {
           <MagicCard className="h-64 flex flex-col justify-center items-center text-center">
             <p className="text-gray-500 text-sm">Quick Actions</p>
             <div className="mt-4 flex gap-3">
-              <button className="px-4 py-2 rounded-lg bg-yellow-400 text-black font-bold text-xs hover:scale-105 transition-all">
+              <Button variant="primary" className="text-xs">
                 Create New Task
-              </button>
-              <button className="px-4 py-2 rounded-lg bg-white/10 text-white font-bold text-xs hover:bg-white/20 transition-all">
+              </Button>
+              <Button variant="secondary" className="text-xs">
                 View All Reports
-              </button>
+              </Button>
             </div>
           </MagicCard>
         </BlurFade>

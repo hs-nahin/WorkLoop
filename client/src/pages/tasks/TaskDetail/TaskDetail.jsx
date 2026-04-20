@@ -1,17 +1,17 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { AuthContext } from '../../../context/AuthContext';
-import { ToastContext } from '../../../context/ToastContext';
 import { apiRequest } from '../../../api/apiClient';
 import MagicCard from '../../../components/animations/MagicCard';
 import TextHighlighter from '../../../components/animations/TextHighlighter';
 import GradientText from '../../../components/animations/GradientText';
 import BlurFade from '../../../components/animations/BlurFade';
+import Button from '../../../components/ui/Button/Button';
+import Input from '../../../components/ui/Input/Input';
 
 const TaskDetail = () => {
   const { id } = useParams();
-  const { user, token } = useContext(AuthContext);
-  const { addToast } = useContext(ToastContext);
+  const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   const [task, setTask] = useState(null);
   const [report, setReport] = useState('');
@@ -20,32 +20,31 @@ const TaskDetail = () => {
   useEffect(() => {
     const fetchTask = async () => {
       try {
-        const data = await apiRequest({ endpoint: `/tasks/${id}`, token });
+        const data = await apiRequest({ endpoint: `/tasks/${id}` });
         setTask(data);
       } catch (error) {
-        addToast(error.message || 'Task not found', 'error');
+        console.error('Task not found:', error.message);
         navigate('/dashboard');
       } finally {
         setIsLoading(false);
       }
     };
     fetchTask();
-  }, [id, token, addToast, navigate]);
+  }, [id, navigate]);
 
   const handleSubmitReport = async () => {
-    if (!report.trim()) return addToast('Please provide a report', 'warning');
+    if (!report.trim()) return console.warn('Please provide a report');
     
     try {
       await apiRequest({ 
         endpoint: `/tasks/${id}/submit`, 
         method: 'PATCH', 
         body: { report }, 
-        token 
       });
-      addToast('Task submitted for review!', 'success');
+      console.log('Task submitted for review!');
       navigate('/dashboard');
     } catch (error) {
-      addToast(error.message || 'Submission failed', 'error');
+      console.error('Submission failed:', error.message);
     }
   };
 
@@ -55,16 +54,16 @@ const TaskDetail = () => {
         endpoint: `/tasks/${id}/decide`, 
         method: 'PATCH', 
         body: { decision }, 
-        token 
       });
-      addToast(`Task ${decision} successfully`, 'success');
+      console.log(`Task ${decision} successfully`);
       navigate('/dashboard');
     } catch (error) {
-      addToast(error.message || 'Decision failed', 'error');
+      console.error('Decision failed:', error.message);
     }
   };
 
   if (isLoading) return <div className="min-h-screen flex items-center justify-center text-yellow-400 font-mono animate-pulse">Loading Task...</div>;
+  if (!task) return null;
 
   return (
     <div className="space-y-8">
@@ -73,12 +72,13 @@ const TaskDetail = () => {
           <TextHighlighter text="Task Specifications" className="text-3xl font-bold tracking-tight" />
           <GradientText text={`Reference ID: ${id.slice(-8).toUpperCase()}`} className="text-sm opacity-70" />
         </div>
-        <button 
+        <Button 
+          variant="secondary" 
           onClick={() => navigate('/tasks')}
-          className="px-4 py-2 rounded-xl bg-white/5 text-white text-xs font-bold hover:bg-white/10 transition-all"
+          className="text-xs"
         >
           ← Back to Repository
-        </button>
+        </Button>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -115,18 +115,19 @@ const TaskDetail = () => {
               <MagicCard>
                 <div className="space-y-4">
                   <h3 className="text-lg font-bold">Submit Work Report</h3>
-                  <textarea 
+                  <Input 
+                    type="textarea"
                     value={report}
                     onChange={(e) => setReport(e.target.value)}
                     placeholder="Describe the work performed and results..."
-                    className="w-full h-32 p-4 rounded-xl bg-white/5 border border-white/10 focus:border-yellow-400 outline-none transition-all text-sm"
+                    className="w-full h-32"
                   />
-                  <button 
+                  <Button 
                     onClick={handleSubmitReport}
-                    className="px-6 py-2 rounded-xl bg-yellow-400 text-black font-bold text-sm hover:scale-105 transition-all"
+                    className="px-6 py-2"
                   >
                     Submit for Review
-                  </button>
+                  </Button>
                 </div>
               </MagicCard>
             </BlurFade>
@@ -143,18 +144,20 @@ const TaskDetail = () => {
                     "{task.report}"
                   </div>
                   <div className="flex gap-3">
-                    <button 
+                    <Button 
                       onClick={() => handleDecision('approved')}
-                      className="flex-1 p-2 rounded-lg bg-green-500/20 text-green-400 border border-green-500/30 text-xs font-bold hover:bg-green-500/30 transition-all"
+                      variant="secondary"
+                      className="flex-1 text-green-400 border-green-500/30 hover:bg-green-500/30"
                     >
                       Approve
-                    </button>
-                    <button 
+                    </Button>
+                    <Button 
                       onClick={() => handleDecision('rejected')}
-                      className="flex-1 p-2 rounded-lg bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-bold hover:bg-red-500/30 transition-all"
+                      variant="secondary"
+                      className="flex-1 text-red-400 border-red-500/30 hover:bg-red-500/30"
                     >
                       Reject
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </MagicCard>

@@ -10,7 +10,7 @@ export const AuthProvider = ({ children }) => {
 
   const fetchMe = async () => {
     try {
-      const data = await apiRequest({ endpoint: '/users/me', token });
+      const data = await apiRequest({ endpoint: '/users/me' });
       setUser(data);
     } catch (error) {
       logout();

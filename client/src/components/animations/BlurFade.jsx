@@ -1,12 +1,10 @@
+import React from 'react';
 
-const BlurFade = ({ children, delay = 0, duration = 500, className = '' }) => {
+const BlurFade = ({ children, duration = 0.5, delay = 0 }) => {
   return (
     <div 
-      className={`transition-all duration-500 ease-out ${className}`}
-      style={{ 
-        animation: `blurFade ${duration}ms ease-out ${delay}ms forwards`,
-        opacity: 0 
-      }}
+      className="animate-blur-fade" 
+      style={{ animationDuration: `${duration}s`, animationDelay: `${delay}s` }}
     >
       {children}
     </div>
