@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 const TypingAnimation = ({ text, speed = 100, delay = 0 }) => {
   const [displayText, setDisplayText] = useState('');
@@ -10,10 +10,10 @@ const TypingAnimation = ({ text, speed = 100, delay = 0 }) => {
         setDisplayText((prev) => prev + text.charAt(index));
         setIndex((prev) => prev + 1);
       }
-    }, speed);
+    }, index === 0 ? speed + delay : speed);
 
     return () => clearTimeout(timer);
-  }, [index, text, speed]);
+  }, [index, text, speed, delay]);
 
   return (
     <span className="font-mono">

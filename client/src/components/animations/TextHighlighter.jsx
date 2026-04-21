@@ -1,4 +1,3 @@
-import React from 'react';
 
 const TextHighlighter = ({ children, color = 'yellow', className = '', animated = true }) => {
   const colors = {

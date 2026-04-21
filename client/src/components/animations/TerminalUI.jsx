@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 const TerminalUI = ({ commands = [], initialText = 'Initializing WorkLoop System...' }) => {
-  const [text, setText] = useState(initialText);
+  const [text] = useState(initialText);
   const [currentCommandIdx, setCurrentCommandIdx] = useState(0);
   const [logs, setLogs] = useState([]);
 
