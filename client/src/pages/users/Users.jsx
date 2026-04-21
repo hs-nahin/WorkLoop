@@ -1,12 +1,12 @@
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { ToastContext } from '@/context/ToastContextState';
 import { useContext, useEffect, useState } from 'react';
 import { apiRequest } from '../../api/apiClient';
 import BlurFade from '../../components/animations/BlurFade';
 import GradientText from '../../components/animations/GradientText';
 import MagicCard from '../../components/animations/MagicCard';
 import TextHighlighter from '../../components/animations/TextHighlighter';
-import Button from '../../components/ui/Button/Button';
-import Input from '../../components/ui/Input/Input';
-import { ToastContext } from '../../context/ToastContext';
 
 const Users = () => {
   const { showToast } = useContext(ToastContext);

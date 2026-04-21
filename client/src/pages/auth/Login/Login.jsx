@@ -1,18 +1,19 @@
-import React, { useState, useContext } from 'react';
-import { useNavigate } from 'react-router';
-import { AuthContext } from '../../../context/AuthContextInstance.js';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, Lock, Mail } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Lock, Mail } from 'lucide-react';
+import { useContext, useState } from 'react';
+import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import BlurFade from '../../../components/animations/BlurFade';
 import TextHighlighter from '../../../components/animations/TextHighlighter';
+import { AuthContext } from '../../../context/AuthContextInstance.js';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
   const { login } = useContext(AuthContext);
@@ -72,23 +73,31 @@ const Login = () => {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-xs font-medium opacity-70 uppercase tracking-wider">
-                  Password
-                </Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
-                  <Input 
-                    id="password"
-                    type="password" 
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    className="pl-10"
-                    placeholder="••••••••" 
-                  />
-                </div>
-              </div>
+               <div className="space-y-2">
+                 <Label htmlFor="password" className="text-xs font-medium opacity-70 uppercase tracking-wider">
+                   Password
+                 </Label>
+                 <div className="relative">
+                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+                   <Input 
+                     id="password"
+                     type={showPassword ? "text" : "password"} 
+                     value={password}
+                     onChange={(e) => setPassword(e.target.value)}
+                     required
+                     className="pl-10 pr-10"
+                     placeholder="••••••••" 
+                   />
+                   <button 
+                     type="button"
+                     onClick={() => setShowPassword(!showPassword)}
+                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1"
+                     aria-label="Toggle password visibility"
+                   >
+                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                   </button>
+                 </div>
+               </div>
 
               <Button 
                 type="submit"

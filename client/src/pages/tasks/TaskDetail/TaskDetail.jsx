@@ -1,13 +1,13 @@
-import React, { useState, useEffect, useContext } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { useContext, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { AuthContext } from '../../../context/AuthContext';
 import { apiRequest } from '../../../api/apiClient';
+import BlurFade from '../../../components/animations/BlurFade';
+import GradientText from '../../../components/animations/GradientText';
 import MagicCard from '../../../components/animations/MagicCard';
 import TextHighlighter from '../../../components/animations/TextHighlighter';
-import GradientText from '../../../components/animations/GradientText';
-import BlurFade from '../../../components/animations/BlurFade';
-import Button from '../../../components/ui/Button/Button';
-import Input from '../../../components/ui/Input/Input';
+import { AuthContext } from '../../../context/AuthContext';
 
 const TaskDetail = () => {
   const { id } = useParams();

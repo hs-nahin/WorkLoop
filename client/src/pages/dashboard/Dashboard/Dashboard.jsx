@@ -1,24 +1,24 @@
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import {
+  Activity,
+  ArrowUpRight,
+  CheckCircle2,
+  Clock,
+  FileText,
+  LayoutDashboard,
+  Plus
+} from 'lucide-react';
 import { useContext, useEffect, useState } from 'react';
 import { apiRequest } from '../../../api/apiClient';
-import { AuthContext } from '../../../context/AuthContextInstance.js';
-import { 
-  LayoutDashboard, 
-  Clock, 
-  CheckCircle2, 
-  Plus, 
-  FileText, 
-  Activity,
-  ArrowUpRight 
-} from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import BlurFade from '../../../components/animations/BlurFade';
 import NumberTicker from '../../../components/animations/NumberTicker';
 import TextHighlighter from '../../../components/animations/TextHighlighter';
 import TypingAnimation from '../../../components/animations/TypingAnimation';
 import WordRotate from '../../../components/animations/WordRotate';
+import { AuthContext } from '../../../context/AuthContextInstance.js';
 
 const Dashboard = () => {
   const { user } = useContext(AuthContext);
