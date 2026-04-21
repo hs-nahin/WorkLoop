@@ -16,8 +16,13 @@ const ProtectedRoute = ({ allowedRoles }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (allowedRoles && (!user || !allowedRoles.includes(user.role))) {
-    return <Navigate to="/dashboard" replace />;
+  const userRole = user?.role?.toUpperCase() || 'USER';
+  
+  if (allowedRoles && allowedRoles.length > 0) {
+    const allowedRolesUpper = allowedRoles.map(r => r.toUpperCase());
+    if (!allowedRolesUpper.includes(userRole)) {
+      return <Navigate to="/dashboard" replace />;
+    }
   }
 
   return <Outlet />;

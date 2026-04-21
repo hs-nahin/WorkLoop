@@ -1,7 +1,8 @@
 const jwt = require('jsonwebtoken');
 const { verifyToken } = require('../utils/token');
+const admin = require('../firebase-admin');
 
-const protect = (req, res, next) => {
+const protect = async (req, res, next) => {
     let token;
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
         token = req.headers.authorization.split(' ')[1];
@@ -12,7 +13,21 @@ const protect = (req, res, next) => {
     }
 
     try {
-        const decoded = verifyToken(token);
+        let decoded;
+        try {
+            const decodedFirebase = await admin.auth().verifyIdToken(token);
+            decoded = {
+                userId: decodedFirebase.uid,
+                email: decodedFirebase.email,
+                role: 'USER'
+            };
+        } catch (firebaseError) {
+            try {
+                decoded = verifyToken(token);
+            } catch (jwtError) {
+                return res.status(401).json({ message: 'Not authorized, token failed' });
+            }
+        }
         req.user = decoded;
         next();
     } catch (error) {
@@ -26,8 +41,7 @@ const authorize = (...roles) => {
             return res.status(403).json({ message: 'Role not authorized' });
         }
         next();
-};
-
+    };
 };
 
 module.exports = { protect, authorize };
