@@ -1,14 +1,36 @@
-import { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { apiRequest } from '../../../api/apiClient';
+import { 
+  Plus, 
+  Search, 
+  Calendar, 
+  User as UserIcon, 
+  ArrowRight,
+  AlertCircle,
+  CheckCircle2,
+  Clock
+} from 'lucide-react';
+import { AuthContext } from '../../../context/AuthContextInstance.js';
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from 'sonner';
 import BlurFade from '../../../components/animations/BlurFade';
-import GradientText from '../../../components/animations/GradientText';
-import MagicCard from '../../../components/animations/MagicCard';
 import TextHighlighter from '../../../components/animations/TextHighlighter';
-import Button from '../../../components/ui/Button/Button';
-import Input from '../../../components/ui/Input/Input';
-import Modal from '../../../components/ui/Modal/Modal';
-import { AuthContext } from '../../../context/AuthContext';
+import GradientText from '../../../components/animations/GradientText';
 
 const TaskList = () => {
   const { user } = useContext(AuthContext);
@@ -16,6 +38,7 @@ const TaskList = () => {
   const [tasks, setTasks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [newTask, setNewTask] = useState({ title: '', description: '', officerId: '', priority: 'medium', deadline: '', location: '' });
   const [isCreating, setIsCreating] = useState(false);
 
@@ -26,7 +49,7 @@ const TaskList = () => {
         const data = await apiRequest({ endpoint: '/tasks' });
         setTasks(data);
       } catch (error) {
-        console.error('Failed to fetch tasks:', error.message);
+        toast.error('Failed to fetch tasks');
       } finally {
         setIsLoading(false);
       }
@@ -36,7 +59,7 @@ const TaskList = () => {
 
   const handleCreateTask = async () => {
     if (!newTask.title || !newTask.description) {
-      console.error('Title and Description are required');
+      toast.error('Title and Description are required');
       return;
     }
     try {
@@ -49,156 +72,223 @@ const TaskList = () => {
       setTasks([createdTask, ...tasks]);
       setIsModalOpen(false);
       setNewTask({ title: '', description: '', officerId: '', priority: 'medium', deadline: '', location: '' });
+      toast.success('Task deployed successfully');
     } catch (error) {
-      console.error('Creation failed:', error.message);
+      toast.error(error.message || 'Creation failed');
     } finally {
       setIsCreating(false);
     }
   };
 
-  const getStatusColor = (status) => {
+  const getStatusBadge = (status) => {
     switch (status) {
-      case 'completed': return 'text-green-400 bg-green-400/10 border-green-400/20';
-      case 'pending': return 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20';
-      case 'rejected': return 'text-red-400 bg-red-400/10 border-red-400/20';
-      default: return 'text-gray-400 bg-gray-400/10 border-gray-400/20';
+      case 'completed': return <<BadgeBadge className="bg-green-500/10 text-green-500 border-green-500/20 hover:bg-green-500/20"><<CheckCheckCircle2 size={12} className="mr-1" /> Completed</Badge>;
+      case 'pending': return <<BadgeBadge className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20 hover:bg-yellow-500/20"><<ClockClock size={12} className="mr-1" /> Pending</Badge>;
+      case 'rejected': return <<BadgeBadge className="bg-destructive/10 text-destructive border-destructive/20 hover:bg-destructive/20"><<AlertAlertCircle size={12} className="mr-1" /> Rejected</Badge>;
+      default: return <<BadgeBadge variant="outline">{status}</Badge>;
     }
   };
 
+  const filteredTasks = tasks.filter(t => 
+    t.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    t.description.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
-    <div className="space-y-8">
-      <header className="flex justify-between items-end">
-        <div className="flex flex-col gap-2">
-          <TextHighlighter text="Task Repository" className="text-3xl font-bold tracking-tight" />
-          <GradientText text="Track, assign and monitor internal IT operations" className="text-sm opacity-70" />
-        </div>
-        {user?.role === 'ADMIN' && (
-          <Button 
-            onClick={() => setIsModalOpen(true)}
-            className="px-6 py-2"
-          >
-            + New Task
-          </Button>
-        )}
+    <<divdiv className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <<headerheader className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <<divdiv className="space-y-1">
+          <<TextTextHighlighter text="Task Repository" className="text-3xl font-bold tracking-tight" />
+          <<GradientGradientText text="Track, assign and monitor internal IT operations" className="text-sm opacity-70 block" />
+        </div
+        
+        <<divdiv className="flex items-center gap-3">
+          <<divdiv className="relative w-full md:w-64">
+            <<SearchSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+            <<InputInput 
+              placeholder="Search operations..." 
+              className="pl-9"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          {user?.role === 'ADMIN' && (
+            <<DialogDialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+              <<DialogDialogTrigger asChild>
+                <<ButtonButton className="gap-2">
+                  <<PlusPlus size={18} />
+                  <span>New Task</span>
+                </Button>
+              </DialogTrigger>
+              <<DialogDialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+                <<DialogDialogHeader>
+                  <<DialogDialogTitle className="text-xl font-bold">Initialize New Task</DialogTitle>
+                  <<DialogDialogDescription>Define the requirements for a new IT operation.</DialogDescription>
+                </DialogHeader>
+                <<divdiv className="grid gap-6 py-4">
+                  <<divdiv className="grid gap-2">
+                    <<LabelLabel htmlFor="title">Task Title</Label>
+                    <<InputInput 
+                      id="title"
+                      placeholder="e.g. Network Migration" 
+                      value={newTask.title}
+                      onChange={(e) => setNewTask({...newTask, title: e.target.value})}
+                    />
+                  </div>
+                  <<divdiv className="grid gap-2">
+                    <<LabelLabel htmlFor="description">Detailed Requirement</Label>
+                    <<TextTextarea 
+                      id="description"
+                      placeholder="Describe the operational goal..." 
+                      value={newTask.description}
+                      onChange={(e) => setNewTask({...newTask, description: e.target.value})}
+                      className="min-h-[120px]"
+                    />
+                  </div>
+                  <<divdiv className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <<divdiv className="grid gap-2">
+                      <<LabelLabel htmlFor="officer">Assign IT Officer (ID)</Label>
+                      <<InputInput 
+                        id="officer"
+                        placeholder="USER_ID" 
+                        value={newTask.officerId}
+                        onChange={(e) => setNewTask({...newTask, officerId: e.target.value})}
+                      />
+                    </div>
+                    <<divdiv className="grid gap-2">
+                      <<LabelLabel htmlFor="priority">Priority Level</Label>
+                      <<SelectSelect 
+                        value={newTask.priority} 
+                        onValueChange={(v) => setNewTask({...newTask, priority: v})}
+                      >
+                        <<SelectSelectTrigger id="priority">
+                          <<SelectSelectValue placeholder="Select Priority" />
+                        </SelectTrigger>
+                        <<SelectSelectContent>
+                          <<SelectItemSelectItem value="low">Low</SelectItem>
+                          <<SelectItemSelectItem value="medium">Medium</SelectItem>
+                          <<SelectItemSelectItem value="high">High</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <<divdiv className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <<divdiv className="grid gap-2">
+                      <<LabelLabel htmlFor="deadline">Deadline</Label>
+                      <<InputInput 
+                        id="deadline"
+                        type="date"
+                        value={newTask.deadline}
+                        onChange={(e) => setNewTask({...newTask, deadline: e.target.value})}
+                      />
+                    </div>
+                    <<divdiv className="grid gap-2">
+                      <<LabelLabel htmlFor="location">Physical Location</Label>
+                      <<InputInput 
+                        id="location"
+                        placeholder="Office/Floor/Room" 
+                        value={newTask.location}
+                        onChange={(e) => setNewTask({...newTask, location: e.target.value})}
+                      />
+                    </div>
+                  </div>
+                </div>
+                <<DialogDialogFooter>
+                  <<ButtonButton variant="outline" onClick={() => setIsModalOpen(false)}>Cancel</Button>
+                  <<ButtonButton onClick={handleCreateTask} disabled={isCreating}>
+                    {isCreating ? <<>><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Deploying...</> : 'Confirm Deployment'}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
+        </div
       </header>
 
       {isLoading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="w-8 h-8 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin" />
+        <<divdiv className="flex flex-col justify-center items-center h-64 gap-4">
+          <<divdiv className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          <<pp className="text-sm text-muted-foreground animate-pulse">Fetching repository data...</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {tasks.map((task, index) => (
-            <BlurFade key={task.id} delay={index * 50}>
-              <MagicCard className="cursor-pointer group" onClick={() => navigate(`/tasks/${task.id}`)}>
-                <div className="flex flex-col gap-4">
-                  <div className="flex justify-between items-start">
-                    <div className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase border ${getStatusColor(task.status)}`}>
-                      {task.status}
-                    </div>
-                    <span className="text-[10px] font-mono text-gray-500">{task.id.slice(-6).toUpperCase()}</span>
-                  </div>
-                  
-                  <h3 className="text-lg font-bold group-hover:text-yellow-400 transition-colors line-clamp-1">
-                    {task.title}
-                  </h3>
-                  
-                  <p className="text-gray-400 text-sm line-clamp-2 h-10 overflow-hidden">
-                    {task.description}
-                  </p>
-
-                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-white/5">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-yellow-400/20 flex items-center justify-center text-[10px] font-bold text-yellow-400">
-                        {task.assignedTo?.name?.charAt(0) || 'U'}
-                      </div>
-                      <span className="text-xs text-gray-300">{task.assignedTo?.name || 'Unassigned'}</span>
-                    </div>
-                    <span className="text-xs text-gray-500 font-mono">{new Date(task.createdAt).toLocaleDateString()}</span>
-                  </div>
-                </div>
-              </MagicCard>
-            </BlurFade>
-          ))}
-          {tasks.length === 0 && (
-            <div className="col-span-full py-20 text-center text-gray-500 italic">
-              No tasks found in the repository.
-            </div>
-          )}
+        <<divdiv className="rounded-xl border bg-card/50 backdrop-blur-sm overflow-hidden">
+          <<divdiv className="overflow-x-auto">
+            <<TableTable>
+              <<TableHeaderTableHeader className="bg-muted/50">
+                <<TableRowTableRow>
+                  <<TableTableHead className="w-[300px]">Task Information</TableHead>
+                  <<TableTableHead>Status</TableHead>
+                  <<TableTableHead>Priority</TableHead>
+                  <<TableTableHead>Assigned To</TableHead>
+                  <<TableTableHead>Deadline</TableHead>
+                  <<TableTableHead className="text-right">Action</TableHead>
+                </TableRow>
+              </TableHeader>
+              <<TableTableBody>
+                {filteredTasks.map((task, index) => (
+                  <<BlurBlurFade key={task.id} delay={index * 20}>
+                    <<TableRowTableRow className="group hover:bg-accent/50 transition-colors cursor-pointer" onClick={() => navigate(`/tasks/${task.id}`)}>
+                      <<TableCellTableCell>
+                        <<divdiv className="flex flex-col gap-1">
+                          <<spanspan className="font-semibold text-foreground group-hover:text-primary transition-colors">
+                            {task.title}
+                          </span>
+                          <<spanspan className="text-xs text-muted-foreground line-clamp-1 max-w-xs">
+                            {task.description}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <<TableCellTableCell>
+                        {getStatusBadge(task.status)}
+                      </TableCell>
+                      <<TableCellTableCell>
+                        <<divdiv className="flex items-center gap-2 text-xs font-medium uppercase">
+                          <<divdiv className={cn(
+                            "w-2 h-2 rounded-full",
+                            task.priority === 'high' ? "bg-destructive" : task.priority === 'medium' ? "bg-yellow-500" : "bg-green-500"
+                          )} />
+                          {task.priority}
+                        </div>
+                      </TableCell>
+                      <<TableCellTableCell>
+                        <<divdiv className="flex items-center gap-2">
+                          <<divdiv className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary border border-primary/20">
+                            {task.assignedTo?.name?.charAt(0) || 'U'}
+                          </div>
+                          <<spanspan className="text-sm">{task.assignedTo?.name || 'Unassigned'}</span>
+                        </div>
+                      </TableCell>
+                      <<TableCellTableCell>
+                        <<divdiv className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <<CalendarCalendar size={14} />
+                          {task.deadline || 'No deadline'}
+                        </div>
+                      </TableCell>
+                      <<TableCellTableCell className="text-right">
+                        <<ButtonButton variant="ghost" size="sm" className="p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                          <<ArrowArrowRight size={16} />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  </BlurFade>
+                ))}
+                {filteredTasks.length === 0 && (
+                  <<TableRowTableRow>
+                    <<TableCellTableCell colSpan={6} className="h-64 text-center text-muted-foreground italic">
+                      No tasks matching your search criteria.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       )}
-
-      <Modal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        title="Initialize New Task"
-        footer={
-          <div className="flex gap-3">
-            <Button variant="secondary" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-            <Button onClick={handleCreateTask} disabled={isCreating}>
-              {isCreating ? 'Creating...' : 'Confirm Deployment'}
-            </Button>
-          </div>
-        }
-      >
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-gray-500 uppercase">Task Title</label>
-            <Input 
-              placeholder="e.g. Network Migration" 
-              value={newTask.title}
-              onChange={(e) => setNewTask({...newTask, title: e.target.value})}
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-gray-500 uppercase">Detailed Requirement</label>
-            <Input 
-              type="textarea"
-              placeholder="Describe the operational goal..." 
-              value={newTask.description}
-              onChange={(e) => setNewTask({...newTask, description: e.target.value})}
-              className="h-32"
-            />
-          </div>
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-500 uppercase">Assign IT Officer (UserID)</label>
-              <Input 
-                placeholder=" Officer ID..." 
-                value={newTask.officerId}
-                onChange={(e) => setNewTask({...newTask, officerId: e.target.value})}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-500 uppercase">Priority</label>
-                <Input 
-                  placeholder="Low/Medium/High" 
-                  value={newTask.priority}
-                  onChange={(e) => setNewTask({...newTask, priority: e.target.value})}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-500 uppercase">Deadline</label>
-                <Input 
-                  type="date"
-                  value={newTask.deadline}
-                  onChange={(e) => setNewTask({...newTask, deadline: e.target.value})}
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-500 uppercase">Location</label>
-              <Input 
-                placeholder="Office/Floor/Room" 
-                value={newTask.location}
-                onChange={(e) => setNewTask({...newTask, location: e.target.value})}
-              />
-            </div>
-
-        </div>
-      </Modal>
     </div>
   );
 };
+
+import { cn } from '@/lib/utils';
+import { Loader2 } from 'lucide-react';
 
 export default TaskList;

@@ -1,15 +1,34 @@
-import { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { apiRequest } from '../../api/apiClient';
+import { AuthContext } from '../../context/AuthContextInstance.js';
+import { 
+  User, 
+  ShieldCheck, 
+  Lock, 
+  Camera,
+  Save,
+  Loader2,
+  CheckCircle2
+} from 'lucide-react';
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle 
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { toast } from 'sonner';
 import BlurFade from '../../components/animations/BlurFade';
-import GradientText from '../../components/animations/GradientText';
-import MagicCard from '../../components/animations/MagicCard';
 import TextHighlighter from '../../components/animations/TextHighlighter';
-import Button from '../../components/ui/Button/Button';
-import Input from '../../components/ui/Input/Input';
-import { ToastContext } from '../../context/ToastContext';
+import GradientText from '../../components/animations/GradientText';
+import { Separator } from '@/components/ui/separator';
 
 const Settings = () => {
-  const { showToast } = useContext(ToastContext);
+  const { user } = useContext(AuthContext);
   const [profile, setProfile] = useState({
     name: '',
     email: '',
@@ -28,7 +47,7 @@ const Settings = () => {
           role: data.role || ''
         });
       } catch (error) {
-        console.error('Failed to fetch profile:', error);
+        toast.error('Failed to fetch profile data');
       } finally {
         setIsLoading(false);
       }
@@ -44,9 +63,9 @@ const Settings = () => {
         method: 'PATCH',
         body: profile,
       });
-      showToast('Profile updated successfully', 'success');
+      toast.success('Profile updated successfully');
     } catch (error) {
-      showToast(error.message || 'Failed to update profile', 'error');
+      toast.error(error.message || 'Failed to update profile');
     } finally {
       setIsSaving(false);
     }
@@ -54,80 +73,123 @@ const Settings = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-yellow-400 font-mono animate-pulse">
-        Loading Settings...
+      <div className="min-h-[80vh] flex flex-col items-center justify-center gap-4 text-muted-foreground">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <p className="text-sm font-medium animate-pulse">Loading configuration...</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <header className="flex flex-col gap-2">
         <TextHighlighter text="Account Settings" className="text-3xl font-bold tracking-tight" />
-        <GradientText text="Manage your operational profile and system preferences" className="text-sm opacity-70" />
+        <GradientText text="Manage your operational profile and system preferences" className="text-sm opacity-70 block" />
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
           <BlurFade>
-            <MagicCard>
-              <div className="space-y-6">
-                <h2 className="text-lg font-bold">Personal Information</h2>
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-gray-500 uppercase">Full Name</label>
-                    <Input 
-                      value={profile.name} 
-                      onChange={(e) => setProfile({...profile, name: e.target.value})} 
-                      placeholder="Enter name"
-                    />
+            <Card className="border-border bg-card/50 backdrop-blur-sm shadow-sm">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                    <User size={20} />
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-gray-500 uppercase">Email Address</label>
-                    <Input 
-                      value={profile.email} 
-                      onChange={(e) => setProfile({...profile, email: e.target.value})} 
-                      placeholder="Enter email"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-gray-500 uppercase">System Role</label>
-                    <Input 
-                      value={profile.role} 
-                      disabled 
-                      className="opacity-50 cursor-not-allowed"
-                    />
+                  <div>
+                    <CardTitle className="text-lg font-semibold">Personal Information</CardTitle>
+                    <CardDescription>Update your identity and contact details</CardDescription>
                   </div>
                 </div>
-                <div className="pt-6 flex justify-end">
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex flex-col md:flex-row gap-8 items-start">
+                  <div className="relative group">
+                    <Avatar className="h-24 w-24 border-4 border-background shadow-md group-hover:border-primary/50 transition-colors">
+                      <AvatarImage src={user?.profileImage} />
+                      <AvatarFallback className="bg-primary text-primary-foreground font-bold text-xl">
+                        {user?.name?.charAt(0) || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <button className="absolute bottom-0 right-0 p-1.5 bg-primary text-primary-foreground rounded-full shadow-lg hover:scale-110 transition-transform">
+                      <Camera size={14} />
+                    </button>
+                  </div>
+                  <div className="flex-1 grid gap-4 w-full">
+                    <div className="grid gap-2">
+                      <Label htmlFor="name" className="text-xs font-medium opacity-70 uppercase tracking-wider">Full Name</Label>
+                      <Input 
+                        id="name"
+                        value={profile.name} 
+                        onChange={(e) => setProfile({...profile, name: e.target.value})} 
+                        placeholder="Enter full name"
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="email" className="text-xs font-medium opacity-70 uppercase tracking-wider">Email Address</Label>
+                      <Input 
+                        id="email"
+                        value={profile.email} 
+                        onChange={(e) => setProfile({...profile, email: e.target.value})} 
+                        placeholder="Enter email"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <Separator className="my-6" />
+
+                <div className="grid gap-4">
+                  <div className="grid gap-2">
+                    <Label className="text-xs font-medium opacity-70 uppercase tracking-wider">System Role</Label>
+                    <div className="flex items-center gap-2 p-2 rounded-md bg-muted/50 border border-border text-muted-foreground font-medium text-sm">
+                      <ShieldCheck size={16} />
+                      {profile.role || 'Guest'}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-4 flex justify-end">
                   <Button 
                     onClick={handleSave} 
                     disabled={isSaving} 
-                    className="px-8"
+                    className="gap-2 px-6"
                   >
-                    {isSaving ? 'Saving...' : 'Save Changes'}
+                    {isSaving ? (
+                      <><Loader2 className="h-4 w-4 animate-spin" /> Saving...</>
+                    ) : (
+                      <><Save size={16} /> Save Changes</>
+                    )}
                   </Button>
                 </div>
-              </div>
-            </MagicCard>
+              </CardContent>
+            </Card>
           </BlurFade>
         </div>
 
         <div className="space-y-6">
           <BlurFade delay={100}>
-            <MagicCard>
-              <div className="space-y-4">
-                <h3 className="text-sm font-bold text-gray-500 uppercase">Security Status</h3>
-                <div className="flex items-center gap-3 text-green-400 text-xs font-mono">
-                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-                  Encrypted Session Active
+            <Card className="border-border bg-card/50 backdrop-blur-sm shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Security Status</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
+                  <div className="flex items-center gap-3 text-sm">
+                    <Lock size={16} className="text-green-500" />
+                    <span className="text-muted-foreground">Session Encryption</span>
+                  </div>
+                  <CheckCircle2 size={16} className="text-green-500" />
                 </div>
-                <div className="flex items-center gap-3 text-green-400 text-xs font-mono">
-                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-                  MFA Verified
+                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
+                  <div className="flex items-center gap-3 text-sm">
+                    <ShieldCheck size={16} className="text-green-500" />
+                    <span className="text-muted-foreground">MFA Verification</span>
+                  </div>
+                  <CheckCircle2 size={16} className="text-green-500" />
                 </div>
-              </div>
-            </MagicCard>
+              </CardContent>
+            </Card>
           </BlurFade>
         </div>
       </div>

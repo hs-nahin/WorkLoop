@@ -1,26 +1,64 @@
-import { useContext } from "react";
-import { AuthContext } from "../../../context/AuthContext";
-import TextHighlighter from "../../animations/TextHighlighter";
-
+import React, { useContext } from "react";
+import { AuthContext } from "../../../context/AuthContextInstance.js";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { User, Settings, LogOut, Bell } from "lucide-react";
 
 const Topbar = () => {
-  const { user } = useContext(AuthContext);
+  const { user, logout } = useContext(AuthContext);
 
   return (
-    <header className="h-16 fixed top-0 right-0 left-0 z-40 bg-black/20 backdrop-blur-md border-b border-white/5 px-6 flex items-center justify-between">
-      <div className="text-sm text-gray-500">
-        <TextHighlighter text={`Current Session: ${user?.role || "Guest"}`} className="text-xs" />
-      </div>
+    <header className="h-16 border-b bg-card/50 backdrop-blur-md px-4 md:px-6 flex items-center justify-between sticky top-0 z-30">
       <div className="flex items-center gap-4">
-        <div className="text-right">
-          <p className="text-xs text-gray-400 font-medium">{user?.name || "User"}</p>
-          <p className="text-[10px] text-yellow-400 uppercase tracking-widest font-bold">{user?.role || "Role"}</p>
+        <div className="hidden md:block">
+          <Badge variant="outline" className="font-medium opacity-70">
+            {user?.role || "Guest"} Session
+          </Badge>
         </div>
-        <div className="w-10 h-10 rounded-full bg-linear-to-br from-yellow-400 to-orange-600 p-0.5">
-          <div className="w-full h-full rounded-full bg-black flex items-center justify-center text-white font-bold text-xs">
-            {user?.name?.charAt(0) || "U"}
-          </div>
-        </div>
+      </div>
+
+      <div className="flex items-center gap-2 md:gap-4">
+        <Button variant="ghost" size="icon" className="relative text-muted-foreground">
+          <Bell size={20} />
+          <span className="absolute top-2 right-2 w-2 h-2 bg-destructive rounded-full border-2 border-card"></span>
+        </Button>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <div className="flex items-center gap-3 p-1 pl-2 rounded-full border hover:bg-accent transition-colors cursor-pointer">
+              <div className="text-right hidden sm:block">
+                <p className="text-xs font-semibold text-foreground leading-none">{user?.name || "User"}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">{user?.role || "Role"}</p>
+              </div>
+              <Avatar className="h-8 w-8 border-2 border-primary/20">
+                <AvatarImage src={user?.profileImage} alt={user?.name} />
+                <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">
+                  {user?.name?.charAt(0) || "U"}
+                </AvatarFallback>
+              </Avatar>
+            </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuItem className="gap-2 cursor-pointer">
+              <User size={16} />
+              <span>Profile</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem className="gap-2 cursor-pointer">
+              <Settings size={16} />
+              <span>Settings</span>
+            </DropdownMenuItem>
+            <div className="h-px bg-border my-1" />
+            <DropdownMenuItem 
+              className="gap-2 text-destructive focus:text-destructive cursor-pointer" 
+              onClick={logout}
+            >
+              <LogOut size={16} />
+              <span>Log out</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );

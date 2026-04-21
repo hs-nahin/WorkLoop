@@ -1,9 +1,21 @@
-
-import { useContext } from "react";
+import React, { useContext } from "react";
 import { Link, useLocation } from "react-router";
+import { 
+  LayoutDashboard, 
+  CheckSquare, 
+  Users, 
+  Building2, 
+  LogOut, 
+  ChevronLeft, 
+  ChevronRight,
+  Menu
+} from "lucide-react";
 import { AppContext } from "../../../context/AppContext.jsx";
 import { AuthContext } from "../../../context/AuthContextInstance.js";
-import MagicCard from "../../animations/MagicCard.jsx";
+import { cn } from "../../../lib/utils";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import TextHighlighter from "../../animations/TextHighlighter.jsx";
 
 const Sidebar = () => {
@@ -12,41 +24,95 @@ const Sidebar = () => {
   const location = useLocation();
 
   const menuItems = [
-    { name: "Dashboard", path: "/dashboard", icon: "??", roles: ["ADMIN", "IT OFFICER"] },
-    { name: "Tasks", path: "/tasks", icon: "??", roles: ["ADMIN", "IT OFFICER"] },
-    { name: "Users", path: "/users", icon: "??", roles: ["ADMIN"] },
-    { name: "Company", path: "/company", icon: "??", roles: ["ADMIN"] },
+    { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard, roles: ["ADMIN", "IT OFFICER"] },
+    { name: "Tasks", path: "/tasks", icon: CheckSquare, roles: ["ADMIN", "IT OFFICER"] },
+    { name: "Users", path: "/users", icon: Users, roles: ["ADMIN"] },
+    { name: "Company", path: "/company", icon: Building2, roles: ["ADMIN"] },
   ];
 
   const filteredItems = menuItems.filter(item => item.roles.includes(user?.role));
 
-  return (
-    <aside className={`fixed left-0 top-0 h-screen transition-all duration-500 z-50 ${sidebarOpen ? "w-64" : "w-20"} bg-black/40 backdrop-blur-2xl border-r border-white/10`}>
-      <div className="p-6 flex items-center justify-between">
-        {sidebarOpen && <TextHighlighter text="WORKLOOP" className="font-black text-xl tracking-tighter" />}
-        <button onClick={toggleSidebar} className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors">
-          {sidebarOpen ? "?" : "?"}
-        </button>
+  const SidebarContent = () => (
+    <div className="flex flex-col h-full py-6">
+      <div className="px-6 mb-8 flex items-center justify-between">
+        {sidebarOpen && (
+          <div className="flex items-center gap-2">
+            <TextHighlighter text="WORKLOOP" className="font-black text-xl tracking-tighter" />
+          </div>
+        )}
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="p-2 h-9 w-9" 
+          onClick={toggleSidebar}
+          aria-label="Toggle Sidebar"
+        >
+          {sidebarOpen ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
+        </Button>
       </div>
 
-      <nav className="mt-8 px-4 space-y-2">
+      <nav className="flex-1 px-3 space-y-1">
         {filteredItems.map((item) => (
-          <Link key={item.path} to={item.path} className={`flex items-center gap-4 p-3 rounded-xl transition-all duration-300 group ${location.pathname === item.path ? "bg-yellow-400 text-black font-bold" : "text-gray-400 hover:bg-white/10 hover:text-white"}`}>
-            <span className="text-xl">{item.icon}</span>
-            {sidebarOpen && <span>{item.name}</span>}
+          <Link 
+            key={item.path} 
+            to={item.path} 
+            className={cn(
+              "flex items-center gap-4 px-3 py-2 rounded-lg transition-all duration-200 group group",
+              location.pathname === item.path 
+                ? "bg-primary text-primary-foreground font-medium shadow-md" 
+                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+            )}
+          >
+            <item.icon size={20} className={cn("shrink-0", location.pathname === item.path ? "text-primary-foreground" : "group-hover:text-foreground")} />
+            {sidebarOpen && <span className="text-sm">{item.name}</span>}
           </Link>
         ))}
       </nav>
 
-      <div className="absolute bottom-8 left-0 w-full px-4">
-        <MagicCard className="cursor-pointer" onClick={logout}>
-          <div className={`flex items-center gap-4 ${!sidebarOpen && "justify-center"}`}>
-            <span className="text-xl">??</span>
-            {sidebarOpen && <span className="text-sm font-medium text-white">Logout</span>}
-          </div>
-        </MagicCard>
+      <div className="p-3 mt-auto">
+        <Button 
+          variant="ghost" 
+          className={cn(
+            "w-full justify-start gap-4 text-muted-foreground hover:text-destructive hover:bg-destructive/10",
+            !sidebarOpen && "justify-center px-0"
+          )} 
+          onClick={logout}
+        >
+          <LogOut size={20} className="shrink-0" />
+          {sidebarOpen && <span className="text-sm">Logout</span>}
+        </Button>
       </div>
-    </aside>
+    </div>
+  );
+
+  return (
+    <>
+      {/* Desktop Sidebar */}
+      <aside 
+        className={cn(
+          "hidden lg:flex flex-col h-screen transition-all duration-300 z-50 border-r bg-card",
+          sidebarOpen ? "w-64" : "w-20"
+        )}
+      >
+        <SidebarContent />
+      </aside>
+
+      {/* Mobile Sidebar (Drawer) */}
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="lg:hidden fixed top-3 left-3 z-50"
+          >
+            <Menu size={20} />
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="left" className="w-64 p-0 bg-card">
+          <SidebarContent />
+        </SheetContent>
+      </Sheet>
+    </>
   );
 };
 

@@ -1,14 +1,24 @@
 import { useContext, useEffect, useState } from 'react';
 import { apiRequest } from '../../../api/apiClient';
+import { AuthContext } from '../../../context/AuthContextInstance.js';
+import { 
+  LayoutDashboard, 
+  Clock, 
+  CheckCircle2, 
+  Plus, 
+  FileText, 
+  Activity,
+  ArrowUpRight 
+} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import BlurFade from '../../../components/animations/BlurFade';
-import GradientText from '../../../components/animations/GradientText';
-import MagicCard from '../../../components/animations/MagicCard';
 import NumberTicker from '../../../components/animations/NumberTicker';
 import TextHighlighter from '../../../components/animations/TextHighlighter';
 import TypingAnimation from '../../../components/animations/TypingAnimation';
 import WordRotate from '../../../components/animations/WordRotate';
-import Button from '../../../components/ui/Button/Button';
-import { AuthContext } from '../../../context/AuthContext';
 
 const Dashboard = () => {
   const { user } = useContext(AuthContext);
@@ -26,91 +36,125 @@ const Dashboard = () => {
         console.error("Error fetching dashboard stats:", err);
       }
     };
-
     fetchStats();
   }, []);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 animate-in fade-in duration-500">
       <header className="flex flex-col gap-2">
         <div className="flex items-center gap-3">
           <TextHighlighter text="Operational Overview" className="text-3xl font-bold tracking-tight" />
-          <TypingAnimation text="|" className="text-yellow-400 font-bold" />
-        </div>
+          <TypingAnimation text="|" className="text-primary font-bold" />
+        </div
         <div className="flex items-center gap-2">
-          <GradientText text="System" className="text-sm opacity-70" />
-          <WordRotate words={['Ready', 'Optimized', 'Secure']} className="text-sm font-bold text-yellow-400" />
-          <GradientText text={` : ${user?.role}`} className="text-sm opacity-70" />
-        </div>
+          <span className="text-sm text-muted-foreground">System</span>
+          <WordRotate words={['Ready', 'Optimized', 'Secure']} className="text-sm font-bold text-primary" />
+          <span className="text-sm text-muted-foreground"> : {user?.role}</span>
+        </div
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
         <BlurFade delay={100}>
-          <MagicCard>
-            <div className="flex flex-col gap-2">
-              <span className="text-gray-500 text-xs font-bold uppercase tracking-widest">Total Tasks</span>
-              <span className="text-4xl font-black text-white">
+          <Card className="border-border bg-card/50 backdrop-blur-sm">
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+              <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-widest">Total Tasks</CardTitle>
+              <LayoutDashboard className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold tracking-tighter">
                 <NumberTicker value={stats.totalTasks} />
-              </span>
-              <div className="h-1 w-full bg-white/10 rounded-full overflow-hidden">
-                <div className="h-full bg-yellow-400" style={{ width: '100%' }} />
               </div>
-            </div>
-          </MagicCard>
+              <div className="mt-4">
+                <Progress value={100} className="h-1" />
+              </div>
+            </CardContent>
+          </Card>
         </BlurFade>
 
         <BlurFade delay={200}>
-          <MagicCard>
-            <div className="flex flex-col gap-2">
-              <span className="text-gray-500 text-xs font-bold uppercase tracking-widest">Pending Action</span>
-              <span className="text-4xl font-black text-yellow-400">
+          <Card className="border-border bg-card/50 backdrop-blur-sm">
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+              <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-widest">Pending Action</CardTitle>
+              <Clock className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold tracking-tighter text-primary">
                 <NumberTicker value={stats.pendingTasks} />
-              </span>
-              <div className="h-1 w-full bg-white/10 rounded-full overflow-hidden">
-                <div className="h-full bg-yellow-400" style={{ width: `${(stats.pendingTasks / (stats.totalTasks || 1)) * 100}%` }} />
               </div>
-            </div>
-          </MagicCard>
+              <div className="mt-4">
+                <Progress 
+                  value={(stats.pendingTasks / (stats.totalTasks || 1)) * 100} 
+                  className="h-1" 
+                />
+              </div>
+            </CardContent>
+          </Card>
         </BlurFade>
 
         <BlurFade delay={300}>
-          <MagicCard>
-            <div className="flex flex-col gap-2">
-              <span className="text-gray-500 text-xs font-bold uppercase tracking-widest">Completed</span>
-              <span className="text-4xl font-black text-green-400">
+          <Card className="border-border bg-card/50 backdrop-blur-sm">
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+              <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-widest">Completed</CardTitle>
+              <CheckCircle2 className="h-4 w-4 text-green-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold tracking-tighter text-green-500">
                 <NumberTicker value={stats.completedTasks} />
-              </span>
-              <div className="h-1 w-full bg-white/10 rounded-full overflow-hidden">
-                <div className="h-full bg-green-400" style={{ width: `${(stats.completedTasks / (stats.totalTasks || 1)) * 100}%` }} />
               </div>
-            </div>
-          </MagicCard>
+              <div className="mt-4">
+                <Progress 
+                  value={(stats.completedTasks / (stats.totalTasks || 1)) * 100} 
+                  className="h-1 bg-green-500/20" 
+                />
+              </div>
+            </CardContent>
+          </Card>
         </BlurFade>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <BlurFade delay={400}>
-          <MagicCard className="h-64 flex flex-col justify-center items-center text-center">
-            <p className="text-gray-500 text-sm">Quick Actions</p>
-            <div className="mt-4 flex gap-3">
-              <Button variant="primary" className="text-xs">
+          <Card className="border-border bg-card/50 backdrop-blur-sm overflow-hidden">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold">Quick Actions</CardTitle>
+              <CardDescription>Manage your workflow effectively</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-wrap gap-4">
+              <Button className="flex items-center gap-2 group">
+                <Plus size={16} />
                 Create New Task
+                <ArrowUpRight size={14} className="transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
               </Button>
-              <Button variant="secondary" className="text-xs">
-                View All Reports
+              <Button variant="outline" className="flex items-center gap-2 group">
+                <FileText size={16} />
+                View Reports
+                <ArrowUpRight size={14} className="transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
               </Button>
-            </div>
-          </MagicCard>
+            </CardContent>
+          </Card>
         </BlurFade>
 
         <BlurFade delay={500}>
-          <MagicCard className="h-64 flex flex-col justify-center items-center text-center">
-            <p className="text-gray-500 text-sm">System Health</p>
-            <div className="mt-4 flex items-center gap-2 text-green-400 font-mono text-xs">
-             <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-             Backend API: Connected
-            </div>
-          </MagicCard>
+          <Card className="border-border bg-card/50 backdrop-blur-sm overflow-hidden">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold">System Health</CardTitle>
+              <CardDescription>Backend and Database connectivity status</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border">
+                <div className="flex items-center gap-3">
+                  <Activity size={20} className="text-green-500" />
+                  <span className="text-sm font-medium">Backend API Status</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                  <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20 text-[10px] uppercase font-bold">
+                    Connected
+                  </Badge>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </BlurFade>
       </div>
     </div>
@@ -118,4 +162,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-

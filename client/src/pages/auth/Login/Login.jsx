@@ -1,12 +1,14 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router';
-import { AuthContext } from '../../../context/AuthContext';
-import MagicCard from '../../../components/animations/MagicCard';
-import TextHighlighter from '../../../components/animations/TextHighlighter';
-import GradientText from '../../../components/animations/GradientText';
+import { AuthContext } from '../../../context/AuthContextInstance.js';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Loader2, Lock, Mail } from 'lucide-react';
+import { toast } from 'sonner';
 import BlurFade from '../../../components/animations/BlurFade';
-import Input from '../../../components/ui/Input/Input';
-import Button from '../../../components/ui/Button/Button';
+import TextHighlighter from '../../../components/animations/TextHighlighter';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -21,68 +23,90 @@ const Login = () => {
     setIsLoading(true);
     try {
       await login({ email, password });
+      toast.success('Welcome back to WorkLoop!');
       navigate('/dashboard');
     } catch (error) {
-      console.error('Login failed:', error.message || 'Login failed. Please check credentials.');
+      toast.error(error.message || 'Invalid credentials. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black text-white relative overflow-hidden">
-      {/* Ambient Background Glows */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-yellow-500/10 blur-[120px] rounded-full" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-orange-600/10 blur-[120px] rounded-full" />
+    <div className="min-h-screen flex items-center justify-center bg-background p-4 relative overflow-hidden">
+      {/* Background Aesthetics */}
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-primary/10 blur-[120px] rounded-full pointer-events-none" />
 
       <BlurFade>
-        <MagicCard className="w-full max-w-md transform transition-all duration-500">
-          <div className="text-center mb-10">
-            <TextHighlighter 
-              text="WORKLOOP" 
-              className="text-4xl font-black tracking-tighter italic" 
-            />
-            <div className="mt-2">
-              <GradientText text="Internal IT Task Management" className="text-xs uppercase tracking-widest opacity-60" />
-            </div>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-gray-400 ml-1">EMAIL ADDRESS</label>
-              <Input 
-                type="email" 
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                placeholder="admin@workloop.com" 
+        <Card className="w-full max-w-md shadow-xl border-border bg-card/50 backdrop-blur-sm">
+          <CardHeader className="space-y-2 text-center">
+            <div className="flex justify-center mb-2">
+              <TextHighlighter 
+                text="WORKLOOP" 
+                className="text-3xl font-black tracking-tighter italic" 
               />
             </div>
+            <CardTitle className="text-xl font-bold">Sign In</CardTitle>
+            <CardDescription>
+              Access your internal IT workflow management system
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-xs font-medium opacity-70 uppercase tracking-wider">
+                  Email Address
+                </Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+                  <Input 
+                    id="email"
+                    type="email" 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="pl-10"
+                    placeholder="name@company.com" 
+                  />
+                </div>
+              </div>
 
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-gray-400 ml-1">PASSWORD</label>
-              <Input 
-                type="password" 
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                placeholder="••••••••" 
-              />
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-xs font-medium opacity-70 uppercase tracking-wider">
+                  Password
+                </Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+                  <Input 
+                    id="password"
+                    type="password" 
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="pl-10"
+                    placeholder="••••••••" 
+                  />
+                </div>
+              </div>
 
-            <Button 
-              type="submit"
-              disabled={isLoading}
-              className="w-full"
-            >
-              {isLoading ? (
-                <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin" />
-              ) : (
-                "Enter Workspace"
-              )}
-            </Button>
-          </form>
-        </MagicCard>
+              <Button 
+                type="submit"
+                disabled={isLoading}
+                className="w-full py-6 text-base font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Authenticating...
+                  </>
+                ) : (
+                  "Enter Workspace"
+                )}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
       </BlurFade>
     </div>
   );
