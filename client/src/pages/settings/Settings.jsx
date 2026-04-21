@@ -1,31 +1,31 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { apiRequest } from '../../api/apiClient';
-import { AuthContext } from '../../context/AuthContextInstance.js';
-import { 
-  User, 
-  ShieldCheck, 
-  Lock, 
-  Camera,
-  Save,
-  Loader2,
-  CheckCircle2
-} from 'lucide-react';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { toast } from 'sonner';
-import BlurFade from '../../components/animations/BlurFade';
-import TextHighlighter from '../../components/animations/TextHighlighter';
-import GradientText from '../../components/animations/GradientText';
 import { Separator } from '@/components/ui/separator';
+import {
+  Camera,
+  CheckCircle2,
+  Loader2,
+  Lock,
+  Save,
+  ShieldCheck,
+  User
+} from 'lucide-react';
+import { useContext, useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import { apiRequest } from '../../api/apiClient';
+import BlurFade from '../../components/animations/BlurFade';
+import GradientText from '../../components/animations/GradientText';
+import TextHighlighter from '../../components/animations/TextHighlighter';
+import { AuthContext } from '../../context/AuthContextInstance.js';
 
 const Settings = () => {
   const { user } = useContext(AuthContext);
@@ -47,7 +47,7 @@ const Settings = () => {
           role: data.role || ''
         });
       } catch (error) {
-        toast.error('Failed to fetch profile data');
+        toast.error(error.message || 'Failed to fetch profile data');
       } finally {
         setIsLoading(false);
       }

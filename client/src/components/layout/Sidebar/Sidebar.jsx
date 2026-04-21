@@ -1,21 +1,20 @@
-import React, { useContext } from "react";
-import { Link, useLocation } from "react-router";
-import { 
-  LayoutDashboard, 
-  CheckSquare, 
-  Users, 
-  Building2, 
-  LogOut, 
-  ChevronLeft, 
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Building2,
+  CheckSquare,
+  ChevronLeft,
   ChevronRight,
-  Menu
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  Users
 } from "lucide-react";
+import { useContext } from "react";
+import { Link, useLocation } from "react-router";
 import { AppContext } from "../../../context/AppContext.jsx";
 import { AuthContext } from "../../../context/AuthContextInstance.js";
 import { cn } from "../../../lib/utils";
-import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import TextHighlighter from "../../animations/TextHighlighter.jsx";
 
 const Sidebar = () => {
@@ -32,7 +31,7 @@ const Sidebar = () => {
 
   const filteredItems = menuItems.filter(item => item.roles.includes(user?.role));
 
-  const SidebarContent = () => (
+  const content = (
     <div className="flex flex-col h-full py-6">
       <div className="px-6 mb-8 flex items-center justify-between">
         {sidebarOpen && (
@@ -57,7 +56,7 @@ const Sidebar = () => {
             key={item.path} 
             to={item.path} 
             className={cn(
-              "flex items-center gap-4 px-3 py-2 rounded-lg transition-all duration-200 group group",
+              "flex items-center gap-4 px-3 py-2 rounded-lg transition-all duration-200 group",
               location.pathname === item.path 
                 ? "bg-primary text-primary-foreground font-medium shadow-md" 
                 : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
@@ -87,17 +86,15 @@ const Sidebar = () => {
 
   return (
     <>
-      {/* Desktop Sidebar */}
       <aside 
         className={cn(
           "hidden lg:flex flex-col h-screen transition-all duration-300 z-50 border-r bg-card",
           sidebarOpen ? "w-64" : "w-20"
         )}
       >
-        <SidebarContent />
+        {content}
       </aside>
 
-      {/* Mobile Sidebar (Drawer) */}
       <Sheet>
         <SheetTrigger asChild>
           <Button 
@@ -109,7 +106,7 @@ const Sidebar = () => {
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="w-64 p-0 bg-card">
-          <SidebarContent />
+          {content}
         </SheetContent>
       </Sheet>
     </>

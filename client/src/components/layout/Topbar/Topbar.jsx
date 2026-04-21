@@ -1,16 +1,16 @@
-import React, { useContext } from "react";
-import { AuthContext } from "../../../context/AuthContextInstance.js";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { User, Settings, LogOut, Bell } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Bell, LogOut, Settings, User } from "lucide-react";
+import { useContext } from "react";
+import { AuthContext } from "../../../context/AuthContextInstance.js";
 
-const Topbar = () => {
+const TopBar = () => {
   const { user, logout } = useContext(AuthContext);
 
   return (
-    <header className="h-16 border-b bg-card/50 backdrop-blur-md px-4 md:px-6 flex items-center justify-between sticky top-0 z-30">
+    <header className="h-16 border-b bg-card/80 backdrop-blur-md px-4 md:px-6 flex items-center justify-between sticky top-0 z-40">
       <div className="flex items-center gap-4">
         <div className="hidden md:block">
           <Badge variant="outline" className="font-medium opacity-70">
@@ -64,4 +64,4 @@ const Topbar = () => {
   );
 };
 
-export default Topbar;
+export default TopBar;

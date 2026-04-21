@@ -40,20 +40,20 @@ const Dashboard = () => {
   }, []);
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-6 animate-in fade-in duration-500">
       <header className="flex flex-col gap-2">
         <div className="flex items-center gap-3">
           <TextHighlighter text="Operational Overview" className="text-3xl font-bold tracking-tight" />
           <TypingAnimation text="|" className="text-primary font-bold" />
-        </div
+        </div>
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">System</span>
           <WordRotate words={['Ready', 'Optimized', 'Secure']} className="text-sm font-bold text-primary" />
           <span className="text-sm text-muted-foreground"> : {user?.role}</span>
-        </div
+        </div>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
         <BlurFade delay={100}>
           <Card className="border-border bg-card/50 backdrop-blur-sm">
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">

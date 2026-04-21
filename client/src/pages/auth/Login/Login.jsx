@@ -41,7 +41,7 @@ const Login = () => {
       <BlurFade>
         <Card className="w-full max-w-md shadow-xl border-border bg-card/50 backdrop-blur-sm">
           <CardHeader className="space-y-2 text-center">
-            <div className="flex justify-center mb-2">
+            <div className="flex justify-center mb-4">
               <TextHighlighter 
                 text="WORKLOOP" 
                 className="text-3xl font-black tracking-tighter italic" 

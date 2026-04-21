@@ -1,7 +1,7 @@
 import React from 'react';
 import { Outlet } from 'react-router';
 import Sidebar from './Sidebar/Sidebar';
-import Topbar from './Topbar/Topbar';
+import TopBar from './TopBar/TopBar';
 
 const MainLayout = () => {
   return (
@@ -9,8 +9,8 @@ const MainLayout = () => {
       <div className="flex h-screen overflow-hidden">
         <Sidebar />
         <div className="relative flex flex-1 flex-col overflow-hidden">
-          <Topbar />
-          <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-6 pt-20 scroll-smooth">
+          <TopBar />
+          <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-6 pt-16 scroll-smooth">
             <div className="max-w-7xl mx-auto w-full">
               <Outlet />
             </div>
