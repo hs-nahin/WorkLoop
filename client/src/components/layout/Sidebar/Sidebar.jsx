@@ -14,19 +14,21 @@ import { useContext } from "react";
 import { Link, useLocation } from "react-router";
 import { AppContext } from "../../../context/AppContext.jsx";
 import { AuthContext } from "../../../context/AuthContextInstance.js";
+import { useCompany } from "../../../context/CompanyContext.jsx";
 import { cn } from "../../../lib/utils";
 import TextHighlighter from "../../animations/TextHighlighter.jsx";
 
 const Sidebar = () => {
   const { sidebarOpen, toggleSidebar } = useContext(AppContext);
   const { user, logout } = useContext(AuthContext);
+  const { company } = useCompany();
   const location = useLocation();
 
   const menuItems = [
-    { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard, roles: ["ADMIN", "IT OFFICER"] },
+    { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard, roles: ["ADMIN", "IT OFFICER", "USER"] },
     { name: "Tasks", path: "/tasks", icon: CheckSquare, roles: ["ADMIN", "IT OFFICER"] },
     { name: "Users", path: "/users", icon: Users, roles: ["ADMIN"] },
-    { name: "Company", path: "/company", icon: Building2, roles: ["ADMIN"] },
+    { name: "Settings", path: "/settings", icon: Building2, roles: ["ADMIN"] },
   ];
 
   const filteredItems = menuItems.filter(item => item.roles.includes(user?.role));
@@ -36,7 +38,11 @@ const Sidebar = () => {
       <div className="px-6 mb-8 flex items-center justify-between">
         {sidebarOpen && (
           <div className="flex items-center gap-2">
-            <TextHighlighter text="WORKLOOP" className="font-black text-xl tracking-tighter" />
+            {company?.logoUrl ? (
+              <img src={company.logoUrl} alt="Logo" className="h-8 w-auto" />
+            ) : (
+              <TextHighlighter text={company?.companyName || 'WORKLOOP'} className="font-black text-xl tracking-tighter" />
+            )}
           </div>
         )}
         <Button 
@@ -68,7 +74,12 @@ const Sidebar = () => {
         ))}
       </nav>
 
-      <div className="p-3 mt-auto">
+      <div className="p-3 mt-auto border-t pt-4">
+        {sidebarOpen && (
+          <div className="px-3 mb-2 text-xs text-muted-foreground">
+            {user?.name || user?.email?.split('@')[0]}
+          </div>
+        )}
         <Button 
           variant="ghost" 
           className={cn(
@@ -80,6 +91,11 @@ const Sidebar = () => {
           <LogOut size={20} className="shrink-0" />
           {sidebarOpen && <span className="text-sm">Logout</span>}
         </Button>
+        {sidebarOpen && (
+          <p className="px-3 mt-4 text-xs text-muted-foreground text-center">
+            Powered by WorkLoop
+          </p>
+        )}
       </div>
     </div>
   );

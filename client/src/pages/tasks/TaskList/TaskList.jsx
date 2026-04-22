@@ -38,7 +38,8 @@ const TaskList = () => {
   const navigate = useNavigate();
   const [tasks, setTasks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const searchParams = new URLSearchParams(window.location.search);
+  const [isModalOpen, setIsModalOpen] = useState(searchParams.get('create') === 'true');
   const [searchQuery, setSearchQuery] = useState('');
   const [newTask, setNewTask] = useState({ title: '', description: '', officerId: '', priority: 'medium', deadline: '', location: '' });
   const [isCreating, setIsCreating] = useState(false);
@@ -72,6 +73,7 @@ const TaskList = () => {
       });
       setTasks([createdTask, ...tasks]);
       setIsModalOpen(false);
+      navigate('/tasks', { replace: true });
       setNewTask({ title: '', description: '', officerId: '', priority: 'medium', deadline: '', location: '' });
       toast.success('Task deployed successfully');
     } catch (error) {
@@ -113,7 +115,7 @@ const TaskList = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          {user?.role === 'ADMIN' && (
+          {(user?.role === 'ADMIN' || user?.role === 'IT OFFICER') && (
             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
               <DialogTrigger asChild>
                 <Button className="gap-2">

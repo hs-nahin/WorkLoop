@@ -1,15 +1,15 @@
-import { AppProvider } from './context/AppProvider';
+import { CompanyProvider } from './context/CompanyContext';
 import { AuthProvider } from './context/AuthContext';
 import './index.css';
 import AppRouter from './router/AppRouter/AppRouter';
 
 function App() {
   return (
-    <AuthProvider>
-      <AppProvider>
+    <CompanyProvider>
+      <AuthProvider>
         <AppRouter />
-      </AppProvider>
-    </AuthProvider>
+      </AuthProvider>
+    </CompanyProvider>
   );
 }
 

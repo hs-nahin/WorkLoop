@@ -58,6 +58,14 @@ export const AuthProvider = ({ children }) => {
       setToken(idToken);
       localStorage.setItem('firebase_token', idToken);
       const profile = await fetchFirestoreProfile(user.uid);
+      
+      if (profile && !profile.isActive) {
+        await signOut(auth);
+        setToken(null);
+        localStorage.removeItem('firebase_token');
+        throw { code: 'auth/account-deactivated', message: 'Your account has been deactivated. Contact admin.' };
+      }
+      
       setFirestoreProfile(profile);
       return { user, profile };
     } catch (error) {

@@ -12,16 +12,17 @@ import {
   Plus
 } from 'lucide-react';
 import { useContext, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router';
 import { apiRequest } from '../../../api/apiClient';
 import BlurFade from '../../../components/animations/BlurFade';
 import NumberTicker from '../../../components/animations/NumberTicker';
 import TextHighlighter from '../../../components/animations/TextHighlighter';
-import TypingAnimation from '../../../components/animations/TypingAnimation';
-import WordRotate from '../../../components/animations/WordRotate';
+
 import { AuthContext } from '../../../context/AuthContextInstance.js';
 
 const Dashboard = () => {
   const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [stats, setStats] = useState({ totalTasks: 0, pendingTasks: 0, completedTasks: 0 });
 
   useEffect(() => {
@@ -42,14 +43,21 @@ const Dashboard = () => {
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <header className="flex flex-col gap-2">
-        <div className="flex items-center gap-3">
-          <TextHighlighter text="Operational Overview" className="text-3xl font-bold tracking-tight" />
-          <TypingAnimation text="|" className="text-primary font-bold" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <TextHighlighter text="Operational Overview" className="text-3xl font-bold tracking-tight" />
+          </div>
+          {(user?.role === 'ADMIN' || user?.role === 'IT OFFICER') && (
+            <Button onClick={() => navigate('/tasks?create=true')} className="gap-2">
+              <Plus size={18} />
+              Create Task
+            </Button>
+          )}
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">System</span>
-          <WordRotate words={['Ready', 'Optimized', 'Secure']} className="text-sm font-bold text-primary" />
-          <span className="text-sm text-muted-foreground"> : {user?.role}</span>
+          <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">
+            {user?.email?.split('@')[0] || 'user'} ({user?.role || 'user'})
+          </Badge>
         </div>
       </header>
 
@@ -120,14 +128,16 @@ const Dashboard = () => {
               <CardDescription>Manage your workflow effectively</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-wrap gap-4">
-              <Button className="flex items-center gap-2 group">
-                <Plus size={16} />
-                Create New Task
-                <ArrowUpRight size={14} className="transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
-              </Button>
-              <Button variant="outline" className="flex items-center gap-2 group">
+              {(user?.role === 'ADMIN' || user?.role === 'IT OFFICER') && (
+                <Button className="flex items-center gap-2 group" onClick={() => navigate('/tasks')}>
+                  <Plus size={16} />
+                  Create New Task
+                  <ArrowUpRight size={14} className="transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
+                </Button>
+              )}
+              <Button variant="outline" className="flex items-center gap-2 group" onClick={() => navigate('/tasks')}>
                 <FileText size={16} />
-                View Reports
+                View All Tasks
                 <ArrowUpRight size={14} className="transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
               </Button>
             </CardContent>
