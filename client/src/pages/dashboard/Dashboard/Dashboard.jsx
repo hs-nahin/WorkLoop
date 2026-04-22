@@ -1,6 +1,8 @@
+import { apiRequest } from '@/api/apiClient';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ModeToggle } from '@/components/ui/ModeToggle';
 import { Progress } from '@/components/ui/progress';
 import {
   Activity,
@@ -12,16 +14,15 @@ import {
   Plus
 } from 'lucide-react';
 import { useContext, useEffect, useState } from 'react';
-import { apiRequest } from '../../../api/apiClient';
-import BlurFade from '../../../components/animations/BlurFade';
-import NumberTicker from '../../../components/animations/NumberTicker';
-import TextHighlighter from '../../../components/animations/TextHighlighter';
-import TypingAnimation from '../../../components/animations/TypingAnimation';
-import WordRotate from '../../../components/animations/WordRotate';
-import { AuthContext } from '../../../context/AuthContextInstance.js';
+
+import BlurFade from '@/components/animations/BlurFade';
+
+import NumberTicker from '@/components/animations/NumberTicker.jsx';
+import { AuthContext } from '@/context/AuthContextInstance';
+
 
 const Dashboard = () => {
-  const { user } = useContext(AuthContext);
+  useContext(AuthContext);
   const [stats, setStats] = useState({ totalTasks: 0, pendingTasks: 0, completedTasks: 0 });
 
   useEffect(() => {
@@ -41,18 +42,9 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <header className="flex flex-col gap-2">
-        <div className="flex items-center gap-3">
-          <TextHighlighter text="Operational Overview" className="text-3xl font-bold tracking-tight" />
-          <TypingAnimation text="|" className="text-primary font-bold" />
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">System</span>
-          <WordRotate words={['Ready', 'Optimized', 'Secure']} className="text-sm font-bold text-primary" />
-          <span className="text-sm text-muted-foreground"> : {user?.role}</span>
-        </div>
-      </header>
-
+      <div className="flex justify-end">
+        <ModeToggle />
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
         <BlurFade delay={100}>
           <Card className="border-border bg-card/50 backdrop-blur-sm">
@@ -125,11 +117,11 @@ const Dashboard = () => {
                 Create New Task
                 <ArrowUpRight size={14} className="transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
               </Button>
-              <Button variant="outline" className="flex items-center gap-2 group">
-                <FileText size={16} />
-                View Reports
-                <ArrowUpRight size={14} className="transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
-              </Button>
+<Button variant="outline" className="flex items-center gap-2 group">
+  <FileText size={16} />
+  View Reports
+  <ArrowUpRight size={14} className="transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
+</Button>
             </CardContent>
           </Card>
         </BlurFade>

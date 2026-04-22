@@ -5,6 +5,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Bell, LogOut, Settings, User } from "lucide-react";
 import { useContext } from "react";
 import { AuthContext } from "../../../context/AuthContextInstance.js";
+import { ModeToggle } from "@/components/ui/ModeToggle";
 
 const TopBar = () => {
   const { user, logout } = useContext(AuthContext);
@@ -24,6 +25,7 @@ const TopBar = () => {
           <Bell size={20} />
           <span className="absolute top-2 right-2 w-2 h-2 bg-destructive rounded-full border-2 border-card"></span>
         </Button>
+        <ModeToggle />
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
