@@ -1,9 +1,9 @@
 import React from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router';
-import { AuthContext } from '../../context/AuthContext';
+import { useAuth } from '../../context/AuthContextInstance';
 
 const ProtectedRoute = ({ allowedRoles }) => {
-  const { user, token, loading } = React.useContext(AuthContext);
+  const { user, loading } = useAuth();
   const location = useLocation();
 
   if (loading) return (
@@ -12,7 +12,7 @@ const ProtectedRoute = ({ allowedRoles }) => {
     </div>
   );
 
-  if (!token) {
+  if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

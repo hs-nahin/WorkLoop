@@ -3,8 +3,7 @@ import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebas
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { AuthContext } from './AuthContextInstance';
-
-export { AuthContext };
+import { authService } from '../services/authService';
 
 export const AuthProvider = ({ children }) => {
   const [firebaseUser, setFirebaseUser] = useState(null);
@@ -102,7 +101,7 @@ export const AuthProvider = ({ children }) => {
   }, [firebaseUser, fetchFirestoreProfile]);
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, logout, fetchMe }}>
+    <AuthContext.Provider value={{ user, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

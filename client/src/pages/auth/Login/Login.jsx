@@ -21,6 +21,10 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!email || !password) {
+      toast.error('Please enter both email and password');
+      return;
+    }
     setIsLoading(true);
     try {
       await login({ email, password });
@@ -40,6 +44,8 @@ const Login = () => {
         errorMessage = 'Invalid email or password.';
       } else if (error.code === 'auth/too-many-requests') {
         errorMessage = 'Too many failed attempts. Please try again later.';
+      } else if (error.message) {
+        errorMessage = error.message;
       }
       
       toast.error(errorMessage);
@@ -88,45 +94,45 @@ const Login = () => {
               </div>
 
                <div className="space-y-2">
-                 <Label htmlFor="password" className="text-xs font-medium opacity-70 uppercase tracking-wider">
-                   Password
-                 </Label>
-                 <div className="relative">
-                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
-                   <Input 
-                     id="password"
-                     type={showPassword ? "text" : "password"} 
-                     value={password}
-                     onChange={(e) => setPassword(e.target.value)}
-                     required
-                     className="pl-10 pr-10"
-                     placeholder="••••••••" 
-                   />
-                   <button 
-                     type="button"
-                     onClick={() => setShowPassword(!showPassword)}
-                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1"
-                     aria-label="Toggle password visibility"
-                   >
-                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                   </button>
-                 </div>
-               </div>
+                  <Label htmlFor="password" className="text-xs font-medium opacity-70 uppercase tracking-wider">
+                    Password
+                  </Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+                    <Input 
+                      id="password"
+                      type={showPassword ? "text" : "password"} 
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      className="pl-10 pr-10"
+                      placeholder="••••••••" 
+                    />
+                    <button 
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1"
+                      aria-label="Toggle password visibility"
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
 
-              <Button 
-                type="submit"
-                disabled={isLoading}
-                className="w-full py-6 text-base font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Authenticating...
-                  </>
-                ) : (
-                  "Enter Workspace"
-                )}
-              </Button>
+               <Button 
+                 type="submit"
+                 disabled={isLoading}
+                 className="w-full py-6 text-base font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
+               >
+                 {isLoading ? (
+                   <>
+                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                     Authenticating...
+                   </>
+                 ) : (
+                   "Enter Workspace"
+                 )}
+               </Button>
             </form>
           </CardContent>
         </Card>

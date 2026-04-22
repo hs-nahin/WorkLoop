@@ -11,7 +11,7 @@ import {
   Users
 } from "lucide-react";
 import { useContext } from "react";
-import { Link, useLocation } from "react-router";
+import { Link, useNavigate, useLocation } from "react-router";
 import { AppContext } from "../../../context/AppContext.jsx";
 import { AuthContext } from "../../../context/AuthContextInstance.js";
 import { useCompany } from "../../../context/CompanyContext.jsx";
@@ -23,6 +23,12 @@ const Sidebar = () => {
   const { user, logout } = useContext(AuthContext);
   const { company } = useCompany();
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
 
   const menuItems = [
     { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard, roles: ["ADMIN", "IT OFFICER", "USER"] },
@@ -86,7 +92,7 @@ const Sidebar = () => {
             "w-full justify-start gap-4 text-muted-foreground hover:text-destructive hover:bg-destructive/10",
             !sidebarOpen && "justify-center px-0"
           )} 
-          onClick={logout}
+          onClick={handleLogout}
         >
           <LogOut size={20} className="shrink-0" />
           {sidebarOpen && <span className="text-sm">Logout</span>}
