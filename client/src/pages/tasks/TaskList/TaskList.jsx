@@ -16,6 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import {
   AlertCircle,
+  ArrowLeft,
   ArrowRight,
   Calendar,
   CheckCircle2,
@@ -99,7 +100,17 @@ const TaskList = () => {
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="space-y-1">
-          <TextHighlighter text="Task Repository" className="text-3xl font-bold tracking-tight" />
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate('/dashboard')}
+              className="hover:bg-accent cursor-pointer"
+            >
+              <ArrowLeft size={20} />
+            </Button>
+            <TextHighlighter text="Task Repository" className="text-3xl font-bold tracking-tight" />
+          </div>
           <GradientText text="Track, assign and monitor internal IT operations" className="text-sm opacity-70 block" />
         </div>
         

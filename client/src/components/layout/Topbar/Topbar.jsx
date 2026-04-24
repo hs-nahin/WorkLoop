@@ -2,10 +2,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { ModeToggle } from "@/components/ui/ModeToggle";
 import { Bell, LogOut, Settings, User } from "lucide-react";
 import { useContext } from "react";
 import { AuthContext } from "../../../context/AuthContextInstance.js";
-import { ModeToggle } from "@/components/ui/ModeToggle";
 
 const TopBar = () => {
   const { user, logout } = useContext(AuthContext);
@@ -22,7 +22,7 @@ const TopBar = () => {
 
       <div className="flex items-center gap-2 md:gap-4">
         <Button variant="ghost" size="icon" className="relative text-muted-foreground">
-          <Bell size={20} />
+          <Bell size={20}/>
           <span className="absolute top-2 right-2 w-2 h-2 bg-destructive rounded-full border-2 border-card"></span>
         </Button>
         <ModeToggle />
