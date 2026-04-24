@@ -2,7 +2,6 @@ import { apiRequest } from '@/api/apiClient';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ModeToggle } from '@/components/ui/ModeToggle';
 import { Progress } from '@/components/ui/progress';
 import {
   Activity,
@@ -40,12 +39,9 @@ const Dashboard = () => {
     fetchStats();
   }, []);
 
-  return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex justify-end">
-        <ModeToggle />
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
+    return (
+      <div className="space-y-6 animate-in fade-in duration-500">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
         <BlurFade delay={100}>
           <Card className="border-border bg-card/50 backdrop-blur-sm">
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
@@ -118,9 +114,9 @@ const Dashboard = () => {
                 <ArrowUpRight size={14} className="transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
               </Button>
 <Button variant="outline" className="flex items-center gap-2 group">
-  <FileText size={16} />
-  View Reports
-  <ArrowUpRight size={14} className="transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
+   <FileText size={16} />
+   View Reports
+   <ArrowUpRight size={14} className="transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
 </Button>
             </CardContent>
           </Card>
