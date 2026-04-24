@@ -42,7 +42,7 @@ const Sidebar = () => {
         <Button 
           variant="ghost" 
           size="sm" 
-          className="p-2 h-9 w-9" 
+          className="p-2 h-9 w-9 cursor-pointer" 
           onClick={toggleSidebar}
           aria-label="Toggle Sidebar"
         >
@@ -72,7 +72,7 @@ const Sidebar = () => {
         <Button 
           variant="ghost" 
           className={cn(
-            "w-full justify-start gap-4 text-muted-foreground hover:text-destructive hover:bg-destructive/10",
+            "w-full justify-start gap-4 text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer",
             !sidebarOpen && "justify-center px-0"
           )} 
           onClick={logout}

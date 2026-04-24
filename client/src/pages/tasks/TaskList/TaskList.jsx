@@ -41,8 +41,9 @@ const TaskList = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [newTask, setNewTask] = useState({ title: '', description: '', officerId: '', priority: 'medium', deadline: '', location: '' });
+  const [newTask, setNewTask] = useState({ title: '', description: '', officerId: '', priority: 'medium', deadline: '', location: '', status: 'pending', assistants: [] });
   const [isCreating, setIsCreating] = useState(false);
+  const [officers, setOfficers] = useState([]);
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -59,21 +60,49 @@ const TaskList = () => {
     fetchTasks();
   }, []);
 
+  useEffect(() => {
+    const fetchOfficers = async () => {
+      try {
+        const data = await apiRequest({ endpoint: '/users' });
+        // Filter for officers only (assuming users with specific roles)
+        const officers = data.filter(user => 
+          user.role === 'IT OFFICER' || 
+          user.role === 'ADMIN' || 
+          user.role === 'SUPERVISOR'
+        );
+        setOfficers(officers.length > 0 ? officers : data); // fallback to all users if no officers found
+      } catch (error) {
+        console.error('Failed to fetch officers:', error);
+      }
+    };
+    fetchOfficers();
+  }, []);
+
   const handleCreateTask = async () => {
-    if (!newTask.title || !newTask.description) {
-      toast.error('Title and Description are required');
+    if (!newTask.title || !newTask.officerId || !newTask.priority) {
+      toast.error('Title, Assigned Officer, and Priority are required');
       return;
     }
     try {
       setIsCreating(true);
+      const taskData = {
+        title: newTask.title,
+        description: newTask.description,
+        location: newTask.location,
+        officerId: newTask.officerId,
+        priority: newTask.priority,
+        deadline: newTask.deadline,
+        status: newTask.status || 'pending',
+        assistants: newTask.assistants
+      };
       const createdTask = await apiRequest({ 
         endpoint: '/tasks', 
         method: 'POST', 
-        body: newTask 
+        body: taskData 
       });
       setTasks([createdTask, ...tasks]);
       setIsModalOpen(false);
-      setNewTask({ title: '', description: '', officerId: '', priority: 'medium', deadline: '', location: '' });
+      setNewTask({ title: '', description: '', officerId: '', priority: 'medium', deadline: '', location: '', status: 'pending', assistants: [] });
       toast.success('Task deployed successfully');
     } catch (error) {
       toast.error(error.message || 'Creation failed');
@@ -127,7 +156,7 @@ const TaskList = () => {
           {user?.role === 'ADMIN' && (
             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
               <DialogTrigger asChild>
-                <Button className="gap-2">
+                <Button className="gap-2" onClick={() => setIsModalOpen(true)}>
                   <Plus size={18} />
                   <span>New Task</span>
                 </Button>
@@ -157,15 +186,24 @@ const TaskList = () => {
                       className="min-h-30"
                     />
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="grid gap-2">
-                      <Label htmlFor="officer">Assign IT Officer (ID)</Label>
-                      <Input 
-                        id="officer"
-                        placeholder="USER_ID" 
-                        value={newTask.officerId}
-                        onChange={(e) => setNewTask({...newTask, officerId: e.target.value})}
-                      />
+                      <Label htmlFor="officer">Assign IT Officer</Label>
+                      <Select 
+                        value={newTask.officerId} 
+                        onValueChange={(v) => setNewTask({...newTask, officerId: v})}
+                      >
+                        <SelectTrigger id="officer">
+                          <SelectValue placeholder="Select Officer" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {officers.map(officer => (
+                            <SelectItem key={officer.id} value={officer.id}>
+                              {officer.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className="grid gap-2">
                       <Label htmlFor="priority">Priority Level</Label>
@@ -180,6 +218,23 @@ const TaskList = () => {
                           <SelectItem value="low">Low</SelectItem>
                           <SelectItem value="medium">Medium</SelectItem>
                           <SelectItem value="high">High</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="status">Status</Label>
+                      <Select 
+                        value={newTask.status} 
+                        onValueChange={(v) => setNewTask({...newTask, status: v})}
+                      >
+                        <SelectTrigger id="status">
+                          <SelectValue placeholder="Select Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="in_progress">In Progress</SelectItem>
+                          <SelectItem value="completed">Completed</SelectItem>
+                          <SelectItem value="rejected">Rejected</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -202,6 +257,28 @@ const TaskList = () => {
                         value={newTask.location}
                         onChange={(e) => setNewTask({...newTask, location: e.target.value})}
                       />
+                    </div>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label>Assistants (Optional)</Label>
+                    <div className="border rounded-md p-3 max-h-32 overflow-y-auto space-y-2">
+                      {officers.map(officer => (
+                        <div key={officer.id} className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id={`assistant-${officer.id}`}
+                            checked={newTask.assistants.includes(officer.id)}
+                            onChange={(e) => {
+                              const updated = e.target.checked
+                                ? [...newTask.assistants, officer.id]
+                                : newTask.assistants.filter(id => id !== officer.id);
+                              setNewTask({...newTask, assistants: updated});
+                            }}
+                            className="rounded border-gray-300"
+                          />
+                          <label htmlFor={`assistant-${officer.id}`} className="text-sm">{officer.name}</label>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
