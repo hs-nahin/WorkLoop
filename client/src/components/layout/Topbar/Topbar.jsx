@@ -9,15 +9,41 @@ import { AuthContext } from "../../../context/AuthContextInstance.js";
 
 const TopBar = () => {
   const { user, logout } = useContext(AuthContext);
+  
+  const getRoleBadgeColor = (role) => {
+    switch(role) {
+      case "ADMIN":
+        return "bg-green-50 dark:bg-green-800";
+      case "IT_OFFICER":
+        return "bg-blue-50 dark:bg-blue-800";
+      case "ASSISTANT":
+        return "bg-purple-50 dark:bg-purple-800";
+      default:
+        return "bg-gray-50 dark:bg-gray-800";
+    }
+  };
 
   return (
     <header className="h-16 border-b bg-card/80 backdrop-blur-md px-4 md:px-6 flex items-center justify-between sticky top-0 z-40">
       <div className="flex items-center gap-4">
         <div className="hidden md:block">
-          <Badge variant="outline" className="font-medium opacity-70">
+          <Badge 
+            variant="outline" 
+            className={`font-medium opacity-70 ${getRoleBadgeColor(user?.role)} text-foreground`}
+          >
             {user?.role || "Guest"} Session
           </Badge>
         </div>
+        {user?.role === "ADMIN" && (
+          <div className="flex items-center gap-1">
+            <Badge 
+              variant="solid" 
+              className="bg-green-500 text-white font-bold"
+            >
+              Verified
+            </Badge>
+          </div>
+        )}
       </div>
 
       <div className="flex items-center gap-2 md:gap-4">
