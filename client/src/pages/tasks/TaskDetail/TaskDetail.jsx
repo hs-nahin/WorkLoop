@@ -1,7 +1,8 @@
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { useContext, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
+import { toast } from 'sonner';
 import { apiRequest } from '../../../api/apiClient';
 import BlurFade from '../../../components/animations/BlurFade';
 import GradientText from '../../../components/animations/GradientText';
@@ -15,7 +16,9 @@ const TaskDetail = () => {
   const navigate = useNavigate();
   const [task, setTask] = useState(null);
   const [report, setReport] = useState('');
+  const [feedback, setFeedback] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [officers, setOfficers] = useState([]);
 
   useEffect(() => {
     const fetchTask = async () => {
@@ -24,16 +27,29 @@ const TaskDetail = () => {
         setTask(data);
       } catch (error) {
         console.error('Task not found:', error.message);
+        toast.error('Task not found');
         navigate('/dashboard');
       } finally {
         setIsLoading(false);
       }
     };
+
+    const fetchUsers = async () => {
+      try {
+        const data = await apiRequest({ endpoint: '/users' });
+        const officerList = data.filter(u => u.role === 'IT OFFICER');
+        setOfficers(officerList);
+      } catch (error) {
+        console.error('Failed to fetch users:', error);
+      }
+    };
+
     fetchTask();
+    fetchUsers();
   }, [id, navigate]);
 
   const handleSubmitReport = async () => {
-    if (!report.trim()) return console.warn('Please provide a report');
+    if (!report.trim()) return toast.error('Please provide a completion report');
     
     try {
       await apiRequest({ 
@@ -41,29 +57,45 @@ const TaskDetail = () => {
         method: 'PATCH', 
         body: { report }, 
       });
-      console.log('Task submitted for review!');
-      navigate('/dashboard');
+      toast.success('Task submitted for review!');
+      // Refresh task data
+      const data = await apiRequest({ endpoint: `/tasks/${id}` });
+      setTask(data);
+      setReport('');
     } catch (error) {
-      console.error('Submission failed:', error.message);
+      toast.error(error.message || 'Submission failed');
     }
   };
 
   const handleDecision = async (decision) => {
+    if (!feedback.trim()) return toast.error('Please provide feedback');
+    
     try {
       await apiRequest({ 
         endpoint: `/tasks/${id}/decide`, 
         method: 'PATCH', 
-        body: { decision }, 
+        body: { decision, feedback }, 
       });
-      console.log(`Task ${decision} successfully`);
+      toast.success(`Task ${decision} successfully`);
       navigate('/dashboard');
     } catch (error) {
-      console.error('Decision failed:', error.message);
+      toast.error(error.message || 'Decision failed');
     }
   };
 
-  if (isLoading) return <div className="min-h-screen flex items-center justify-center text-yellow-400 font-mono animate-pulse">Loading Task...</div>;
+  if (isLoading) return <div className="min-h-screen flex items-center justify-center text-foreground font-mono animate-pulse">Loading Task...</div>;
   if (!task) return null;
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'approved': return 'text-green-600 dark:text-green-400 border-green-600/30 dark:border-green-400/30 bg-green-600/10 dark:bg-green-400/10';
+      case 'completed': return 'text-green-600 dark:text-green-400 border-green-600/30 dark:border-green-400/30 bg-green-600/10 dark:bg-green-400/10';
+      case 'pending': return 'text-yellow-600 dark:text-yellow-400 border-yellow-600/30 dark:border-yellow-400/30 bg-yellow-600/10 dark:bg-yellow-400/10';
+      case 'submitted': return 'text-blue-600 dark:text-blue-400 border-blue-600/30 dark:border-blue-400/30 bg-blue-600/10 dark:bg-blue-400/10';
+      case 'rejected': return 'text-red-600 dark:text-red-400 border-red-600/30 dark:border-red-400/30 bg-red-600/10 dark:bg-red-400/10';
+      default: return 'text-gray-600 dark:text-gray-400 border-gray-600/30 dark:border-gray-400/30 bg-gray-600/10 dark:bg-gray-400/10';
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -88,36 +120,56 @@ const TaskDetail = () => {
               <div className="space-y-6">
                 <div className="flex justify-between items-start">
                   <h2 className="text-2xl font-bold">{task.title}</h2>
-                  <span className={`px-3 py-1 rounded-full text-xs font-bold border ${
-                    task.status === 'completed' ? 'text-green-400 border-green-400/30 bg-green-400/10' :
-                    task.status === 'pending' ? 'text-yellow-400 border-yellow-400/30 bg-yellow-400/10' :
-                    'text-red-400 border-red-400/30 bg-red-400/10'
-                  }`}>
-                    {task.status.toUpperCase()}
+                  <span className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusColor(task.status)}`}>
+                    {task.status?.toUpperCase()}
                   </span>
                 </div>
                 
-                <div className="space-y-2">
-                  <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Requirement</span>
-                  <p className="text-gray-300 leading-relaxed">{task.description}</p>
-                </div>
+        <div className="space-y-2">
+                   <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Requirement</span>
+                   <p className="text-foreground leading-relaxed">{task.description}</p>
+                 </div>
 
-                <div className="pt-6 border-t border-white/5 flex items-center gap-4">
-                    <div className="text-xs text-gray-500">Assigned To: <span className="text-white font-medium">{task.officerId?.name || task.officerId}</span></div>
+                {task.location && (
+                  <div className="space-y-2">
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Location</span>
+                    <p className="text-foreground">{task.location}</p>
+                  </div>
+                )}
 
-                  <div className="text-xs text-gray-500">Created: <span className="text-white font-medium">{new Date(task.createdAt).toLocaleDateString()}</span></div>
+                <div className="pt-6 border-t border-border grid grid-cols-2 gap-4">
+                  <div className="text-xs text-muted-foreground">
+                    Assigned To: <span className="text-foreground font-medium">{officers.find(o => o.userId === task.officerId)?.name || task.officerId}</span>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Priority: <span className={`font-medium ${
+                      task.priority === 'high' ? 'text-red-600 dark:text-red-400' : 
+                      task.priority === 'medium' ? 'text-yellow-600 dark:text-yellow-400' : 'text-green-600 dark:text-green-400'
+                    }`}>{task.priority?.toUpperCase()}</span>
+                  </div>
+                  {task.deadline && (
+                    <div className="text-xs text-muted-foreground">
+                      Deadline: <span className="text-foreground font-medium">{new Date(task.deadline).toLocaleDateString()}</span>
+                    </div>
+                  )}
+                  {task.createdAt && (
+                    <div className="text-xs text-muted-foreground">
+                      Created: <span className="text-foreground font-medium">
+                        {task.createdAt?.toDate ? task.createdAt.toDate().toLocaleDateString() : new Date(task.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             </MagicCard>
           </BlurFade>
 
-          {user?.role === 'IT OFFICER' && task.status === 'pending' && (
+          {user?.role === 'IT OFFICER' && task.officerId === user.userId && task.status === 'pending' && (
             <BlurFade delay={100}>
               <MagicCard>
                 <div className="space-y-4">
-                  <h3 className="text-lg font-bold">Submit Work Report</h3>
-                  <Input 
-                    type="textarea"
+                  <h3 className="text-lg font-bold text-foreground">Submit Work Report</h3>
+                  <Textarea 
                     value={report}
                     onChange={(e) => setReport(e.target.value)}
                     placeholder="Describe the work performed and results..."
@@ -140,22 +192,28 @@ const TaskDetail = () => {
             <BlurFade delay={200}>
               <MagicCard>
                 <div className="space-y-6">
-                  <h3 className="text-lg font-bold">Administrative Review</h3>
-                  <div className="p-4 rounded-xl bg-white/5 border border-white/10 italic text-sm text-gray-400">
-                    "{task.report}"
+                  <h3 className="text-lg font-bold text-foreground">Administrative Review</h3>
+                  <div className="p-4 rounded-xl bg-muted/50 border border-border italic text-sm text-muted-foreground">
+                    "{task.completionReport || 'No report submitted'}"
                   </div>
+                  <Textarea 
+                    value={feedback}
+                    onChange={(e) => setFeedback(e.target.value)}
+                    placeholder="Provide feedback for approval/rejection..."
+                    className="w-full h-24"
+                  />
                   <div className="flex gap-3">
                     <Button 
                       onClick={() => handleDecision('approved')}
                       variant="secondary"
-                      className="flex-1 text-green-400 border-green-500/30 hover:bg-green-500/30"
+                      className="flex-1 text-green-600 dark:text-green-400 border-green-600/30 dark:border-green-400/30 hover:bg-green-600/10 dark:hover:bg-green-400/10"
                     >
                       Approve
                     </Button>
                     <Button 
                       onClick={() => handleDecision('rejected')}
                       variant="secondary"
-                      className="flex-1 text-red-400 border-red-500/30 hover:bg-red-500/30"
+                      className="flex-1 text-red-600 dark:text-red-400 border-red-600/30 dark:border-red-400/30 hover:bg-red-600/10 dark:hover:bg-red-400/10"
                     >
                       Reject
                     </Button>
@@ -164,24 +222,26 @@ const TaskDetail = () => {
               </MagicCard>
             </BlurFade>
           )}
-          
+           
           <BlurFade delay={300}>
             <MagicCard>
-              <h3 className="text-sm font-bold text-gray-500 uppercase mb-4">Timeline</h3>
+              <h3 className="text-sm font-bold text-muted-foreground uppercase mb-4">Timeline</h3>
               <div className="space-y-4 text-xs">
                 <div className="flex gap-3">
-                  <div className="w-2 h-2 rounded-full bg-yellow-400 mt-1" />
+                  <div className="w-2 h-2 rounded-full bg-yellow-600 dark:bg-yellow-400 mt-1" />
                   <div>
-                    <p className="text-white font-medium">Task Created</p>
-                    <p className="text-gray-500">{new Date(task.createdAt).toLocaleString()}</p>
+                    <p className="text-foreground font-medium">Task Created</p>
+                    <p className="text-muted-foreground">
+                      {task.createdAt?.toDate ? task.createdAt.toDate().toLocaleString() : new Date(task.createdAt).toLocaleString()}
+                    </p>
                   </div>
                 </div>
                 {task.status === 'submitted' && (
                   <div className="flex gap-3">
-                    <div className="w-2 h-2 rounded-full bg-blue-400 mt-1" />
+                    <div className="w-2 h-2 rounded-full bg-blue-600 dark:bg-blue-400 mt-1" />
                     <div>
-                      <p className="text-white font-medium">Report Submitted</p>
-                      <p className="text-gray-500">{new Date(task.updatedAt).toLocaleString()}</p>
+                      <p className="text-foreground font-medium">Report Submitted</p>
+                      <p className="text-muted-foreground">Awaiting review</p>
                     </div>
                   </div>
                 )}

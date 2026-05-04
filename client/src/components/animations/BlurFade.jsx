@@ -1,8 +1,8 @@
 
-const BlurFade = ({ children, duration = 0.5, delay = 0 }) => {
+const BlurFade = ({ children, duration = 0.5, delay = 0, className = '' }) => {
   return (
     <div 
-      className="animate-blur-fade" 
+      className={`animate-blur-fade ${className}`}
       style={{ animationDuration: `${duration}s`, animationDelay: `${delay}s` }}
     >
       {children}

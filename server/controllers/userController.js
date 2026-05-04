@@ -1,16 +1,19 @@
 const bcrypt = require('bcryptjs');
-const FileHandler = require('../utils/fileHandler');
-const { protect, authorize } = require('../middleware/authMiddleware');
-
-const userStore = new FileHandler('users.json');
+const admin = require('../firebase-admin');
 
 const getUsers = async (req, res) => {
     try {
-        const users = await userStore.read();
-        // Don't return passwords
-        const safeUsers = users.map(({ password, ...rest }) => rest);
-        res.json(safeUsers);
+        const db = admin.firestore();
+        const usersSnapshot = await db.collection('users').get();
+        const users = usersSnapshot.docs.map(doc => {
+            const data = doc.data();
+            // Don't return passwords
+            const { password, ...safeUser } = data;
+            return { userId: doc.id, ...safeUser };
+        });
+        res.json(users);
     } catch (error) {
+        console.error('Error fetching users:', error);
         res.status(500).json({ message: 'Server error' });
     }
 };
@@ -22,19 +25,22 @@ const createUser = async (req, res) => {
             return res.status(400).json({ message: 'All fields are required' });
         }
 
-        const users = await userStore.read();
-        if (users.find(u => u.userId === userId)) {
+        const db = admin.firestore();
+        
+        // Check if user already exists
+        const existingUser = await db.collection('users').doc(userId).get();
+        if (existingUser.exists) {
             return res.status(400).json({ message: 'User already exists' });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = { userId, name, password: hashedPassword, role };
         
-        users.push(newUser);
-        await userStore.write(users);
+        await db.collection('users').doc(userId).set(newUser);
 
-        res.status(201).json({ message: 'User created successfully', userId: newUser.userId });
+        res.status(201).json({ message: 'User created successfully', userId });
     } catch (error) {
+        console.error('Error creating user:', error);
         res.status(500).json({ message: 'Server error' });
     }
 };
@@ -43,20 +49,16 @@ const updateUser = async (req, res) => {
     try {
         const { id } = req.params;
         const updates = req.body;
-        const users = await userStore.read();
-        const index = users.findIndex(u => u.userId === id);
-
-        if (index === -1) return res.status(404).json({ message: 'User not found' });
+        const db = admin.firestore();
 
         if (updates.password) {
             updates.password = await bcrypt.hash(updates.password, 10);
         }
 
-        users[index] = { ...users[index], ...updates };
-        await userStore.write(users);
-
+        await db.collection('users').doc(id).update(updates);
         res.json({ message: 'User updated successfully' });
     } catch (error) {
+        console.error('Error updating user:', error);
         res.status(500).json({ message: 'Server error' });
     }
 };
@@ -64,16 +66,12 @@ const updateUser = async (req, res) => {
 const deleteUser = async (req, res) => {
     try {
         const { id } = req.params;
-        const users = await userStore.read();
-        const filteredUsers = users.filter(u => u.userId !== id);
-
-        if (users.length === filteredUsers.length) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-
-        await userStore.write(filteredUsers);
+        const db = admin.firestore();
+        
+        await db.collection('users').doc(id).delete();
         res.json({ message: 'User deleted successfully' });
     } catch (error) {
+        console.error('Error deleting user:', error);
         res.status(500).json({ message: 'Server error' });
     }
 };

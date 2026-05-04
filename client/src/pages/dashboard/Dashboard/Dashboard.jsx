@@ -7,17 +7,24 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import {
   ArrowUpRight,
   CheckCircle2,
   Clock,
   FileText,
   LayoutDashboard,
+  Loader2,
   Plus,
 } from "lucide-react";
 import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
+import { toast } from "sonner";
 
 import BlurFade from "@/components/animations/BlurFade";
 
@@ -25,12 +32,25 @@ import NumberTicker from "@/components/animations/NumberTicker.jsx";
 import { AuthContext } from "@/context/AuthContextInstance";
 
 const Dashboard = () => {
-  useContext(AuthContext);
+  const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   const [stats, setStats] = useState({
     totalTasks: 0,
     pendingTasks: 0,
     completedTasks: 0,
+  });
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [officers, setOfficers] = useState([]);
+  const [assistants, setAssistants] = useState([]);
+  const [newTask, setNewTask] = useState({ 
+    title: '', 
+    description: '', 
+    location: '', 
+    officerId: '', 
+    priority: 'medium', 
+    deadline: '', 
+    assistants: [] 
   });
 
   useEffect(() => {
@@ -52,6 +72,63 @@ const Dashboard = () => {
     };
     fetchStats();
   }, []);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const data = await apiRequest({ endpoint: '/users' });
+        const officerList = data.filter(user => user.role === 'IT OFFICER');
+        setOfficers(officerList);
+        const assistantList = data.filter(user => user.role === 'ASSISTANT');
+        setAssistants(assistantList);
+      } catch (error) {
+        console.error('Failed to fetch users:', error);
+      }
+    };
+    if (user?.role === 'ADMIN') {
+      fetchUsers();
+    }
+  }, [user]);
+
+  const handleCreateTask = async () => {
+    if (!newTask.title.trim()) return toast.error('Title is required');
+    if (!newTask.description.trim()) return toast.error('Description is required');
+    if (!newTask.location.trim()) return toast.error('Location is required');
+    if (!newTask.officerId) return toast.error('Assign an IT Officer');
+    if (!newTask.priority) return toast.error('Select priority');
+    if (!newTask.deadline) return toast.error('Set a deadline');
+
+    try {
+      setIsCreating(true);
+      const taskData = {
+        title: newTask.title,
+        description: newTask.description,
+        location: newTask.location,
+        officerId: newTask.officerId,
+        priority: newTask.priority,
+        deadline: newTask.deadline,
+        assistants: newTask.assistants
+      };
+      await apiRequest({ 
+        endpoint: '/tasks', 
+        method: 'POST', 
+        body: taskData 
+      });
+      setIsModalOpen(false);
+      setNewTask({ title: '', description: '', location: '', officerId: '', priority: 'medium', deadline: '', assistants: [] });
+      toast.success('Task deployed successfully');
+      // Refresh stats
+      const data = await apiRequest({ endpoint: "/tasks" });
+      const total = data.length || 0;
+      const pending = data.filter((t) => t.status === "pending").length || 0;
+      const completed = data.filter((t) => t.status === "completed").length || 0;
+      setStats({ totalTasks: total, pendingTasks: pending, completedTasks: completed });
+    } catch (error) {
+      toast.error(error.message || 'Creation failed');
+    } finally {
+      setIsCreating(false);
+    }
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -132,14 +209,132 @@ const Dashboard = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-wrap gap-4">
-              <Button className="flex items-center gap-2 group cursor-pointer">
-                <Plus size={16} />
-                Create New Task
-                <ArrowUpRight
-                  size={14}
-                  className="transition-transform group-hover:translate-x-1 group-hover:-translate-y-1"
-                />
-              </Button>
+              {user?.role === 'ADMIN' && (
+                <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="flex items-center gap-2 group cursor-pointer">
+                      <Plus size={16} />
+                      Create New Task
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle className="text-xl font-bold">Initialize New Task</DialogTitle>
+                      <DialogDescription>Define the requirements for the IT operation.</DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-6 py-4">
+                      {/* 1. Basic Info (What) */}
+                      <div className="grid gap-2">
+                        <Label htmlFor="title">Task Title *</Label>
+                        <Input 
+                          id="title" 
+                          placeholder="e.g. Network Migration" 
+                          value={newTask.title}
+                          onChange={(e) => setNewTask({...newTask, title: e.target.value})}
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="description">Description *</Label>
+                        <Textarea 
+                          id="description" 
+                          placeholder="Detailed requirements..." 
+                          value={newTask.description}
+                          onChange={(e) => setNewTask({...newTask, description: e.target.value})}
+                          className="min-h-24"
+                        />
+                      </div>
+
+                      {/* 2. Location (Where) */}
+                      <div className="grid gap-2">
+                        <Label htmlFor="location">Location *</Label>
+                        <Input 
+                          id="location" 
+                          placeholder="Shed A / Floor 2 / Server Room" 
+                          value={newTask.location}
+                          onChange={(e) => setNewTask({...newTask, location: e.target.value})}
+                        />
+                      </div>
+
+                      {/* 3. Assignment (Who) */}
+                      <div className="grid gap-2">
+                        <Label htmlFor="officer">Assign IT Officer *</Label>
+                        <Select 
+                          value={newTask.officerId} 
+                          onValueChange={(v) => setNewTask({...newTask, officerId: v})}
+                        >
+                          <SelectTrigger id="officer">
+                            <SelectValue placeholder="Select IT Officer" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {officers.map(officer => (
+                              <SelectItem key={officer.userId} value={officer.userId}>
+                                {officer.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="grid gap-2">
+                        <Label>Assign Assistants (Optional)</Label>
+                        <div className="border rounded-md p-3 max-h-32 overflow-y-auto space-y-2">
+                          {assistants.map(assistant => (
+                            <div key={assistant.userId} className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id={`assistant-${assistant.userId}`}
+                                checked={newTask.assistants.includes(assistant.userId)}
+                                onChange={(e) => {
+                                  const updated = e.target.checked
+                                    ? [...newTask.assistants, assistant.userId]
+                                    : newTask.assistants.filter(id => id !== assistant.userId);
+                                  setNewTask({...newTask, assistants: updated});
+                                }}
+                                className="rounded border-gray-300"
+                              />
+                              <label htmlFor={`assistant-${assistant.userId}`} className="text-sm">{assistant.name}</label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* 4. Priority & Deadline */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="grid gap-2">
+                          <Label htmlFor="priority">Priority *</Label>
+                          <Select 
+                            value={newTask.priority} 
+                            onValueChange={(v) => setNewTask({...newTask, priority: v})}
+                          >
+                            <SelectTrigger id="priority">
+                              <SelectValue placeholder="Select Priority" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="low">Low</SelectItem>
+                              <SelectItem value="medium">Medium</SelectItem>
+                              <SelectItem value="high">High</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="deadline">Deadline *</Label>
+                          <Input 
+                            id="deadline" 
+                            type="date" 
+                            value={newTask.deadline}
+                            onChange={(e) => setNewTask({...newTask, deadline: e.target.value})}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancel</Button>
+                      <Button onClick={handleCreateTask} disabled={isCreating}>
+                        {isCreating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating...</> : 'Create Task'}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              )}
               <Button
                 variant="outline"
                 className="flex items-center gap-2 group cursor-pointer"

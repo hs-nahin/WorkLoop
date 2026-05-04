@@ -7,15 +7,12 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import {
   Camera,
   CheckCircle2,
   Loader2,
   Lock,
-  Save,
   ShieldCheck,
   User
 } from 'lucide-react';
@@ -35,41 +32,43 @@ const Settings = () => {
     role: ''
   });
   const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const data = await apiRequest({ endpoint: '/users/me' });
-        setProfile({
-          name: data.name || '',
-          email: data.email || '',
-          role: data.role || ''
-        });
-      } catch (error) {
-        toast.error(error.message || 'Failed to fetch profile data');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchProfile();
-  }, []);
-
-  const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      await apiRequest({
-        endpoint: '/users/update',
-        method: 'PATCH',
-        body: profile,
+    // Use the user data from context instead of calling non-existent endpoint
+    if (user) {
+      setProfile({
+        name: user.name || '',
+        email: user.email || '',
+        role: user.role || ''
       });
-      toast.success('Profile updated successfully');
-    } catch (error) {
-      toast.error(error.message || 'Failed to update profile');
-    } finally {
-      setIsSaving(false);
+      setIsLoading(false);
+    } else {
+      // Fallback: try to fetch from API
+      const fetchProfile = async () => {
+        try {
+          const data = await apiRequest({ endpoint: '/users/me' });
+          setProfile({
+            name: data.name || '',
+            email: data.email || '',
+            role: data.role || ''
+          });
+        } catch (error) {
+          console.error('Failed to fetch profile:', error);
+          // Use data from context as fallback
+          if (user) {
+            setProfile({
+              name: user.name || '',
+              email: user.email || '',
+              role: user.role || ''
+            });
+          }
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      fetchProfile();
     }
-  };
+  }, [user]);
 
   if (isLoading) {
     return (
@@ -84,7 +83,7 @@ const Settings = () => {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <header className="flex flex-col gap-2">
         <TextHighlighter text="Account Settings" className="text-3xl font-bold tracking-tight" />
-        <GradientText text="Manage your operational profile and system preferences" className="text-sm opacity-70 block" />
+        <GradientText text="View your operational profile and system preferences" className="text-sm opacity-70 block" />
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -98,41 +97,32 @@ const Settings = () => {
                   </div>
                   <div>
                     <CardTitle className="text-lg font-semibold">Personal Information</CardTitle>
-                    <CardDescription>Update your identity and contact details</CardDescription>
+                    <CardDescription>View your identity and contact details</CardDescription>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="flex flex-col md:flex-row gap-8 items-start">
                   <div className="relative group">
-                    <Avatar className="h-24 w-24 border-4 border-background shadow-md group-hover:border-primary/50 transition-colors">
+                    <Avatar className="h-24 w-24 border-4 border-background shadow-md">
                       <AvatarImage src={user?.profileImage} />
                       <AvatarFallback className="bg-primary text-primary-foreground font-bold text-xl">
                         {user?.name?.charAt(0) || 'U'}
                       </AvatarFallback>
                     </Avatar>
-                    <button className="absolute bottom-0 right-0 p-1.5 bg-primary text-primary-foreground rounded-full shadow-lg hover:scale-110 transition-transform">
-                      <Camera size={14} />
-                    </button>
                   </div>
                   <div className="flex-1 grid gap-4 w-full">
                     <div className="grid gap-2">
-                      <Label htmlFor="name" className="text-xs font-medium opacity-70 uppercase tracking-wider">Full Name</Label>
-                      <Input 
-                        id="name"
-                        value={profile.name} 
-                        onChange={(e) => setProfile({...profile, name: e.target.value})} 
-                        placeholder="Enter full name"
-                      />
+                      <Label className="text-xs font-medium opacity-70 uppercase tracking-wider">Full Name</Label>
+                      <div className="p-2 rounded-md bg-muted/50 border border-border text-sm">
+                        {profile.name || 'Not set'}
+                      </div>
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="email" className="text-xs font-medium opacity-70 uppercase tracking-wider">Email Address</Label>
-                      <Input 
-                        id="email"
-                        value={profile.email} 
-                        onChange={(e) => setProfile({...profile, email: e.target.value})} 
-                        placeholder="Enter email"
-                      />
+                      <Label className="text-xs font-medium opacity-70 uppercase tracking-wider">Email Address</Label>
+                      <div className="p-2 rounded-md bg-muted/50 border border-border text-sm">
+                        {profile.email || 'Not set'}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -147,20 +137,6 @@ const Settings = () => {
                       {profile.role || 'Guest'}
                     </div>
                   </div>
-                </div>
-
-                <div className="pt-4 flex justify-end">
-                  <Button 
-                    onClick={handleSave} 
-                    disabled={isSaving} 
-                    className="gap-2 px-6"
-                  >
-                    {isSaving ? (
-                      <><Loader2 className="h-4 w-4 animate-spin" /> Saving...</>
-                    ) : (
-                      <><Save size={16} /> Save Changes</>
-                    )}
-                  </Button>
                 </div>
               </CardContent>
             </Card>
