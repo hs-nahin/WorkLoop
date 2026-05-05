@@ -1,8 +1,11 @@
 import { Outlet } from 'react-router';
+import { useContext } from 'react';
 import Sidebar from './Sidebar/Sidebar';
 import TopBar from './TopBar/TopBar';
+import { AppContext } from '../../context/AppContext';
 
 const MainLayout = () => {
+  const { sidebarOpen } = useContext(AppContext);
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
       <div className="flex h-screen overflow-hidden">
