@@ -68,28 +68,43 @@ const Users = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {users.map((u, index) => (
-              <BlurFade key={u.id || index} delay={index * 50}>
-                <MagicCard>
-                  <div className="flex items-center justify-between p-2">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-yellow-400/20 flex items-center justify-center text-yellow-400 font-bold text-xs">
-                        {u.name?.charAt(0) || 'U'}
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-white">{u.name}</p>
-                        <p className="text-xs text-gray-500">{u.email}</p>
-                      </div>
-                    </div>
-                    <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase border ${u.role === 'ADMIN' ? 'text-red-400 border-red-400/30 bg-red-400/10' : 'text-yellow-400 border-yellow-400/30 bg-yellow-400/10'}`}>
-                      {u.role}
-                    </span>
-                  </div>
-                </MagicCard>
-              </BlurFade>
-            ))}
-          </div>
+          <BlurFade>
+            <MagicCard>
+              <div className="space-y-4">
+                <h3 className="text-lg font-bold text-foreground">All Personnel</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {users.map((u, index) => (
+                    <BlurFade key={u.id || index} delay={index * 50}>
+                      <MagicCard className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold ${
+                              u.role === 'ADMIN' ? 'bg-red-400/20 text-red-400' :
+                              u.role === 'IT OFFICER' ? 'bg-blue-400/20 text-blue-400' :
+                              'bg-purple-400/20 text-purple-400'
+                            }`}>
+                              {u.name?.charAt(0) || 'U'}
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold text-foreground">{u.name}</p>
+                              <p className="text-xs text-muted-foreground">{u.email}</p>
+                            </div>
+                          </div>
+                          <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase border ${
+                            u.role === 'ADMIN' ? 'text-red-400 border-red-400/30 bg-red-400/10' :
+                            u.role === 'IT OFFICER' ? 'text-blue-400 border-blue-400/30 bg-blue-400/10' :
+                            'text-purple-400 border-purple-400/30 bg-purple-400/10'
+                          }`}>
+                            {u.role}
+                          </span>
+                        </div>
+                      </MagicCard>
+                    </BlurFade>
+                  ))}
+                </div>
+              </div>
+            </MagicCard>
+          </BlurFade>
         </div>
 
         <div className="space-y-6">

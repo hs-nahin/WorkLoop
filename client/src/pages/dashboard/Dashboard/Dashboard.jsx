@@ -49,8 +49,8 @@ const Dashboard = () => {
     location: '', 
     officerId: '', 
     priority: 'medium', 
-    deadline: '', 
-    assistants: [] 
+    deadline: '',
+    assistantId: ''
   });
 
   useEffect(() => {
@@ -107,7 +107,7 @@ const Dashboard = () => {
         officerId: newTask.officerId,
         priority: newTask.priority,
         deadline: newTask.deadline,
-        assistants: newTask.assistants
+        assistantId: newTask.assistantId || null
       };
       console.log('Creating task with data:', taskData);
       const result = await apiRequest({ 
@@ -117,7 +117,7 @@ const Dashboard = () => {
       });
       console.log('Task created:', result);
       setIsModalOpen(false);
-      setNewTask({ title: '', description: '', location: '', officerId: '', priority: 'medium', deadline: '', assistants: [] });
+      setNewTask({ title: '', description: '', location: '', officerId: '', priority: 'medium', deadline: '', assistantId: '' });
       toast.success('Task deployed successfully');
       navigate('/tasks');
     } catch (error) {
@@ -276,6 +276,24 @@ const Dashboard = () => {
                           {officers.map(officer => (
                             <SelectItem key={officer.userId} value={officer.userId}>
                               {officer.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="assistant">Assistant Technician (Optional)</Label>
+                      <Select 
+                        value={newTask.assistantId} 
+                        onValueChange={(v) => setNewTask({...newTask, assistantId: v})}
+                      >
+                        <SelectTrigger id="assistant">
+                          <SelectValue placeholder="Select Assistant Technician" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {assistants.map(assistant => (
+                            <SelectItem key={assistant.userId} value={assistant.userId}>
+                              {assistant.name}
                             </SelectItem>
                           ))}
                         </SelectContent>

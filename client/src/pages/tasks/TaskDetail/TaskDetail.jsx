@@ -186,6 +186,11 @@ const TaskDetail = () => {
                   <div className="text-xs text-muted-foreground">
                     Assigned To: <span className="text-foreground font-medium">{officers.find(o => o.userId === task.officerId)?.name || task.officerId}</span>
                   </div>
+                  {task.assistantName && (
+                    <div className="text-xs text-muted-foreground">
+                      Assistant: <span className="text-foreground font-medium">{task.assistantName}</span>
+                    </div>
+                  )}
                   <div className="text-xs text-muted-foreground">
                     Priority: <span className={`font-medium ${
                       task.priority === 'high' ? 'text-red-600 dark:text-red-400' : 

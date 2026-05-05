@@ -14,19 +14,36 @@ const getTasks = async (req, res) => {
 
 const createTask = async (req, res) => {
     try {
-        const { title, description, location, officerId, assistants, priority, deadline } = req.body;
+        const { title, description, location, officerId, assistantId, priority, deadline } = req.body;
         
         if (!title || !description || !officerId) {
             return res.status(400).json({ message: 'Title, description and officer are required' });
         }
 
         const db = admin.firestore();
+        
+        // Get officer name
+        let officerName = 'Unassigned';
+        if (officerId) {
+            const officerDoc = await db.collection('users').doc(officerId).get();
+            officerName = officerDoc.exists ? officerDoc.data().name : 'Unknown';
+        }
+        
+        // Get assistant name if provided
+        let assistantName = null;
+        if (assistantId) {
+            const assistantDoc = await db.collection('users').doc(assistantId).get();
+            assistantName = assistantDoc.exists ? assistantDoc.data().name : null;
+        }
+        
         const newTask = {
             title,
             description,
             location: location || '',
             officerId,
-            assistants: assistants || [],
+            officerName,
+            assistantId: assistantId || null,
+            assistantName,
             status: 'pending',
             priority: priority || 'medium',
             deadline: deadline || null,
