@@ -78,9 +78,25 @@ const Dashboard = () => {
       try {
         const data = await apiRequest({ endpoint: '/users' });
         console.log('Users fetched:', data);
-        const officerList = data.filter(user => user.role?.toUpperCase() === 'IT OFFICER');
+        
+        // Filter valid users: must have email with @ and valid role
+        const validUsers = data.filter(u => 
+          u.email?.includes('@') && 
+          ['IT OFFICER', 'ASSISTANT'].includes(u.role?.toUpperCase())
+        );
+        
+        // Deduplicate by email or uid
+        const seen = new Set();
+        const uniqueUsers = validUsers.filter(u => {
+          const key = u.email || u.uid || u.userId;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+        
+        const officerList = uniqueUsers.filter(user => user.role?.toUpperCase() === 'IT OFFICER');
         setOfficers(officerList);
-        const assistantList = data.filter(user => user.role?.toUpperCase() === 'ASSISTANT');
+        const assistantList = uniqueUsers.filter(user => user.role?.toUpperCase() === 'ASSISTANT');
         setAssistants(assistantList);
       } catch (error) {
         console.error('Failed to fetch users:', error);

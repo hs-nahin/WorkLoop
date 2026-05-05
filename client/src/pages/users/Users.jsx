@@ -24,7 +24,23 @@ export default function Users() {
         console.log('[Users] Fetching /users...');
         const data = await apiRequest({ endpoint: '/users' });
         console.log('[Users] Data:', data);
-        setUsers(data || []);
+        
+        // Filter valid users: must have email with @ and valid role
+        const validUsers = (data || []).filter(u => 
+          u.email?.includes('@') && 
+          ['IT OFFICER', 'ASSISTANT', 'ADMIN'].includes(u.role?.toUpperCase())
+        );
+        
+        // Deduplicate by email or uid
+        const seen = new Set();
+        const uniqueUsers = validUsers.filter(u => {
+          const key = u.email || u.uid || u.userId;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+        
+        setUsers(uniqueUsers);
       } catch (err) {
         console.error('[Users] Error:', err);
         setError(err.message || 'Failed to load users');

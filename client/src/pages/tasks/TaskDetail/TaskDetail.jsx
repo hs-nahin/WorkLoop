@@ -3,12 +3,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { useContext, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Circle, Clock, Loader2 } from 'lucide-react';
 import { apiRequest } from '../../../api/apiClient';
 import BlurFade from '../../../components/animations/BlurFade';
 import GradientText from '../../../components/animations/GradientText';
 import MagicCard from '../../../components/animations/MagicCard';
 import TextHighlighter from '../../../components/animations/TextHighlighter';
+import Confetti from '../../../components/animations/Confetti';
 import { AuthContext } from '../../../context/AuthContext';
 
 const TaskDetail = () => {
@@ -298,6 +299,112 @@ const TaskDetail = () => {
         </div>
 
         <div className="space-y-6">
+          {/* Task Workflow Panel */}
+          <BlurFade delay={100}>
+            <MagicCard>
+              <div className="space-y-4">
+                <h3 className="text-lg font-bold text-foreground">Task Workflow</h3>
+                <div className="relative flex items-center justify-between">
+                  {/* Progress Bar Background */}
+                  <div className="absolute top-5 left-0 right-0 h-1 bg-muted rounded-full -z-0"></div>
+                  
+                  {/* Dynamic Progress Bar Fill */}
+                  <div 
+                    className="absolute top-5 left-0 h-1 bg-gradient-to-r from-sky-600 via-blue-500 to-purple-500 rounded-full -z-0 transition-all duration-500"
+                    style={{
+                      width: task.status === 'pending' ? '0%' :
+                             task.status === 'accepted' ? '50%' :
+                             ['submitted', 'approved', 'completed', 'rejected'].includes(task.status) ? '100%' : '0%'
+                    }}
+                  ></div>
+
+                  {/* Step 1: Pending */}
+                  <div className="flex flex-col items-center gap-2 z-10">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
+                      ['pending', 'accepted', 'submitted', 'approved', 'completed', 'rejected'].includes(task.status)
+                        ? 'bg-sky-600 text-white shadow-lg shadow-sky-600/25'
+                        : 'bg-muted text-muted-foreground'
+                    }`}>
+                      {['accepted', 'submitted', 'approved', 'completed', 'rejected'].includes(task.status) ? (
+                        <CheckCircle2 size={18} />
+                      ) : (
+                        <Clock size={18} />
+                      )}
+                    </div>
+                    <span className={`text-xs font-medium ${
+                      ['pending', 'accepted', 'submitted', 'approved', 'completed', 'rejected'].includes(task.status)
+                        ? 'text-foreground'
+                        : 'text-muted-foreground'
+                    }`}>Pending</span>
+                  </div>
+
+                  {/* Step 2: In Progress */}
+                  <div className="flex flex-col items-center gap-2 z-10">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
+                      ['accepted', 'submitted', 'approved', 'completed', 'rejected'].includes(task.status)
+                        ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/25'
+                        : 'bg-muted text-muted-foreground'
+                    }`}>
+                      {['submitted', 'approved', 'completed', 'rejected'].includes(task.status) ? (
+                        <CheckCircle2 size={18} />
+                      ) : ['accepted'].includes(task.status) ? (
+                        <Loader2 size={18} className="animate-spin" />
+                      ) : (
+                        <Circle size={18} />
+                      )}
+                    </div>
+                    <span className={`text-xs font-medium ${
+                      ['accepted', 'submitted', 'approved', 'completed', 'rejected'].includes(task.status)
+                        ? 'text-foreground'
+                        : 'text-muted-foreground'
+                    }`}>In Progress</span>
+                  </div>
+
+                  {/* Step 3: Submitted */}
+                  <div className="flex flex-col items-center gap-2 z-10">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
+                      ['submitted', 'approved', 'completed', 'rejected'].includes(task.status)
+                        ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/25'
+                        : 'bg-muted text-muted-foreground'
+                    }`}>
+                      {['approved', 'completed'].includes(task.status) ? (
+                        <CheckCircle2 size={18} />
+                      ) : ['submitted'].includes(task.status) ? (
+                        <CheckCircle2 size={18} className="animate-pulse" />
+                      ) : ['rejected'].includes(task.status) ? (
+                        <CheckCircle2 size={18} />
+                      ) : (
+                        <Circle size={18} />
+                      )}
+                    </div>
+                    <span className={`text-xs font-medium ${
+                      ['submitted', 'approved', 'completed', 'rejected'].includes(task.status)
+                        ? 'text-foreground'
+                        : 'text-muted-foreground'
+                    }`}>Submitted</span>
+                  </div>
+                </div>
+
+                {/* Status Message */}
+                <div className={`text-center text-xs font-medium p-2 rounded-lg ${
+                  task.status === 'pending' ? 'text-sky-600 bg-sky-600/10' :
+                  task.status === 'accepted' ? 'text-blue-600 bg-blue-500/10' :
+                  task.status === 'submitted' ? 'text-purple-600 bg-purple-500/10' :
+                  task.status === 'approved' || task.status === 'completed' ? 'text-green-600 bg-green-500/10' :
+                  task.status === 'rejected' ? 'text-red-600 bg-red-500/10' :
+                  'text-muted-foreground bg-muted/50'
+                }`}>
+                  {task.status === 'pending' && '⏳ Task is pending assignment'}
+                  {task.status === 'accepted' && '🔄 Task is in progress'}
+                  {task.status === 'submitted' && '⏳ Waiting for admin approval'}
+                  {task.status === 'approved' && '✅ Task has been approved'}
+                  {task.status === 'completed' && '✅ Task completed'}
+                  {task.status === 'rejected' && '❌ Task was rejected'}
+                </div>
+              </div>
+            </MagicCard>
+          </BlurFade>
+
           {/* Admin Review Section */}
           {user?.role === 'ADMIN' && task.status === 'submitted' && (
             <BlurFade delay={200}>
@@ -347,52 +454,6 @@ const TaskDetail = () => {
               </MagicCard>
             </BlurFade>
           )}
-          
-          <BlurFade delay={300}>
-            <MagicCard>
-              <h3 className="text-sm font-bold text-muted-foreground uppercase mb-4">Timeline</h3>
-              <div className="space-y-4 text-xs">
-                <div className="flex gap-3">
-                  <div className="w-2 h-2 rounded-full bg-yellow-600 dark:bg-yellow-400 mt-1" />
-                  <div>
-                    <p className="text-foreground font-medium">Task Created</p>
-                    <p className="text-muted-foreground">
-                      {task.createdAt?.toDate ? task.createdAt.toDate().toLocaleString() : new Date(task.createdAt).toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-                {task.acceptedAt && (
-                  <div className="flex gap-3">
-                    <div className="w-2 h-2 rounded-full bg-blue-600 dark:bg-blue-400 mt-1" />
-                    <div>
-                      <p className="text-foreground font-medium">Task Accepted</p>
-                      <p className="text-muted-foreground">
-                        {task.acceptedAt?.toDate ? task.acceptedAt.toDate().toLocaleString() : new Date(task.acceptedAt).toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                )}
-                {task.submittedAt && (
-                  <div className="flex gap-3">
-                    <div className="w-2 h-2 rounded-full bg-purple-600 dark:bg-purple-400 mt-1" />
-                    <div>
-                      <p className="text-foreground font-medium">Report Submitted</p>
-                      <p className="text-muted-foreground">Awaiting review</p>
-                    </div>
-                  </div>
-                )}
-                {task.completedAt && (
-                  <div className="flex gap-3">
-                    <div className="w-2 h-2 rounded-full bg-green-600 dark:bg-green-400 mt-1" />
-                    <div>
-                      <p className="text-foreground font-medium">Task Completed</p>
-                      <p className="text-muted-foreground">Approved by Admin</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </MagicCard>
-          </BlurFade>
         </div>
       </div>
     </div>
