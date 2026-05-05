@@ -150,4 +150,13 @@
   html {
     @apply font-sans;
   }
+  button, 
+  [role="button"], 
+  .cursor-pointer {
+    cursor: pointer;
+  }
+  [data-radix-dialog-overlay] button,
+  [data-radix-dialog-content] button {
+    cursor: pointer;
+  }
 }

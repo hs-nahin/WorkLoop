@@ -7,19 +7,24 @@ if (!admin.apps.length) {
 
   const privateKey = process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n');
 
-  admin.initializeApp({
+  const config = {
     credential: admin.credential.cert({
       projectId: process.env.FIREBASE_PROJECT_ID,
       private_key: privateKey,
       client_email: process.env.FIREBASE_CLIENT_EMAIL,
-    }),
-    storageBucket: process.env.FIREBASE_STORAGE_BUCKET
-  });
+    })
+  };
+
+  // Only add storageBucket if it's defined
+  if (process.env.FIREBASE_STORAGE_BUCKET) {
+    config.storageBucket = process.env.FIREBASE_STORAGE_BUCKET;
+  }
+
+  admin.initializeApp(config);
 }
 
 module.exports = {
   admin,
   adminAuth: admin.auth(),
-  adminDb: admin.firestore(),
-  adminStorage: admin.storage().bucket()
+  adminDb: admin.firestore()
 };

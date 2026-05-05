@@ -2,13 +2,60 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Bell, LogOut, Settings, User } from "lucide-react";
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../../../context/AuthContextInstance.js";
+import { apiRequest } from "../../../api/apiClient";
 
 const TopBar = () => {
   const { user, logout } = useContext(AuthContext);
-  
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [open, setOpen] = useState(false);
+
+  const fetchNotifications = async () => {
+    try {
+      const data = await apiRequest({ endpoint: '/tasks/notifications' });
+      setNotifications(data);
+      setUnreadCount(data.filter(n => !n.read).length);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (user?.role === 'ADMIN') {
+      fetchNotifications();
+      // Poll for new notifications every 30 seconds
+      const interval = setInterval(fetchNotifications, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [user]);
+
+  const handleNotificationClick = async (notification) => {
+    // Mark as read
+    if (!notification.read) {
+      try {
+        await apiRequest({ 
+          endpoint: `/tasks/notifications/${notification.id}/read`, 
+          method: 'PATCH' 
+        });
+        setNotifications(prev => 
+          prev.map(n => n.id === notification.id ? { ...n, read: true } : n)
+        );
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      } catch (error) {
+        console.error('Error marking notification as read:', error);
+      }
+    }
+    
+    // Navigate to task
+    if (notification.taskId) {
+      window.location.href = `/tasks/${notification.taskId}`;
+    }
+  };
+
   const getRoleBadgeColor = (role) => {
     switch(role) {
       case "ADMIN":
@@ -46,10 +93,47 @@ const TopBar = () => {
       </div>
 
       <div className="flex items-center gap-2 md:gap-4">
-        <Button variant="ghost" size="icon" className="relative text-muted-foreground">
-          <Bell size={20}/>
-          <span className="absolute top-2 right-2 w-2 h-2 bg-destructive rounded-full border-2 border-card"></span>
-        </Button>
+        {user?.role === 'ADMIN' && (
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="icon" className="relative text-muted-foreground cursor-pointer">
+                <Bell size={20} />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground text-xs font-bold rounded-full flex items-center justify-center border-2 border-card">
+                    {unreadCount}
+                  </span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 p-0" align="end">
+              <div className="p-4 border-b">
+                <h3 className="font-semibold">Notifications</h3>
+              </div>
+              <div className="max-h-80 overflow-y-auto">
+                {notifications.length === 0 ? (
+                  <div className="p-4 text-center text-sm text-muted-foreground">
+                    No notifications
+                  </div>
+                ) : (
+                  notifications.map(notification => (
+                    <div 
+                      key={notification.id}
+                      onClick={() => handleNotificationClick(notification)}
+                      className={`p-4 border-b cursor-pointer hover:bg-accent transition-colors ${!notification.read ? 'bg-accent/50' : ''}`}
+                    >
+                      <p className="text-sm font-medium">{notification.message}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {notification.createdAt?.toDate ? 
+                          notification.createdAt.toDate().toLocaleString() : 
+                          'Just now'}
+                      </p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
+        )}
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

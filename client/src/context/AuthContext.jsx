@@ -3,7 +3,8 @@ import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebas
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { AuthContext } from './AuthContextInstance';
-import { authService } from '../services/authService';
+
+export { AuthContext };
 
 export const AuthProvider = ({ children }) => {
   const [firebaseUser, setFirebaseUser] = useState(null);
@@ -57,14 +58,6 @@ export const AuthProvider = ({ children }) => {
       setToken(idToken);
       localStorage.setItem('firebase_token', idToken);
       const profile = await fetchFirestoreProfile(user.uid);
-      
-      if (profile && !profile.isActive) {
-        await signOut(auth);
-        setToken(null);
-        localStorage.removeItem('firebase_token');
-        throw { code: 'auth/account-deactivated', message: 'Your account has been deactivated. Contact admin.' };
-      }
-      
       setFirestoreProfile(profile);
       return { user, profile };
     } catch (error) {
@@ -101,7 +94,7 @@ export const AuthProvider = ({ children }) => {
   }, [firebaseUser, fetchFirestoreProfile]);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, login, logout, fetchMe }}>
       {children}
     </AuthContext.Provider>
   );

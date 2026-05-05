@@ -1,11 +1,12 @@
 // server/seed.js - Seed script to populate Firestore with initial data
 require('dotenv').config();
-const admin = require('./firebase-admin');
+const { admin, adminDb } = require('./firebase-admin');
 const bcrypt = require('bcryptjs');
 
 const seedDatabase = async () => {
   try {
-    const db = admin.firestore();
+    const db = adminDb;
+    const FieldValue = admin.firestore.FieldValue;
     
     console.log('🌱 Starting database seed...');
 
@@ -24,13 +25,19 @@ const seedDatabase = async () => {
     const officers = [
       {
         userId: 'officer1',
-        name: 'John Smith',
+        name: 'Shaikat',
         password: await bcrypt.hash('officer123', 10),
         role: 'IT OFFICER'
       },
       {
         userId: 'officer2',
-        name: 'Sarah Johnson',
+        name: 'Hasnat',
+        password: await bcrypt.hash('officer123', 10),
+        role: 'IT OFFICER'
+      },
+      {
+        userId: 'officer3',
+        name: 'Shakil',
         password: await bcrypt.hash('officer123', 10),
         role: 'IT OFFICER'
       }
@@ -39,19 +46,19 @@ const seedDatabase = async () => {
     for (const officer of officers) {
       await db.collection('users').doc(officer.userId).set(officer);
     }
-    console.log('✅ IT Officers created (officer1, officer2 - password: officer123)');
+    console.log('✅ IT Officers created (Shaikat, Hasnat, Shakil)');
 
-    // 3. Create Assistants
+    // 3. Create Support Technicians (Assistants)
     const assistants = [
       {
         userId: 'assistant1',
-        name: 'Mike Wilson',
+        name: 'Safiqul',
         password: await bcrypt.hash('assist123', 10),
         role: 'ASSISTANT'
       },
       {
         userId: 'assistant2',
-        name: 'Emily Davis',
+        name: 'Ashiq',
         password: await bcrypt.hash('assist123', 10),
         role: 'ASSISTANT'
       }
@@ -60,14 +67,14 @@ const seedDatabase = async () => {
     for (const assistant of assistants) {
       await db.collection('users').doc(assistant.userId).set(assistant);
     }
-    console.log('✅ Assistants created (assistant1, assistant2 - password: assist123)');
+    console.log('✅ Support Technicians created (Safiqul, Ashiq)');
 
     // 4. Create sample company profile
     const companyProfile = {
       name: 'WorkLoop IT Department',
       address: 'Corporate HQ',
       contact: 'it-support@company.com',
-      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      updatedAt: FieldValue.serverTimestamp()
     };
 
     await db.collection('company').doc('profile').set(companyProfile);
@@ -84,7 +91,7 @@ const seedDatabase = async () => {
         status: 'pending',
         priority: 'high',
         deadline: '2026-05-15',
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
         createdBy: 'admin',
         completionReport: null,
         adminFeedback: null
@@ -98,7 +105,7 @@ const seedDatabase = async () => {
         status: 'pending',
         priority: 'medium',
         deadline: '2026-05-20',
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
         createdBy: 'admin',
         completionReport: null,
         adminFeedback: null
@@ -113,10 +120,11 @@ const seedDatabase = async () => {
     console.log('\n🎉 Database seeded successfully!');
     console.log('\n📋 Login Credentials:');
     console.log('   Admin: userId=admin, password=admin123');
-    console.log('   Officer 1: userId=officer1, password=officer123');
-    console.log('   Officer 2: userId=officer2, password=officer123');
-    console.log('   Assistant 1: userId=assistant1, password=assist123');
-    console.log('   Assistant 2: userId=assistant2, password=assist123');
+    console.log('   Officer 1: userId=officer1, password=officer123 (Shaikat)');
+    console.log('   Officer 2: userId=officer2, password=officer123 (Hasnat)');
+    console.log('   Officer 3: userId=officer3, password=officer123 (Shakil)');
+    console.log('   Tech 1: userId=assistant1, password=assist123 (Safiqul)');
+    console.log('   Tech 2: userId=assistant2, password=assist123 (Ashiq)');
 
   } catch (error) {
     console.error('❌ Seed error:', error);

@@ -3,13 +3,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { useContext, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
+import { ArrowLeft } from 'lucide-react';
 import { apiRequest } from '../../../api/apiClient';
 import BlurFade from '../../../components/animations/BlurFade';
 import GradientText from '../../../components/animations/GradientText';
 import MagicCard from '../../../components/animations/MagicCard';
 import TextHighlighter from '../../../components/animations/TextHighlighter';
 import { AuthContext } from '../../../context/AuthContext';
-import { ArrowLeft } from 'lucide-react';
 
 const TaskDetail = () => {
   const { id } = useParams();
@@ -18,6 +18,7 @@ const TaskDetail = () => {
   const [task, setTask] = useState(null);
   const [report, setReport] = useState('');
   const [feedback, setFeedback] = useState('');
+  const [progressMessage, setProgressMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [officers, setOfficers] = useState([]);
 
@@ -49,6 +50,38 @@ const TaskDetail = () => {
     fetchUsers();
   }, [id, navigate]);
 
+  const handleAcceptTask = async () => {
+    try {
+      await apiRequest({ 
+        endpoint: `/tasks/${id}/accept`, 
+        method: 'PATCH' 
+      });
+      toast.success('Task accepted!');
+      const data = await apiRequest({ endpoint: `/tasks/${id}` });
+      setTask(data);
+    } catch (error) {
+      toast.error(error.message || 'Failed to accept task');
+    }
+  };
+
+  const handleAddProgress = async () => {
+    if (!progressMessage.trim()) return toast.error('Please provide progress message');
+    
+    try {
+      await apiRequest({ 
+        endpoint: `/tasks/${id}/progress`, 
+        method: 'PATCH',
+        body: { message: progressMessage }
+      });
+      toast.success('Progress report added!');
+      setProgressMessage('');
+      const data = await apiRequest({ endpoint: `/tasks/${id}` });
+      setTask(data);
+    } catch (error) {
+      toast.error(error.message || 'Failed to add progress');
+    }
+  };
+
   const handleSubmitReport = async () => {
     if (!report.trim()) return toast.error('Please provide a completion report');
     
@@ -59,7 +92,6 @@ const TaskDetail = () => {
         body: { report }, 
       });
       toast.success('Task submitted for review!');
-      // Refresh task data
       const data = await apiRequest({ endpoint: `/tasks/${id}` });
       setTask(data);
       setReport('');
@@ -68,19 +100,32 @@ const TaskDetail = () => {
     }
   };
 
-  const handleDecision = async (decision) => {
-    if (!feedback.trim()) return toast.error('Please provide feedback');
+  const handleApprove = async () => {
+    try {
+      await apiRequest({ 
+        endpoint: `/tasks/${id}/approve`, 
+        method: 'PATCH' 
+      });
+      toast.success('Task approved!');
+      navigate('/dashboard');
+    } catch (error) {
+      toast.error(error.message || 'Approval failed');
+    }
+  };
+
+  const handleReject = async () => {
+    if (!feedback.trim()) return toast.error('Please provide feedback for rejection');
     
     try {
       await apiRequest({ 
-        endpoint: `/tasks/${id}/decide`, 
+        endpoint: `/tasks/${id}/reject`, 
         method: 'PATCH', 
-        body: { decision, feedback }, 
+        body: { feedback }, 
       });
-      toast.success(`Task ${decision} successfully`);
+      toast.success('Task rejected with feedback');
       navigate('/dashboard');
     } catch (error) {
-      toast.error(error.message || 'Decision failed');
+      toast.error(error.message || 'Rejection failed');
     }
   };
 
@@ -92,13 +137,14 @@ const TaskDetail = () => {
       case 'approved': return 'text-green-600 dark:text-green-400 border-green-600/30 dark:border-green-400/30 bg-green-600/10 dark:bg-green-400/10';
       case 'completed': return 'text-green-600 dark:text-green-400 border-green-600/30 dark:border-green-400/30 bg-green-600/10 dark:bg-green-400/10';
       case 'pending': return 'text-yellow-600 dark:text-yellow-400 border-yellow-600/30 dark:border-yellow-400/30 bg-yellow-600/10 dark:bg-yellow-400/10';
-      case 'submitted': return 'text-blue-600 dark:text-blue-400 border-blue-600/30 dark:border-blue-400/30 bg-blue-600/10 dark:bg-blue-400/10';
+      case 'accepted': return 'text-blue-600 dark:text-blue-400 border-blue-600/30 dark:border-blue-400/30 bg-blue-600/10 dark:bg-blue-400/10';
+      case 'submitted': return 'text-purple-600 dark:text-purple-400 border-purple-600/30 dark:border-purple-400/30 bg-purple-600/10 dark:bg-purple-400/10';
       case 'rejected': return 'text-red-600 dark:text-red-400 border-red-600/30 dark:border-red-400/30 bg-red-600/10 dark:bg-red-400/10';
       default: return 'text-gray-600 dark:text-gray-400 border-gray-600/30 dark:border-gray-400/30 bg-gray-600/10 dark:bg-gray-400/10';
     }
   };
 
-return (
+  return (
     <div className="space-y-8">
       <header className="flex items-end justify-between">
         <div className="flex items-center gap-3">
@@ -124,10 +170,10 @@ return (
                   </span>
                 </div>
                 
-        <div className="space-y-2">
-                   <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Requirement</span>
-                   <p className="text-foreground leading-relaxed">{task.description}</p>
-                 </div>
+                <div className="space-y-2">
+                  <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Requirement</span>
+                  <p className="text-foreground leading-relaxed">{task.description}</p>
+                </div>
 
                 {task.location && (
                   <div className="space-y-2">
@@ -163,20 +209,80 @@ return (
             </MagicCard>
           </BlurFade>
 
+          {/* Accept Task - for officers */}
           {user?.role === 'IT OFFICER' && task.officerId === user.userId && task.status === 'pending' && (
             <BlurFade delay={100}>
               <MagicCard>
                 <div className="space-y-4">
+                  <h3 className="text-lg font-bold text-foreground">Accept Task</h3>
+                  <p className="text-sm text-muted-foreground">Accept this task to start working on it</p>
+                  <Button 
+                    onClick={handleAcceptTask}
+                    className="cursor-pointer"
+                  >
+                    Accept Task
+                  </Button>
+                </div>
+              </MagicCard>
+            </BlurFade>
+          )}
+
+          {/* Add Progress Report - for officers with accepted tasks */}
+          {user?.role === 'IT OFFICER' && task.officerId === user.userId && task.status === 'accepted' && (
+            <BlurFade delay={100}>
+              <MagicCard>
+                <div className="space-y-4">
+                  <h3 className="text-lg font-bold text-foreground">Add Progress Report</h3>
+                  <Textarea 
+                    value={progressMessage}
+                    onChange={(e) => setProgressMessage(e.target.value)}
+                    placeholder="Describe your progress, what you've done, and any issues..."
+                    className="w-full h-32"
+                  />
+                  <Button 
+                    onClick={handleAddProgress}
+                    className="cursor-pointer"
+                  >
+                    Add Progress Update
+                  </Button>
+                  
+                  {/* Show existing progress reports */}
+                  {task.progressReports && task.progressReports.length > 0 && (
+                    <div className="space-y-3 mt-4">
+                      <h4 className="text-sm font-bold text-muted-foreground uppercase">Progress History</h4>
+                      {task.progressReports.map((report, index) => (
+                        <div key={index} className="p-3 rounded-lg bg-muted/50 border border-border">
+                          <p className="text-sm text-foreground">{report.message}</p>
+                          <p className="text-xs text-muted-foreground mt-2">
+                            {report.timestamp?.toDate ? report.timestamp.toDate().toLocaleString() : 'Just now'}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </MagicCard>
+            </BlurFade>
+          )}
+
+          {/* Submit Completion Report - for officers with accepted tasks */}
+          {user?.role === 'IT OFFICER' && task.officerId === user.userId && (task.status === 'accepted' || task.status === 'rejected') && (
+            <BlurFade delay={200}>
+              <MagicCard>
+                <div className="space-y-4">
                   <h3 className="text-lg font-bold text-foreground">Submit Work Report</h3>
+                  <div className="p-4 rounded-xl bg-muted/50 border border-border italic text-sm text-muted-foreground">
+                    "{task.completionReport || 'No report submitted yet'}"
+                  </div>
                   <Textarea 
                     value={report}
                     onChange={(e) => setReport(e.target.value)}
-                    placeholder="Describe the work performed and results..."
+                    placeholder="Describe the work performed, problems solved, and any remaining issues..."
                     className="w-full h-32"
                   />
                   <Button 
                     onClick={handleSubmitReport}
-                    className="px-6 py-2"
+                    className="cursor-pointer"
                   >
                     Submit for Review
                   </Button>
@@ -187,6 +293,7 @@ return (
         </div>
 
         <div className="space-y-6">
+          {/* Admin Review Section */}
           {user?.role === 'ADMIN' && task.status === 'submitted' && (
             <BlurFade delay={200}>
               <MagicCard>
@@ -198,30 +305,44 @@ return (
                   <Textarea 
                     value={feedback}
                     onChange={(e) => setFeedback(e.target.value)}
-                    placeholder="Provide feedback for approval/rejection..."
+                    placeholder="Provide feedback (required for rejection)..."
                     className="w-full h-24"
                   />
                   <div className="flex gap-3">
                     <Button 
-                      onClick={() => handleDecision('approved')}
+                      onClick={handleApprove}
                       variant="secondary"
-                      className="flex-1 text-green-600 dark:text-green-400 border-green-600/30 dark:border-green-400/30 hover:bg-green-600/10 dark:hover:bg-green-400/10"
+                      className="flex-1 cursor-pointer text-green-600 dark:text-green-400 border-green-600/30 dark:border-green-400/30 hover:bg-green-600/10 dark:hover:bg-green-400/10"
                     >
-                      Approve
+                      Accept & Approve
                     </Button>
                     <Button 
-                      onClick={() => handleDecision('rejected')}
+                      onClick={handleReject}
                       variant="secondary"
-                      className="flex-1 text-red-600 dark:text-red-400 border-red-600/30 dark:border-red-400/30 hover:bg-red-600/10 dark:hover:bg-red-400/10"
+                      className="flex-1 cursor-pointer text-red-600 dark:text-red-400 border-red-600/30 dark:border-red-400/30 hover:bg-red-600/10 dark:hover:bg-red-400/10"
                     >
-                      Reject
+                      Reject with Feedback
                     </Button>
                   </div>
                 </div>
               </MagicCard>
             </BlurFade>
           )}
-           
+
+          {/* Admin Feedback for Rejected Tasks */}
+          {task.status === 'rejected' && task.adminFeedback && (
+            <BlurFade delay={200}>
+              <MagicCard>
+                <div className="space-y-4">
+                  <h3 className="text-sm font-bold text-muted-foreground uppercase">Admin Feedback</h3>
+                  <div className="p-4 rounded-xl bg-red-600/10 border border-red-600/30">
+                    <p className="text-sm text-foreground">{task.adminFeedback}</p>
+                  </div>
+                </div>
+              </MagicCard>
+            </BlurFade>
+          )}
+          
           <BlurFade delay={300}>
             <MagicCard>
               <h3 className="text-sm font-bold text-muted-foreground uppercase mb-4">Timeline</h3>
@@ -235,12 +356,32 @@ return (
                     </p>
                   </div>
                 </div>
-                {task.status === 'submitted' && (
+                {task.acceptedAt && (
                   <div className="flex gap-3">
                     <div className="w-2 h-2 rounded-full bg-blue-600 dark:bg-blue-400 mt-1" />
                     <div>
+                      <p className="text-foreground font-medium">Task Accepted</p>
+                      <p className="text-muted-foreground">
+                        {task.acceptedAt?.toDate ? task.acceptedAt.toDate().toLocaleString() : new Date(task.acceptedAt).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                {task.submittedAt && (
+                  <div className="flex gap-3">
+                    <div className="w-2 h-2 rounded-full bg-purple-600 dark:bg-purple-400 mt-1" />
+                    <div>
                       <p className="text-foreground font-medium">Report Submitted</p>
                       <p className="text-muted-foreground">Awaiting review</p>
+                    </div>
+                  </div>
+                )}
+                {task.completedAt && (
+                  <div className="flex gap-3">
+                    <div className="w-2 h-2 rounded-full bg-green-600 dark:bg-green-400 mt-1" />
+                    <div>
+                      <p className="text-foreground font-medium">Task Completed</p>
+                      <p className="text-muted-foreground">Approved by Admin</p>
                     </div>
                   </div>
                 )}
