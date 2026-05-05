@@ -47,6 +47,16 @@ const selfOrAdmin = (req, res, next) => {
   next();
 };
 
+const authorize = (allowedRoles) => {
+  return (req, res, next) => {
+    const userRole = req.user?.role?.toUpperCase();
+    if (!userRole || !allowedRoles.map(r => r.toUpperCase()).includes(userRole)) {
+      return res.status(403).json({ message: 'Insufficient permissions' });
+    }
+    next();
+  };
+};
+
 const writeAuditLog = async (action, user, details) => {
   try {
     await adminDb.collection('auditLogs').add({
@@ -63,4 +73,4 @@ const writeAuditLog = async (action, user, details) => {
   }
 };
 
-module.exports = { verifyToken, adminOnly, selfOrAdmin, writeAuditLog };
+module.exports = { verifyToken, adminOnly, selfOrAdmin, authorize, writeAuditLog };

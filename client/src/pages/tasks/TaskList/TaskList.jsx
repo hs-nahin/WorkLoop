@@ -34,7 +34,7 @@ const TaskList = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [newTask, setNewTask] = useState({ title: '', description: '', officerId: '', priority: 'medium', deadline: '', location: '', assistantId: '' });
+  const [newTask, setNewTask] = useState({ title: '', description: '', officerId: '', priority: 'medium', deadline: '', location: '', assistants: [] });
   const [isCreating, setIsCreating] = useState(false);
   const [officers, setOfficers] = useState([]);
   const [assistants, setAssistants] = useState([]);
@@ -88,7 +88,7 @@ const TaskList = () => {
         officerId: newTask.officerId,
         priority: newTask.priority,
         deadline: newTask.deadline,
-        assistantId: newTask.assistantId || null
+        assistants: newTask.assistants
       };
       const createdTask = await apiRequest({ 
         endpoint: '/tasks', 
@@ -97,7 +97,7 @@ const TaskList = () => {
       });
       setTasks([createdTask, ...tasks]);
       setIsModalOpen(false);
-      setNewTask({ title: '', description: '', location: '', officerId: '', priority: 'medium', deadline: '', assistantId: '' });
+      setNewTask({ title: '', description: '', location: '', officerId: '', priority: 'medium', deadline: '', assistants: [] });
       toast.success('Task deployed successfully');
     } catch (error) {
       toast.error(error.message || 'Creation failed');
@@ -237,22 +237,26 @@ const TaskList = () => {
                     </Select>
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="assistant">Assistant Technician (Optional)</Label>
-                    <Select 
-                      value={newTask.assistantId} 
-                      onValueChange={(v) => setNewTask({...newTask, assistantId: v})}
-                    >
-                      <SelectTrigger id="assistant">
-                        <SelectValue placeholder="Select Assistant Technician" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {assistants.map(assistant => (
-                          <SelectItem key={assistant.userId} value={assistant.userId}>
-                            {assistant.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Label>Assign Assistants (Optional)</Label>
+                    <div className="border rounded-md p-3 max-h-32 overflow-y-auto space-y-2">
+                      {assistants.map(assistant => (
+                        <div key={assistant.userId} className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id={`assistant-${assistant.userId}`}
+                            checked={newTask.assistants.includes(assistant.userId)}
+                            onChange={(e) => {
+                              const updated = e.target.checked
+                                ? [...newTask.assistants, assistant.userId]
+                                : newTask.assistants.filter(id => id !== assistant.userId);
+                              setNewTask({...newTask, assistants: updated});
+                            }}
+                            className="rounded border-gray-300"
+                          />
+                          <label htmlFor={`assistant-${assistant.userId}`} className="text-sm">{assistant.name}</label>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-2">
@@ -302,7 +306,7 @@ const TaskList = () => {
       ) : (
         <div className="rounded-xl border bg-card/50 overflow-hidden">
           {/* Table Header */}
-          <div className="grid grid-cols-[25%_12%_12%_13%_13%_10%_15%] w-full">
+          <div className="grid grid-cols-[25%_10%_10%_15%_15%_12%_13%] w-full">
             <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b">Task Information</div>
             <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l">Status</div>
             <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l">Priority</div>
@@ -313,7 +317,7 @@ const TaskList = () => {
           </div>
           {/* Table Body */}
           {filteredTasks.length > 0 ? (
-            <div className="grid grid-cols-[25%_12%_12%_13%_13%_10%_15%] w-full">
+            <div className="grid grid-cols-[25%_10%_10%_15%_15%_12%_13%] w-full">
               {filteredTasks.map((task) => (
                   <Fragment key={task.id}>
                   <div 
@@ -334,6 +338,18 @@ const TaskList = () => {
                     onClick={() => navigate(`/tasks/${task.id}`)}
                   >
                     {getStatusBadge(task.status)}
+                  </div>
+                  <div 
+                    className="px-4 py-3 border-b border-border/50 hover:bg-accent/50 cursor-pointer flex items-center"
+                    onClick={() => navigate(`/tasks/${task.id}`)}
+                  >
+                    <Badge className={cn(
+                      task.priority === 'high' && "bg-red-500/10 text-red-500 border-red-500/20",
+                      task.priority === 'medium' && "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
+                      task.priority === 'low' && "bg-green-500/10 text-green-500 border-green-500/20",
+                    )}>
+                      {task.priority}
+                    </Badge>
                   </div>
                   <div 
                     className="px-4 py-3 border-b border-border/50 hover:bg-accent/50 cursor-pointer flex items-center gap-2"
