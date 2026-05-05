@@ -1,14 +1,10 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import axios from 'axios';
+import { apiRequest } from '@/api/apiClient';
 
 const CompanyContext = createContext({
   company: null,
   loading: true,
   refetch: () => {}
-});
-
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 });
 
 export const CompanyProvider = ({ children }) => {
@@ -17,7 +13,7 @@ export const CompanyProvider = ({ children }) => {
 
   const fetchCompany = async () => {
     try {
-      const { data } = await api.get('/company');
+      const data = await apiRequest({ endpoint: '/company' });
       setCompany(data);
       
       if (data.appTitle) {
