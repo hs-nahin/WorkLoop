@@ -14,7 +14,7 @@ const MagicCard = ({ children, className = '' }) => {
   return (
     <div 
       onMouseMove={handleMouseMove}
-      className={`relative group overflow-hidden bg-white/5 border border-white/10 rounded-2xl p-6 transition-all duration-300 hover:border-white/20 ${className}`}
+      className={`relative group overflow-hidden bg-card border border-border rounded-2xl p-6 transition-all duration-300 hover:border-primary/50 ${className}`}
     >
       <div 
         className="pointer-events-none absolute inset-0 z-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
