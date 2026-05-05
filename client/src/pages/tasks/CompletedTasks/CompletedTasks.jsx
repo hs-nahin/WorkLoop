@@ -62,7 +62,7 @@ const CompletedTasks = () => {
                       }`}>{task.priority?.toUpperCase()}</span>
                     </p>
                   </div>
-                  <CheckCircle2 size={24} className="text-green-600" />
+                   <CheckCircle2 size={24} className="text-green-600" />
                 </div>
               </MagicCard>
             </BlurFade>

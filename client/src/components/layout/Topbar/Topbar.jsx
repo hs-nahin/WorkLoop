@@ -1,3 +1,4 @@
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -5,34 +6,44 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Bell, LogOut, Settings, User } from "lucide-react";
 import { useContext, useEffect, useState } from "react";
-import { AuthContext } from "../../../context/AuthContextInstance.js";
+import { useNavigate } from "react-router";
 import { apiRequest } from "../../../api/apiClient";
+import { AuthContext } from "../../../context/AuthContextInstance.js";
 
 const TopBar = () => {
   const { user, logout } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
 
-  const fetchNotifications = async () => {
-    try {
-      const endpoint = user?.role === 'ADMIN' ? '/tasks/notifications' : '/tasks/notifications/officer';
-      const data = await apiRequest({ endpoint });
-      setNotifications(data);
-      setUnreadCount(data.filter(n => !n.read).length);
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-    }
-  };
-
   useEffect(() => {
-    if (user?.role === 'ADMIN') {
-      fetchNotifications();
-      // Poll for new notifications every 30 seconds
-      const interval = setInterval(fetchNotifications, 30000);
-      return () => clearInterval(interval);
-    }
-  }, [user]);
+    if (user?.role !== 'ADMIN') return;
+    
+    let cancelled = false;
+    
+    const fetchNotifications = async () => {
+      if (cancelled) return;
+      try {
+        const endpoint = user.role === 'ADMIN' ? '/tasks/notifications' : '/tasks/notifications/officer';
+        const data = await apiRequest({ endpoint });
+        if (!cancelled) {
+          setNotifications(data);
+          setUnreadCount(data.filter(n => !n.read).length);
+        }
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+      }
+    };
+    
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 30000);
+    
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [user, setNotifications, setUnreadCount]);
 
   const handleNotificationClick = async (notification) => {
     // Mark as read
@@ -53,7 +64,7 @@ const TopBar = () => {
     
     // Navigate to task
     if (notification.taskId) {
-      window.location.href = `/tasks/${notification.taskId}`;
+      navigate(`/tasks/${notification.taskId}`);
     }
   };
 
@@ -85,7 +96,7 @@ const TopBar = () => {
           <div className="flex items-center gap-1">
             <Badge 
               variant="solid" 
-              className="bg-green-500 text-white font-bold"
+              className="bg-sky-50 text-sky-600 dark:bg-sky-950 dark:text-sky-50 font-bold"
             >
               Verified
             </Badge>
@@ -135,6 +146,8 @@ const TopBar = () => {
             </PopoverContent>
           </Popover>
         )}
+
+        <ThemeToggle />
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

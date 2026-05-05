@@ -8,12 +8,11 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
-  Plus,
-  Search,
   Users
 } from "lucide-react";
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { Link, useLocation } from "react-router";
+import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog";
 import { AppContext } from "../../../context/AppContext.jsx";
 import { AuthContext } from "../../../context/AuthContextInstance.js";
 import { cn } from "../../../lib/utils";
@@ -22,6 +21,7 @@ const Sidebar = () => {
   const { sidebarOpen, toggleSidebar } = useContext(AppContext);
   const { user, logout } = useContext(AuthContext);
   const location = useLocation();
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   const menuItems = [
     { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard, roles: ["ADMIN", "IT OFFICER", "ASSISTANT"] },
@@ -75,30 +75,7 @@ const Sidebar = () => {
       </nav>
 
       <div className="p-3 mt-auto">
-        {user && user.role === "ADMIN" && (
-          <div className="space-y-2">
-            <Button 
-              variant="ghost" 
-              className={cn(
-                "w-full justify-start gap-3 text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer",
-                !sidebarOpen && "justify-center px-0"
-              )} 
-            >
-              <Plus size={20} className="shrink-0" />
-              {sidebarOpen && <span className="text-sm">Create New Task</span>}
-            </Button>
-            <Button 
-              variant="ghost" 
-              className={cn(
-                "w-full justify-start gap-3 text-muted-foreground hover:text-primary hover:bg-primary/10 cursor-pointer",
-                !sidebarOpen && "justify-center px-0"
-              )} 
-            >
-              <Search size={20} className="shrink-0" />
-              {sidebarOpen && <span className="text-sm">View All Tasks</span>}
-            </Button>
-          </div>
-        )}
+        <CreateTaskDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
         <Button 
           variant="ghost" 
           className={cn(

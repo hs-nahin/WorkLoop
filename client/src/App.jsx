@@ -1,3 +1,4 @@
+import { ThemeProvider } from 'next-themes';
 import { AppProvider } from './context/AppProvider';
 import { AuthProvider } from './context/AuthContext';
 import ToastProvider from './context/ToastContext';
@@ -6,13 +7,15 @@ import AppRouter from './router/AppRouter/AppRouter';
 
 function App() {
   return (
-    <AuthProvider>
-      <ToastProvider>
-        <AppProvider>
-          <AppRouter />
-        </AppProvider>
-      </ToastProvider>
-    </AuthProvider>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <AuthProvider>
+        <ToastProvider>
+          <AppProvider>
+            <AppRouter />
+          </AppProvider>
+        </ToastProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

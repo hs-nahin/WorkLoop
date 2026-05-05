@@ -318,7 +318,7 @@ const TaskDetail = () => {
                     }}
                   ></div>
 
-                  {/* Step 1: Pending */}
+                  {/* Step1: Pending */}
                   <div className="flex flex-col items-center gap-2 z-10">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
                       ['pending', 'accepted', 'submitted', 'approved', 'completed', 'rejected'].includes(task.status)
