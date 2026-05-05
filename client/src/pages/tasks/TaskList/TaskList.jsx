@@ -34,7 +34,7 @@ const TaskList = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [newTask, setNewTask] = useState({ title: '', description: '', officerId: '', priority: 'medium', deadline: '', location: '', assistants: [] });
+  const [newTask, setNewTask] = useState({ title: '', description: '', officerId: '', priority: 'medium', deadline: '', location: '', assistantId: '' });
   const [isCreating, setIsCreating] = useState(false);
   const [officers, setOfficers] = useState([]);
   const [assistants, setAssistants] = useState([]);
@@ -88,7 +88,7 @@ const TaskList = () => {
         officerId: newTask.officerId,
         priority: newTask.priority,
         deadline: newTask.deadline,
-        assistants: newTask.assistants
+        assistantId: newTask.assistantId || null
       };
       const createdTask = await apiRequest({ 
         endpoint: '/tasks', 
@@ -97,7 +97,7 @@ const TaskList = () => {
       });
       setTasks([createdTask, ...tasks]);
       setIsModalOpen(false);
-      setNewTask({ title: '', description: '', location: '', officerId: '', priority: 'medium', deadline: '', assistants: [] });
+      setNewTask({ title: '', description: '', location: '', officerId: '', priority: 'medium', deadline: '', assistantId: '' });
       toast.success('Task deployed successfully');
     } catch (error) {
       toast.error(error.message || 'Creation failed');
@@ -237,26 +237,22 @@ const TaskList = () => {
                     </Select>
                   </div>
                   <div className="grid gap-2">
-                    <Label>Assign Assistants (Optional)</Label>
-                    <div className="border rounded-md p-3 max-h-32 overflow-y-auto space-y-2">
-                      {assistants.map(assistant => (
-                        <div key={assistant.userId} className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            id={`assistant-${assistant.userId}`}
-                            checked={newTask.assistants.includes(assistant.userId)}
-                            onChange={(e) => {
-                              const updated = e.target.checked
-                                ? [...newTask.assistants, assistant.userId]
-                                : newTask.assistants.filter(id => id !== assistant.userId);
-                              setNewTask({...newTask, assistants: updated});
-                            }}
-                            className="rounded border-gray-300"
-                          />
-                          <label htmlFor={`assistant-${assistant.userId}`} className="text-sm">{assistant.name}</label>
-                        </div>
-                      ))}
-                    </div>
+                    <Label htmlFor="assistant">Assistant Technician (Optional)</Label>
+                    <Select 
+                      value={newTask.assistantId} 
+                      onValueChange={(v) => setNewTask({...newTask, assistantId: v})}
+                    >
+                      <SelectTrigger id="assistant">
+                        <SelectValue placeholder="Select Assistant Technician" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {assistants.map(assistant => (
+                          <SelectItem key={assistant.userId} value={assistant.userId}>
+                            {assistant.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-2">
@@ -306,11 +302,12 @@ const TaskList = () => {
       ) : (
         <div className="rounded-xl border bg-card/50 overflow-hidden">
           {/* Table Header */}
-          <div className="grid grid-cols-[30%_15%_15%_20%_12%_8%] w-full">
+          <div className="grid grid-cols-[30%_15%_15%_15%_15%_8%] w-full">
             <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b">Task Information</div>
             <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l">Status</div>
             <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l">Priority</div>
-            <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l">Assigned To</div>
+            <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l">Officer</div>
+            <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l">Assistant</div>
             <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l">Deadline</div>
             <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l text-right">Action</div>
           </div>
@@ -339,23 +336,28 @@ const TaskList = () => {
                     {getStatusBadge(task.status)}
                   </div>
                   <div 
-                    className="px-4 py-3 border-b border-border/50 hover:bg-accent/50 cursor-pointer flex items-center gap-2 text-xs font-medium"
+                    className="px-4 py-3 border-b border-border/50 hover:bg-accent/50 cursor-pointer flex items-center gap-2"
                     onClick={() => navigate(`/tasks/${task.id}`)}
                   >
-                    <div className={cn(
-                      "w-2 h-2 rounded-full shrink-0",
-                      task.priority === 'high' ? "bg-destructive" : task.priority === 'medium' ? "bg-yellow-500" : "bg-green-500"
-                    )} />
-                    <span className="uppercase">{task.priority}</span>
+                    <div className="w-6 h-6 rounded-full bg-blue-400/20 flex items-center justify-center text-[10px] font-bold text-blue-400 shrink-0">
+                      {(task.officerName || task.officerId)?.charAt(0) || 'U'}
+                    </div>
+                    <span className="text-sm truncate">{task.officerName || task.officerId || 'Unassigned'}</span>
                   </div>
                   <div 
                     className="px-4 py-3 border-b border-border/50 hover:bg-accent/50 cursor-pointer flex items-center gap-2"
                     onClick={() => navigate(`/tasks/${task.id}`)}
                   >
-                    <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary border border-primary/20 shrink-0">
-                      {task.officerId?.charAt(0) || 'U'}
-                    </div>
-                    <span className="text-sm truncate">{task.officerId || 'Unassigned'}</span>
+                    {task.assistantName ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full bg-purple-400/20 flex items-center justify-center text-[10px] font-bold text-purple-400 shrink-0">
+                          {task.assistantName?.charAt(0) || 'U'}
+                        </div>
+                        <span className="text-sm truncate">{task.assistantName}</span>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">No assistant</span>
+                    )}
                   </div>
                   <div 
                     className="px-4 py-3 border-b border-border/50 hover:bg-accent/50 cursor-pointer flex items-center gap-2 text-sm text-muted-foreground"
