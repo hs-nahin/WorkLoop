@@ -20,7 +20,7 @@ const verifyToken = async (req, res, next) => {
 
     const userData = userDoc.data();
     
-    if (!userData.isActive) {
+    if (userData.isActive === false) {
       return res.status(403).json({ message: 'Account deactivated' });
     }
 

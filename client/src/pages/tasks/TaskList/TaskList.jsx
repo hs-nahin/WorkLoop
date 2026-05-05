@@ -228,11 +228,11 @@ const TaskList = () => {
                         <SelectValue placeholder="Select IT Officer" />
                       </SelectTrigger>
                       <SelectContent>
-                        {officers.map(officer => (
-                          <SelectItem key={officer.userId} value={officer.userId}>
-                            {officer.name}
-                          </SelectItem>
-                        ))}
+                      {officers.map(officer => (
+                           <SelectItem key={officer.uid} value={officer.uid}>
+                             {officer.name}
+                           </SelectItem>
+                         ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -240,22 +240,22 @@ const TaskList = () => {
                     <Label>Assign Assistants (Optional)</Label>
                     <div className="border rounded-md p-3 max-h-32 overflow-y-auto space-y-2">
                       {assistants.map(assistant => (
-                        <div key={assistant.userId} className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            id={`assistant-${assistant.userId}`}
-                            checked={newTask.assistants.includes(assistant.userId)}
-                            onChange={(e) => {
-                              const updated = e.target.checked
-                                ? [...newTask.assistants, assistant.userId]
-                                : newTask.assistants.filter(id => id !== assistant.userId);
-                              setNewTask({...newTask, assistants: updated});
-                            }}
-                            className="rounded border-gray-300"
-                          />
-                          <label htmlFor={`assistant-${assistant.userId}`} className="text-sm">{assistant.name}</label>
-                        </div>
-                      ))}
+                         <div key={assistant.uid} className="flex items-center space-x-2">
+                           <input
+                             type="checkbox"
+                             id={`assistant-${assistant.uid}`}
+                             checked={newTask.assistants.includes(assistant.uid)}
+                             onChange={(e) => {
+                               const updated = e.target.checked
+                                 ? [...newTask.assistants, assistant.uid]
+                                 : newTask.assistants.filter(id => id !== assistant.uid);
+                               setNewTask({...newTask, assistants: updated});
+                             }}
+                             className="rounded border-gray-300"
+                           />
+                           <label htmlFor={`assistant-${assistant.uid}`} className="text-sm">{assistant.name}</label>
+                         </div>
+                       ))}
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">

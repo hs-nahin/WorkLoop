@@ -19,9 +19,11 @@ const Users = () => {
     const fetchUsers = async () => {
       try {
         const data = await apiRequest({ endpoint: '/users' });
+        console.log('Users fetched:', data);
         setUsers(data);
       } catch (error) {
         console.error('Failed to fetch users:', error);
+        toast.error('Failed to load users: ' + (error.message || 'Unknown error'));
       } finally {
         setIsLoading(false);
       }
@@ -74,28 +76,26 @@ const Users = () => {
                 <h3 className="text-lg font-bold text-foreground">All Personnel</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {users.map((u, index) => (
-                    <BlurFade key={u.id || index} delay={index * 50}>
+                    <BlurFade key={u.uid || index} delay={index * 50}>
                       <MagicCard className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold ${
-                              u.role === 'ADMIN' ? 'bg-red-400/20 text-red-400' :
-                              u.role === 'IT OFFICER' ? 'bg-blue-400/20 text-blue-400' :
-                              'bg-purple-400/20 text-purple-400'
-                            }`}>
-                              {u.name?.charAt(0) || 'U'}
-                            </div>
-                            <div>
-                              <p className="text-sm font-bold text-foreground">{u.name}</p>
-                              <p className="text-xs text-muted-foreground">{u.email}</p>
-                            </div>
+                        <div className="flex items-center gap-4">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                            u.role === 'ADMIN' ? 'bg-red-400/20 text-red-400' :
+                            u.role === 'IT OFFICER' ? 'bg-blue-400/20 text-blue-400' :
+                            'bg-purple-400/20 text-purple-400'
+                          }`}>
+                            {u.name?.charAt(0) || 'U'}
                           </div>
-                          <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase border ${
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-bold text-foreground truncate">{u.name}</p>
+                            <p className="text-xs text-muted-foreground truncate">@{u.email?.split('@')[0] || u.uid}</p>
+                          </div>
+                          <span className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase border shrink-0 ${
                             u.role === 'ADMIN' ? 'text-red-400 border-red-400/30 bg-red-400/10' :
                             u.role === 'IT OFFICER' ? 'text-blue-400 border-blue-400/30 bg-blue-400/10' :
                             'text-purple-400 border-purple-400/30 bg-purple-400/10'
                           }`}>
-                            {u.role}
+                            {u.role === 'IT OFFICER' ? 'IT Officer' : u.role === 'ASSISTANT' ? 'Asst. Technician' : u.role}
                           </span>
                         </div>
                       </MagicCard>

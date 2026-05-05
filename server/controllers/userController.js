@@ -5,11 +5,31 @@ const getUsers = async (req, res) => {
     try {
         const db = admin.firestore();
         const usersSnapshot = await db.collection('users').get();
+        
+        // If no users in Firestore, try to get from Firebase Auth
+        if (usersSnapshot.empty) {
+            try {
+                const authUsers = await admin.auth().listUsers();
+                const users = authUsers.users.map(user => ({
+                    uid: user.uid,
+                    email: user.email,
+                    name: user.displayName || user.email?.split('@')[0] || 'Unknown',
+                    role: 'IT OFFICER', // Default role
+                    userId: user.uid
+                }));
+                return res.json(users);
+            } catch (authError) {
+                console.error('Error fetching from Auth:', authError);
+                return res.json([]);
+            }
+        }
+        
         const users = usersSnapshot.docs.map(doc => {
             const data = doc.data();
             // Don't return passwords
             const { password, ...safeUser } = data;
-            return { userId: doc.id, ...safeUser };
+            // Use uid from data if available, otherwise use doc.id
+            return { uid: data.uid || doc.id, userId: data.uid || doc.id, ...safeUser, id: doc.id };
         });
         res.json(users);
     } catch (error) {

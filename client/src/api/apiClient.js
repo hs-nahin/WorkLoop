@@ -1,13 +1,17 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export const apiRequest = async ({ endpoint, method = 'GET', body = null, requiresAuth = true }) => {
-  const token = localStorage.getItem('firebase_token');
   const headers = {
     'Content-Type': 'application/json',
   };
 
-  if (token && requiresAuth) {
-    headers['Authorization'] = `Bearer ${token}`;
+  if (requiresAuth) {
+    const { auth } = await import('../lib/firebase');
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+      const token = await currentUser.getIdToken();
+      headers['Authorization'] = `Bearer ${token}`;
+    }
   }
 
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {

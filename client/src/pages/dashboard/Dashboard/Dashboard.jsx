@@ -216,19 +216,86 @@ const Dashboard = () => {
                   Create New Task
                 </Button>
               )}
-              
-              <Button
-                variant="outline"
-                className="flex items-center gap-2 group cursor-pointer"
-                onClick={() => navigate('/tasks')}
-              >
-                <FileText size={16} />
-                View All Tasks
-              </Button>
-            </CardContent>
-            </Card>
-            
-            <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+               
+               <Button
+                 variant="outline"
+                 className="flex items-center gap-2 group cursor-pointer"
+                 onClick={() => navigate('/tasks')}
+               >
+                 <FileText size={16} />
+                 View All Tasks
+               </Button>
+             </CardContent>
+             </Card>
+             
+             <BlurFade delay={500}>
+               <Card className="border-border bg-card/50 backdrop-blur-sm">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-lg font-semibold">
+                        Personnel Overview
+                      </CardTitle>
+                      <CardDescription>
+                        IT Officers and Assistants registered in the system
+                      </CardDescription>
+                    </div>
+                    {user?.role === 'ADMIN' && (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => navigate('/users')}
+                        className="cursor-pointer"
+                      >
+                        View All
+                      </Button>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                   <div className="space-y-4">
+                      <div>
+                        <h4 className="text-sm font-semibold text-muted-foreground mb-3">IT Officers ({officers.length})</h4>
+                        <div className="space-y-2">
+                          {officers.length > 0 ? officers.map((officer) => (
+                            <div key={officer.uid || officer.userId} className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent/50">
+                              <div className="w-8 h-8 rounded-full bg-blue-400/20 flex items-center justify-center text-xs font-bold text-blue-400 shrink-0">
+                                {officer.name?.charAt(0) || 'U'}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate">{officer.name}</p>
+                                <p className="text-xs text-muted-foreground truncate">@{officer.email?.split('@')[0] || officer.uid}</p>
+                              </div>
+                            </div>
+                          )) : (
+                            <p className="text-xs text-muted-foreground">No IT Officers registered</p>
+                          )}
+                        </div>
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-semibold text-muted-foreground mb-3">Assistants ({assistants.length})</h4>
+                        <div className="space-y-2">
+                          {assistants.length > 0 ? assistants.map((assistant) => (
+                            <div key={assistant.uid || assistant.userId} className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent/50">
+                              <div className="w-8 h-8 rounded-full bg-purple-400/20 flex items-center justify-center text-xs font-bold text-purple-400 shrink-0">
+                                {assistant.name?.charAt(0) || 'U'}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate">{assistant.name}</p>
+                                <p className="text-xs text-muted-foreground truncate">@{assistant.email?.split('@')[0] || assistant.uid}</p>
+                              </div>
+                            </div>
+                          )) : (
+                            <p className="text-xs text-muted-foreground">No Assistants registered</p>
+                          )}
+                        </div>
+                      </div>
+                   </div>
+                 </CardContent>
+               </Card>
+             </BlurFade>
+             
+             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                 <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle className="text-xl font-bold">Initialize New Task</DialogTitle>
@@ -274,10 +341,10 @@ const Dashboard = () => {
                         </SelectTrigger>
                         <SelectContent>
                           {officers.map(officer => (
-                            <SelectItem key={officer.userId} value={officer.userId}>
-                              {officer.name}
-                            </SelectItem>
-                          ))}
+                             <SelectItem key={officer.uid} value={officer.uid}>
+                               {officer.name}
+                             </SelectItem>
+                           ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -292,10 +359,10 @@ const Dashboard = () => {
                         </SelectTrigger>
                         <SelectContent>
                           {assistants.map(assistant => (
-                            <SelectItem key={assistant.userId} value={assistant.userId}>
-                              {assistant.name}
-                            </SelectItem>
-                          ))}
+                             <SelectItem key={assistant.uid} value={assistant.uid}>
+                               {assistant.name}
+                             </SelectItem>
+                           ))}
                         </SelectContent>
                       </Select>
                     </div>
