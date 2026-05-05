@@ -9,6 +9,7 @@ import GradientText from '../../../components/animations/GradientText';
 import MagicCard from '../../../components/animations/MagicCard';
 import TextHighlighter from '../../../components/animations/TextHighlighter';
 import { AuthContext } from '../../../context/AuthContext';
+import { ArrowLeft } from 'lucide-react';
 
 const TaskDetail = () => {
   const { id } = useParams();
@@ -99,19 +100,17 @@ const TaskDetail = () => {
 
   return (
     <div className="space-y-8">
-      <header className="flex justify-between items-end">
-        <div className="flex flex-col gap-2">
-          <TextHighlighter text="Task Specifications" className="text-3xl font-bold tracking-tight" />
-          <GradientText text={`Reference ID: ${id.slice(-8).toUpperCase()}`} className="text-sm opacity-70" />
-        </div>
-        <Button 
-          variant="secondary" 
-          onClick={() => navigate('/tasks')}
-          className="text-xs"
-        >
-          ← Back to Repository
-        </Button>
-      </header>
+<header className="flex items-end justify-between">
+         <div className="flex items-center gap-3">
+           <Button variant="ghost" size="icon" onClick={() => navigate('/tasks')} className="hover:bg-accent cursor-pointer">
+             <ArrowLeft size={20} />
+           </Button>
+           <div className="flex flex-col gap-2">
+             <TextHighlighter text="Task Specifications" className="text-3xl font-bold tracking-tight" />
+             <GradientText text={`Reference ID: ${id.slice(-8).toUpperCase()}`} className="text-sm opacity-70" />
+           </div>
+         </div>
+       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">

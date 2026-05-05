@@ -2,7 +2,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ModeToggle } from "@/components/ui/ModeToggle";
 import { Bell, LogOut, Settings, User } from "lucide-react";
 import { useContext } from "react";
 import { AuthContext } from "../../../context/AuthContextInstance.js";
@@ -51,7 +50,6 @@ const TopBar = () => {
           <Bell size={20}/>
           <span className="absolute top-2 right-2 w-2 h-2 bg-destructive rounded-full border-2 border-card"></span>
         </Button>
-        <ModeToggle />
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
