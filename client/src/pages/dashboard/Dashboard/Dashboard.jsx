@@ -210,7 +210,15 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent className="flex flex-wrap gap-4">
               {user?.role === 'ADMIN' && (
-                <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+                <>
+                  <Button 
+                    className="flex items-center gap-2 group cursor-pointer"
+                    onClick={() => navigate('/tasks?create=true')}
+                  >
+                    <Plus size={16} />
+                    Add New Task
+                  </Button>
+                  <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                   <DialogTrigger asChild>
                     <Button className="flex items-center gap-2 group cursor-pointer">
                       <Plus size={16} />
