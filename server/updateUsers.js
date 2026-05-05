@@ -19,7 +19,7 @@ const updateUsers = async () => {
     const users = [
       {
         uid: 'el4d2e49kHTcLHwGZDjw5qPghuE2',
-        email: 'hasnat@workloop.com',
+        email: 'admin@workloop.com',
         name: 'System Administrator',
         password: await bcrypt.hash('admin123', 10),
         role: 'ADMIN'

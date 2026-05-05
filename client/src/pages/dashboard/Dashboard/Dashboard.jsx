@@ -207,13 +207,15 @@ const Dashboard = () => {
               </CardDescription>
             </CardHeader>
 <CardContent className="flex flex-wrap gap-4">
-              <Button 
-                className="flex items-center gap-2 group cursor-pointer"
-                onClick={() => setIsModalOpen(true)}
-              >
-                <Plus size={16} />
-                Create New Task
-              </Button>
+              {user?.role === 'ADMIN' && (
+                <Button 
+                  className="flex items-center gap-2 group cursor-pointer"
+                  onClick={() => setIsModalOpen(true)}
+                >
+                  <Plus size={16} />
+                  Create New Task
+                </Button>
+              )}
               
               <Button
                 variant="outline"
@@ -223,7 +225,7 @@ const Dashboard = () => {
                 <FileText size={16} />
                 View All Tasks
               </Button>
-</CardContent>
+            </CardContent>
             </Card>
             
             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
