@@ -302,7 +302,7 @@ const TaskList = () => {
       ) : (
         <div className="rounded-xl border bg-card/50 overflow-hidden">
           {/* Table Header */}
-          <div className="grid grid-cols-[30%_15%_15%_15%_15%_8%] w-full">
+          <div className="grid grid-cols-[25%_12%_12%_13%_13%_10%_15%] w-full">
             <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b">Task Information</div>
             <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l">Status</div>
             <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l">Priority</div>
@@ -313,7 +313,7 @@ const TaskList = () => {
           </div>
           {/* Table Body */}
           {filteredTasks.length > 0 ? (
-            <div className="grid grid-cols-[30%_15%_15%_20%_12%_8%] w-full">
+            <div className="grid grid-cols-[25%_12%_12%_13%_13%_10%_15%] w-full">
               {filteredTasks.map((task) => (
                   <Fragment key={task.id}>
                   <div 
