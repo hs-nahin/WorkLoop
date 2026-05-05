@@ -1,29 +1,33 @@
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ToastContext } from '@/context/ToastContextState';
-import { useContext, useEffect, useState } from 'react';
+﻿import { useState, useEffect, useContext } from 'react';
+import { useNavigate } from 'react-router';
 import { apiRequest } from '../../api/apiClient';
-import BlurFade from '../../components/animations/BlurFade';
-import GradientText from '../../components/animations/GradientText';
-import MagicCard from '../../components/animations/MagicCard';
-import TextHighlighter from '../../components/animations/TextHighlighter';
+import { AuthContext } from '../../context/AuthContextInstance';
 
-const Users = () => {
-  const { showToast } = useContext(ToastContext);
+export default function Users() {
+  const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [newUser, setNewUser] = useState({ name: '', email: '', role: 'IT OFFICER', password: '' });
   const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
+    if (user && user.role !== 'ADMIN') {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
+
+  useEffect(() => {
     const fetchUsers = async () => {
       try {
+        console.log('[Users] Fetching /users...');
         const data = await apiRequest({ endpoint: '/users' });
-        console.log('Users fetched:', data);
-        setUsers(data);
-      } catch (error) {
-        console.error('Failed to fetch users:', error);
-        toast.error('Failed to load users: ' + (error.message || 'Unknown error'));
+        console.log('[Users] Data:', data);
+        setUsers(data || []);
+      } catch (err) {
+        console.error('[Users] Error:', err);
+        setError(err.message || 'Failed to load users');
       } finally {
         setIsLoading(false);
       }
@@ -33,134 +37,158 @@ const Users = () => {
 
   const handleCreateUser = async () => {
     if (!newUser.name || !newUser.email || !newUser.password) {
-      showToast('Please fill all required fields', 'error');
+      alert('Please fill all required fields');
       return;
     }
     setIsCreating(true);
     try {
       const createdUser = await apiRequest({
-        endpoint: '/users',
+        endpoint: '/auth/create-user',
         method: 'POST',
-        body: newUser,
+        body: { ...newUser, role: newUser.role.toUpperCase() },
       });
       setUsers([...users, createdUser]);
       setNewUser({ name: '', email: '', role: 'IT OFFICER', password: '' });
-      showToast('User created successfully', 'success');
+      alert('User created successfully');
     } catch (error) {
-      showToast(error.message || 'Failed to create user', 'error');
+      alert(error.message || 'Failed to create user');
     } finally {
       setIsCreating(false);
     }
   };
 
+  const getInitial = (name) => (name?.charAt(0) || 'U').toUpperCase();
+
   if (isLoading) {
+    return <div style={{ padding: '2rem', color: 'white', textAlign: 'center' }}>Loading users...</div>;
+  }
+
+  if (error) {
     return (
-        <div className="min-h-screen flex items-center justify-center text-yellow-400 font-mono animate-pulse">
-          Loading Personnel Registry...
-        </div>
+      <div style={{ padding: '2rem', color: 'white', textAlign: 'center' }}>
+        <p style={{ color: '#f87171' }}>Error: {error}</p>
+        <button onClick={() => window.location.reload()} style={{ marginTop: '1rem', padding: '0.5rem 1rem', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '0.25rem' }}>
+          Retry
+        </button>
+      </div>
     );
   }
 
-  return (
-    <div className="space-y-8">
-      <header className="flex flex-col gap-2">
-        <TextHighlighter text="Personnel Management" className="text-3xl font-bold tracking-tight" />
-        <GradientText text="Oversee and manage system access and user roles" className="text-sm opacity-70" />
-      </header>
+  const officers = users.filter(u => u.role?.toUpperCase() === 'IT OFFICER' || u.role?.toUpperCase() === 'IT OFFICER');
+  const assistants = users.filter(u => u.role?.toUpperCase() === 'ASSISTANT');
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-6">
-          <BlurFade>
-            <MagicCard>
-              <div className="space-y-4">
-                <h3 className="text-lg font-bold text-foreground">All Personnel</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {users.map((u, index) => (
-                    <BlurFade key={u.uid || index} delay={index * 50}>
-                      <MagicCard className="p-4">
-                        <div className="flex items-center gap-4">
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
-                            u.role === 'ADMIN' ? 'bg-red-400/20 text-red-400' :
-                            u.role === 'IT OFFICER' ? 'bg-blue-400/20 text-blue-400' :
-                            'bg-purple-400/20 text-purple-400'
-                          }`}>
-                            {u.name?.charAt(0) || 'U'}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-bold text-foreground truncate">{u.name}</p>
-                            <p className="text-xs text-muted-foreground truncate">@{u.email?.split('@')[0] || u.uid}</p>
-                          </div>
-                          <span className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase border shrink-0 ${
-                            u.role === 'ADMIN' ? 'text-red-400 border-red-400/30 bg-red-400/10' :
-                            u.role === 'IT OFFICER' ? 'text-blue-400 border-blue-400/30 bg-blue-400/10' :
-                            'text-purple-400 border-purple-400/30 bg-purple-400/10'
-                          }`}>
-                            {u.role === 'IT OFFICER' ? 'IT Officer' : u.role === 'ASSISTANT' ? 'Asst. Technician' : u.role}
-                          </span>
-                        </div>
-                      </MagicCard>
-                    </BlurFade>
-                  ))}
+  return (
+    <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
+      <h1 style={{ fontSize: '1.875rem', fontWeight: 'bold', color: 'white', marginBottom: '0.5rem' }}>Personnel Management</h1>
+      <p style={{ color: '#9ca3af', marginBottom: '2rem' }}>Oversee and manage system access and user roles</p>
+      
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '2rem' }}>
+        <div>
+          <div style={{ marginBottom: '2rem' }}>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'white', marginBottom: '0.25rem' }}>IT Officers ({officers.length})</h2>
+            <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginBottom: '1rem' }}>Field technicians and IT support officers</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
+              {officers.map((u) => (
+                <div key={u.uid || u.email} style={{ padding: '1.25rem', background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '0.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{ width: '3rem', height: '3rem', borderRadius: '50%', background: 'rgba(96,165,250,0.2)', color: '#60a5fa', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.125rem', fontWeight: 'bold', flexShrink: 0 }}>
+                      {getInitial(u.name)}
+                    </div>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <p style={{ fontSize: '1rem', fontWeight: 'bold', color: 'white', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.name || 'No Name'}</p>
+                      <p style={{ fontSize: '0.875rem', color: '#9ca3af', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.email}</p>
+                      <span style={{ display: 'inline-block', marginTop: '0.25rem', padding: '0.125rem 0.5rem', borderRadius: '0.25rem', fontSize: '0.625rem', fontWeight: 'bold', textTransform: 'uppercase', background: 'rgba(96,165,250,0.2)', color: '#60a5fa', border: '1px solid rgba(96,165,250,0.3)' }}>
+                        IT Officer
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </MagicCard>
-          </BlurFade>
+              ))}
+            </div>
+            {officers.length === 0 && <p style={{ color: '#9ca3af', textAlign: 'center', padding: '1rem' }}>No IT Officers registered</p>}
+          </div>
+
+          <div>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'white', marginBottom: '0.25rem' }}>Assistants ({assistants.length})</h2>
+            <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginBottom: '1rem' }}>Assistant technicians and support staff</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
+              {assistants.map((u) => (
+                <div key={u.uid || u.email} style={{ padding: '1.25rem', background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '0.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{ width: '3rem', height: '3rem', borderRadius: '50%', background: 'rgba(192,132,252,0.2)', color: '#c084fc', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.125rem', fontWeight: 'bold', flexShrink: 0 }}>
+                      {getInitial(u.name)}
+                    </div>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <p style={{ fontSize: '1rem', fontWeight: 'bold', color: 'white', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.name || 'No Name'}</p>
+                      <p style={{ fontSize: '0.875rem', color: '#9ca3af', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.email}</p>
+                      <span style={{ display: 'inline-block', marginTop: '0.25rem', padding: '0.125rem 0.5rem', borderRadius: '0.25rem', fontSize: '0.625rem', fontWeight: 'bold', textTransform: 'uppercase', background: 'rgba(192,132,252,0.2)', color: '#c084fc', border: '1px solid rgba(192,132,252,0.3)' }}>
+                        Asst. Technician
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {assistants.length === 0 && <p style={{ color: '#9ca3af', textAlign: 'center', padding: '1rem' }}>No Assistants registered</p>}
+          </div>
         </div>
 
-        <div className="space-y-6">
-          <BlurFade delay={100}>
-            <MagicCard>
-              <div className="space-y-6">
-                <h3 className="text-sm font-bold text-gray-500 uppercase">Register New Personnel</h3>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-gray-500 uppercase">Full Name</label>
-                    <Input 
-                      value={newUser.name} 
-                      onChange={(e) => setNewUser({...newUser, name: e.target.value})} 
-                      placeholder="Name"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-gray-500 uppercase">Email</label>
-                    <Input 
-                      value={newUser.email} 
-                      onChange={(e) => setNewUser({...newUser, email: e.target.value})} 
-                      placeholder="email@workloop.ai"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-gray-500 uppercase">Role</label>
-                    <Input 
-                      value={newUser.role} 
-                      onChange={(e) => setNewUser({...newUser, role: e.target.value})} 
-                      placeholder="ADMIN or IT OFFICER"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-gray-500 uppercase">Password</label>
-                    <Input 
-                      type="password"
-                      value={newUser.password} 
-                      onChange={(e) => setNewUser({...newUser, password: e.target.value})} 
-                      placeholder="••••••••"
-                    />
-                  </div>
-                  <Button 
-                    onClick={handleCreateUser} 
-                    disabled={isCreating} 
-                    className="w-full"
-                  >
-                    {isCreating ? 'Registering...' : 'Initialize Access'}
-                  </Button>
-                </div>
+        <div>
+          <div style={{ padding: '1.5rem', background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '0.5rem' }}>
+            <h3 style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#9ca3af', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Register New Personnel</h3>
+            <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginBottom: '1.5rem' }}>Create new user account with role assignment</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#9ca3af', textTransform: 'uppercase', display: 'block', marginBottom: '0.5rem' }}>Full Name</label>
+                <input
+                  value={newUser.name}
+                  onChange={(e) => setNewUser({...newUser, name: e.target.value})}
+                  placeholder="Enter full name"
+                  style={{ width: '100%', padding: '0.5rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '0.375rem', color: 'white', fontSize: '0.875rem' }}
+                />
               </div>
-            </MagicCard>
-          </BlurFade>
+              <div>
+                <label style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#9ca3af', textTransform: 'uppercase', display: 'block', marginBottom: '0.5rem' }}>Email</label>
+                <input
+                  value={newUser.email}
+                  onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                  placeholder="email@workloop.com"
+                  style={{ width: '100%', padding: '0.5rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '0.375rem', color: 'white', fontSize: '0.875rem' }}
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#9ca3af', textTransform: 'uppercase', display: 'block', marginBottom: '0.5rem' }}>Role</label>
+                <select
+                  value={newUser.role}
+                  onChange={(e) => setNewUser({...newUser, role: e.target.value})}
+                  style={{ width: '100%', padding: '0.5rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '0.375rem', color: 'white', fontSize: '0.875rem' }}
+                >
+                  <option value="IT OFFICER">IT Officer</option>
+                  <option value="ASSISTANT">Assistant Technician</option>
+                  <option value="ADMIN">Administrator</option>
+                </select>
+              </div>
+              <div>
+                <label style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#9ca3af', textTransform: 'uppercase', display: 'block', marginBottom: '0.5rem' }}>Password</label>
+                <input
+                  type="password"
+                  value={newUser.password}
+                  onChange={(e) => setNewUser({...newUser, password: e.target.value})}
+                  placeholder="Min 6 characters"
+                  style={{ width: '100%', padding: '0.5rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '0.375rem', color: 'white', fontSize: '0.875rem' }}
+                />
+              </div>
+              <button
+                onClick={handleCreateUser}
+                disabled={isCreating}
+                style={{ width: '100%', padding: '0.5rem', background: isCreating ? '#666' : '#3b82f6', color: 'white', border: 'none', borderRadius: '0.375rem', fontSize: '0.875rem', cursor: isCreating ? 'not-allowed' : 'pointer' }}
+              >
+                {isCreating ? 'Registering...' : 'Initialize Access'}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
-};
-
-export default Users;
+}

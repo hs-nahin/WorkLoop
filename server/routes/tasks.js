@@ -1,16 +1,19 @@
 const express = require('express');
 const router = express.Router();
 const { 
-    getTasks, 
-    createTask, 
-    getTaskById, 
-    acceptTask,
-    addProgressReport,
-    submitTask,
-    approveTask,
-    rejectTask,
-    updateTask, 
-    deleteTask 
+  getTasks, 
+  createTask, 
+  getTaskById, 
+  acceptTask, 
+  addProgressReport, 
+  submitTask, 
+  approveTask, 
+  rejectTask, 
+  updateTask, 
+  deleteTask,
+  getNotifications,
+  getOfficerNotifications,
+  markNotificationRead
 } = require('../controllers/taskController');
 const { verifyToken, authorize } = require('../middleware/auth');
 
@@ -43,5 +46,14 @@ router.put('/:id', verifyToken, authorize(['ADMIN']), updateTask);
 
 // Delete task (admin only)
 router.delete('/:id', verifyToken, authorize(['ADMIN']), deleteTask);
+
+// Get notifications for admin
+router.get('/notifications', verifyToken, authorize(['ADMIN']), getNotifications);
+
+// Get notifications for officer
+router.get('/notifications/officer', verifyToken, authorize(['IT OFFICER', 'ASSISTANT']), getOfficerNotifications);
+
+// Mark notification as read
+router.patch('/notifications/:id/read', verifyToken, markNotificationRead);
 
 module.exports = router;

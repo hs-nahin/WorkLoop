@@ -77,9 +77,10 @@ const Dashboard = () => {
     const fetchUsers = async () => {
       try {
         const data = await apiRequest({ endpoint: '/users' });
-        const officerList = data.filter(user => user.role === 'IT OFFICER');
+        console.log('Users fetched:', data);
+        const officerList = data.filter(user => user.role?.toUpperCase() === 'IT OFFICER');
         setOfficers(officerList);
-        const assistantList = data.filter(user => user.role === 'ASSISTANT');
+        const assistantList = data.filter(user => user.role?.toUpperCase() === 'ASSISTANT');
         setAssistants(assistantList);
       } catch (error) {
         console.error('Failed to fetch users:', error);
@@ -262,10 +263,10 @@ const Dashboard = () => {
                               <div className="w-8 h-8 rounded-full bg-blue-400/20 flex items-center justify-center text-xs font-bold text-blue-400 shrink-0">
                                 {officer.name?.charAt(0) || 'U'}
                               </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium truncate">{officer.name}</p>
-                                <p className="text-xs text-muted-foreground truncate">@{officer.email?.split('@')[0] || officer.uid}</p>
-                              </div>
+                         <div className="flex-1 min-w-0">
+                                 <p className="text-sm font-medium truncate">{officer.name}</p>
+                                 <p className="text-xs text-muted-foreground truncate">{officer.email}</p>
+                               </div>
                             </div>
                           )) : (
                             <p className="text-xs text-muted-foreground">No IT Officers registered</p>
@@ -280,10 +281,10 @@ const Dashboard = () => {
                               <div className="w-8 h-8 rounded-full bg-purple-400/20 flex items-center justify-center text-xs font-bold text-purple-400 shrink-0">
                                 {assistant.name?.charAt(0) || 'U'}
                               </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium truncate">{assistant.name}</p>
-                                <p className="text-xs text-muted-foreground truncate">@{assistant.email?.split('@')[0] || assistant.uid}</p>
-                              </div>
+                         <div className="flex-1 min-w-0">
+                                 <p className="text-sm font-medium truncate">{assistant.name}</p>
+                                 <p className="text-xs text-muted-foreground truncate">{assistant.email}</p>
+                               </div>
                             </div>
                           )) : (
                             <p className="text-xs text-muted-foreground">No Assistants registered</p>

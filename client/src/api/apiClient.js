@@ -1,3 +1,30 @@
+let cachedToken = null;
+let tokenRefreshPromise = null;
+
+const getToken = async () => {
+  try {
+    const { auth } = await import('../lib/firebase');
+    const currentUser = auth.currentUser;
+    if (!currentUser) return null;
+    
+    if (tokenRefreshPromise) return tokenRefreshPromise;
+    
+    tokenRefreshPromise = currentUser.getIdToken(true).then(token => {
+      cachedToken = token;
+      tokenRefreshPromise = null;
+      return token;
+    }).catch(err => {
+      tokenRefreshPromise = null;
+      throw err;
+    });
+    
+    return tokenRefreshPromise;
+  } catch (err) {
+    console.error('Token error:', err);
+    return cachedToken;
+  }
+};
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export const apiRequest = async ({ endpoint, method = 'GET', body = null, requiresAuth = true }) => {
@@ -6,10 +33,8 @@ export const apiRequest = async ({ endpoint, method = 'GET', body = null, requir
   };
 
   if (requiresAuth) {
-    const { auth } = await import('../lib/firebase');
-    const currentUser = auth.currentUser;
-    if (currentUser) {
-      const token = await currentUser.getIdToken();
+    const token = await getToken();
+    if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
   }

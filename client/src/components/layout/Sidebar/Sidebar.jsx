@@ -27,7 +27,6 @@ const Sidebar = () => {
     { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard, roles: ["ADMIN", "IT OFFICER", "ASSISTANT"] },
     { name: "Tasks", path: "/tasks", icon: CheckSquare, roles: ["ADMIN", "IT OFFICER", "ASSISTANT"] },
     { name: "Users", path: "/users", icon: Users, roles: ["ADMIN"] },
-    { name: "Company", path: "/company", icon: Building2, roles: ["ADMIN"] },
   ];
 
   const filteredItems = menuItems.filter(item => item.roles.includes(user?.role));

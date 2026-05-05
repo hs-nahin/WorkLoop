@@ -16,7 +16,8 @@ const TopBar = () => {
 
   const fetchNotifications = async () => {
     try {
-      const data = await apiRequest({ endpoint: '/tasks/notifications' });
+      const endpoint = user?.role === 'ADMIN' ? '/tasks/notifications' : '/tasks/notifications/officer';
+      const data = await apiRequest({ endpoint });
       setNotifications(data);
       setUnreadCount(data.filter(n => !n.read).length);
     } catch (error) {

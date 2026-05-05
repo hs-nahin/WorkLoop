@@ -1,9 +1,9 @@
-const admin = require('../firebase-admin');
+const admin = require('firebase-admin');
+const { adminDb, adminAuth } = require('../firebase-admin');
 
 const getTasks = async (req, res) => {
     try {
-        const db = admin.firestore();
-        const tasksSnapshot = await db.collection('tasks').orderBy('createdAt', 'desc').get();
+        const tasksSnapshot = await adminDb.collection('tasks').orderBy('createdAt', 'desc').get();
         const tasks = tasksSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         res.json(tasks);
     } catch (error) {
@@ -20,19 +20,17 @@ const createTask = async (req, res) => {
             return res.status(400).json({ message: 'Title, description and officer are required' });
         }
 
-        const db = admin.firestore();
-        
         // Get officer name
         let officerName = 'Unassigned';
         if (officerId) {
-            const officerDoc = await db.collection('users').doc(officerId).get();
+            const officerDoc = await adminDb.collection('users').doc(officerId).get();
             officerName = officerDoc.exists ? officerDoc.data().name : 'Unknown';
         }
         
         // Get assistant name if provided
         let assistantName = null;
         if (assistantId) {
-            const assistantDoc = await db.collection('users').doc(assistantId).get();
+            const assistantDoc = await adminDb.collection('users').doc(assistantId).get();
             assistantName = assistantDoc.exists ? assistantDoc.data().name : null;
         }
         
@@ -48,7 +46,7 @@ const createTask = async (req, res) => {
             priority: priority || 'medium',
             deadline: deadline || null,
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
-            createdBy: req.user.userId,
+            createdBy: req.user.uid,
             completionReport: null,
             adminFeedback: null,
             progressReports: [],
@@ -56,8 +54,8 @@ const createTask = async (req, res) => {
             submittedAt: null,
             completedAt: null
         };
-
-        const docRef = await db.collection('tasks').add(newTask);
+        
+        const docRef = await adminDb.collection('tasks').add(newTask);
         const createdTask = { id: docRef.id, ...newTask };
         res.status(201).json(createdTask);
     } catch (error) {
@@ -69,8 +67,7 @@ const createTask = async (req, res) => {
 const getTaskById = async (req, res) => {
     try {
         const { id } = req.params;
-        const db = admin.firestore();
-        const taskDoc = await db.collection('tasks').doc(id).get();
+        const taskDoc = await adminDb.collection('tasks').doc(id).get();
         
         if (!taskDoc.exists) return res.status(404).json({ message: 'Task not found' });
         
@@ -86,9 +83,7 @@ const getTaskById = async (req, res) => {
 const acceptTask = async (req, res) => {
     try {
         const { id } = req.params;
-        const db = admin.firestore();
-        
-        const taskDoc = await db.collection('tasks').doc(id).get();
+        const taskDoc = await adminDb.collection('tasks').doc(id).get();
         if (!taskDoc.exists) return res.status(404).json({ message: 'Task not found' });
         
         const task = taskDoc.data();
@@ -98,13 +93,13 @@ const acceptTask = async (req, res) => {
             return res.status(400).json({ message: 'Task is not available for acceptance' });
         }
         
-        await db.collection('tasks').doc(id).update({
+        await adminDb.collection('tasks').doc(id).update({
             status: 'accepted',
             acceptedAt: admin.firestore.FieldValue.serverTimestamp(),
-            acceptedBy: req.user.userId
+            acceptedBy: req.user.uid
         });
         
-        const updatedDoc = await db.collection('tasks').doc(id).get();
+        const updatedDoc = await adminDb.collection('tasks').doc(id).get();
         res.json({ id: updatedDoc.id, ...updatedDoc.data() });
     } catch (error) {
         console.error('Error accepting task:', error);
@@ -122,22 +117,17 @@ const addProgressReport = async (req, res) => {
             return res.status(400).json({ message: 'Progress message is required' });
         }
         
-        const db = admin.firestore();
-        const taskDoc = await db.collection('tasks').doc(id).get();
-        
-        if (!taskDoc.exists) return res.status(404).json({ message: 'Task not found' });
-        
         const report = {
             message,
             timestamp: admin.firestore.FieldValue.serverTimestamp(),
-            reportedBy: req.user.userId
+            reportedBy: req.user.uid
         };
         
-        await db.collection('tasks').doc(id).update({
+        await adminDb.collection('tasks').doc(id).update({
             progressReports: admin.firestore.FieldValue.arrayUnion(report)
         });
         
-        const updatedDoc = await db.collection('tasks').doc(id).get();
+        const updatedDoc = await adminDb.collection('tasks').doc(id).get();
         res.json({ id: updatedDoc.id, ...updatedDoc.data() });
     } catch (error) {
         console.error('Error adding progress report:', error);
@@ -155,8 +145,7 @@ const submitTask = async (req, res) => {
             return res.status(400).json({ message: 'Completion report is required' });
         }
         
-        const db = admin.firestore();
-        const taskDoc = await db.collection('tasks').doc(id).get();
+        const taskDoc = await adminDb.collection('tasks').doc(id).get();
         
         if (!taskDoc.exists) return res.status(404).json({ message: 'Task not found' });
         
@@ -167,15 +156,15 @@ const submitTask = async (req, res) => {
             return res.status(400).json({ message: 'Task must be accepted before submission' });
         }
         
-        await db.collection('tasks').doc(id).update({
+        await adminDb.collection('tasks').doc(id).update({
             status: 'submitted',
             completionReport: report,
             submittedAt: admin.firestore.FieldValue.serverTimestamp(),
-            submittedBy: req.user.userId
+            submittedBy: req.user.uid
         });
         
         // Create notification for admin
-        await db.collection('notifications').add({
+        await adminDb.collection('notifications').add({
             type: 'task_submitted',
             taskId: id,
             taskTitle: task.title,
@@ -184,7 +173,7 @@ const submitTask = async (req, res) => {
             createdAt: admin.firestore.FieldValue.serverTimestamp()
         });
         
-        const updatedDoc = await db.collection('tasks').doc(id).get();
+        const updatedDoc = await adminDb.collection('tasks').doc(id).get();
         res.json({ id: updatedDoc.id, ...updatedDoc.data() });
     } catch (error) {
         console.error('Error submitting task:', error);
@@ -196,12 +185,10 @@ const submitTask = async (req, res) => {
 const approveTask = async (req, res) => {
     try {
         const { id } = req.params;
-        const db = admin.firestore();
-        
-        const taskDoc = await db.collection('tasks').doc(id).get();
+        const taskDoc = await adminDb.collection('tasks').doc(id).get();
         if (!taskDoc.exists) return res.status(404).json({ message: 'Task not found' });
         
-        await db.collection('tasks').doc(id).update({
+        await adminDb.collection('tasks').doc(id).update({
             status: 'approved',
             completedAt: admin.firestore.FieldValue.serverTimestamp(),
             adminFeedback: null
@@ -209,7 +196,7 @@ const approveTask = async (req, res) => {
         
         // Create notification for officer
         const task = taskDoc.data();
-        await db.collection('notifications').add({
+        await adminDb.collection('notifications').add({
             type: 'task_approved',
             taskId: id,
             taskTitle: task.title,
@@ -219,7 +206,7 @@ const approveTask = async (req, res) => {
             createdAt: admin.firestore.FieldValue.serverTimestamp()
         });
         
-        const updatedDoc = await db.collection('tasks').doc(id).get();
+        const updatedDoc = await adminDb.collection('tasks').doc(id).get();
         res.json({ id: updatedDoc.id, ...updatedDoc.data() });
     } catch (error) {
         console.error('Error approving task:', error);
@@ -237,12 +224,10 @@ const rejectTask = async (req, res) => {
             return res.status(400).json({ message: 'Feedback is required for rejection' });
         }
         
-        const db = admin.firestore();
-        const taskDoc = await db.collection('tasks').doc(id).get();
-        
+        const taskDoc = await adminDb.collection('tasks').doc(id).get();
         if (!taskDoc.exists) return res.status(404).json({ message: 'Task not found' });
         
-        await db.collection('tasks').doc(id).update({
+        await adminDb.collection('tasks').doc(id).update({
             status: 'rejected',
             adminFeedback: feedback,
             submittedAt: null,
@@ -251,7 +236,7 @@ const rejectTask = async (req, res) => {
         
         // Create notification for officer
         const task = taskDoc.data();
-        await db.collection('notifications').add({
+        await adminDb.collection('notifications').add({
             type: 'task_rejected',
             taskId: id,
             taskTitle: task.title,
@@ -261,7 +246,7 @@ const rejectTask = async (req, res) => {
             createdAt: admin.firestore.FieldValue.serverTimestamp()
         });
         
-        const updatedDoc = await db.collection('tasks').doc(id).get();
+        const updatedDoc = await adminDb.collection('tasks').doc(id).get();
         res.json({ id: updatedDoc.id, ...updatedDoc.data() });
     } catch (error) {
         console.error('Error rejecting task:', error);
@@ -273,10 +258,8 @@ const updateTask = async (req, res) => {
     try {
         const { id } = req.params;
         const updates = req.body;
-        const db = admin.firestore();
-        
-        await db.collection('tasks').doc(id).update(updates);
-        const updatedDoc = await db.collection('tasks').doc(id).get();
+        await adminDb.collection('tasks').doc(id).update(updates);
+        const updatedDoc = await adminDb.collection('tasks').doc(id).get();
         res.json({ id: updatedDoc.id, ...updatedDoc.data() });
     } catch (error) {
         console.error('Error updating task:', error);
@@ -287,9 +270,7 @@ const updateTask = async (req, res) => {
 const deleteTask = async (req, res) => {
     try {
         const { id } = req.params;
-        const db = admin.firestore();
-        
-        await db.collection('tasks').doc(id).delete();
+        await adminDb.collection('tasks').doc(id).delete();
         res.json({ message: 'Task deleted successfully' });
     } catch (error) {
         console.error('Error deleting task:', error);
@@ -300,8 +281,7 @@ const deleteTask = async (req, res) => {
 // Get notifications for admin
 const getNotifications = async (req, res) => {
     try {
-        const db = admin.firestore();
-        const notificationsSnapshot = await db.collection('notifications')
+        const notificationsSnapshot = await adminDb.collection('notifications')
             .where('userId', '==', null)
             .orderBy('createdAt', 'desc')
             .get();
@@ -317,9 +297,8 @@ const getNotifications = async (req, res) => {
 // Get notifications for officer
 const getOfficerNotifications = async (req, res) => {
     try {
-        const db = admin.firestore();
-        const notificationsSnapshot = await db.collection('notifications')
-            .where('userId', '==', req.user.userId)
+        const notificationsSnapshot = await adminDb.collection('notifications')
+            .where('userId', '==', req.user.uid)
             .orderBy('createdAt', 'desc')
             .get();
         
@@ -335,9 +314,7 @@ const getOfficerNotifications = async (req, res) => {
 const markNotificationRead = async (req, res) => {
     try {
         const { id } = req.params;
-        const db = admin.firestore();
-        
-        await db.collection('notifications').doc(id).update({ read: true });
+        await adminDb.collection('notifications').doc(id).update({ read: true });
         res.json({ message: 'Notification marked as read' });
     } catch (error) {
         console.error('Error updating notification:', error);
@@ -349,14 +326,14 @@ module.exports = {
     getTasks, 
     createTask, 
     getTaskById, 
-    acceptTask,
-    addProgressReport,
-    submitTask,
-    approveTask,
-    rejectTask,
+    acceptTask, 
+    addProgressReport, 
+    submitTask, 
+    approveTask, 
+    rejectTask, 
     updateTask, 
-    deleteTask,
-    getNotifications,
-    getOfficerNotifications,
+    deleteTask, 
+    getNotifications, 
+    getOfficerNotifications, 
     markNotificationRead
 };
