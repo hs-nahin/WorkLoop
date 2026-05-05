@@ -342,7 +342,9 @@ const Dashboard = () => {
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>
+              </>
               )}
+              
               <Button
                 variant="outline"
                 className="flex items-center gap-2 group cursor-pointer"
