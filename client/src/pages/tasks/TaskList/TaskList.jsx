@@ -26,6 +26,17 @@ import BlurFade from '../../../components/animations/BlurFade';
 import GradientText from '../../../components/animations/GradientText';
 import TextHighlighter from '../../../components/animations/TextHighlighter';
 import { AuthContext } from '../../../context/AuthContextInstance.js';
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from '@/components/ui/alert-dialog';
 
 // Helper function to convert Firestore timestamp to Date
 const convertTimestamp = (timestamp) => {
@@ -73,6 +84,10 @@ const TaskList = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [officers, setOfficers] = useState([]);
   const [assistants, setAssistants] = useState([]);
+  const [taskToDelete, setTaskToDelete] = useState(null);
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [deletingTaskId, setDeletingTaskId] = useState(null);
+  const isAdmin = user?.role === 'ADMIN';
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -157,8 +172,17 @@ const TaskList = () => {
     }
   };
 
-  const handleDeleteTask = async (taskId) => {
+  const confirmDelete = (taskId) => {
+    setTaskToDelete(taskId);
+    setAlertOpen(true);
+  };
+
+  const handleDeleteTask = async () => {
+    const taskId = taskToDelete;
+    if (!taskId) return;
     try {
+      setDeletingTaskId(taskId);
+      setAlertOpen(false);
       await apiRequest({ 
         endpoint: `/tasks/${taskId}`, 
         method: 'DELETE'
@@ -167,6 +191,9 @@ const TaskList = () => {
       toast.success('Task deleted successfully');
     } catch (error) {
       toast.error(error.message || 'Failed to delete task');
+    } finally {
+      setDeletingTaskId(null);
+      setTaskToDelete(null);
     }
   };
 
@@ -404,21 +431,23 @@ const TaskList = () => {
           <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
           <p className="text-sm text-muted-foreground animate-pulse">Fetching repository data...</p>
         </div>
-      ) : (
+) : (
         <div className="rounded-xl border bg-card/50 overflow-hidden">
           {/* Table Header */}
-          <div className="grid grid-cols-[25%_10%_10%_15%_15%_12%_13%] w-full">
+          <div className={`grid w-full ${isAdmin ? 'grid-cols-[25%_10%_10%_15%_15%_20%_5%]' : 'grid-cols-[28%_12%_12%_15%_15%_30%]'}`}>
             <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b">Task Information</div>
             <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l">Status</div>
             <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l">Priority</div>
             <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l">Officer</div>
             <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l">Assistant</div>
             <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l">Deadline</div>
-            <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l text-right">Action</div>
+            {isAdmin && (
+              <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l flex items-center justify-center">Action</div>
+            )}
           </div>
           {/* Table Body */}
           {filteredTasks.length > 0 ? (
-            <div className="grid grid-cols-[25%_10%_10%_15%_15%_12%_13%] w-full">
+            <div className={`grid w-full ${isAdmin ? 'grid-cols-[25%_10%_10%_15%_15%_20%_5%]' : 'grid-cols-[28%_12%_12%_15%_15%_30%]'}`}>
               {filteredTasks.map((task) => (
                   <Fragment key={task.id}>
                   <div 
@@ -476,40 +505,63 @@ const TaskList = () => {
                       <span className="text-xs text-muted-foreground">No assistant</span>
                     )}
                   </div>
-                   <div 
-                     className="px-4 py-3 border-b border-border/50 hover:bg-accent/50 cursor-pointer flex items-center gap-2 text-sm text-muted-foreground"
-                     onClick={() => navigate(`/tasks/${task.id}`)}
-                   >
-                     <Calendar size={14} className="shrink-0" />
-                     <span>{formatDate(task.deadline)}</span>
-                   </div>
-                   <div className="px-4 py-3 border-b border-border/50 hover:bg-accent/50 flex items-center justify-end gap-1">
-                     {user?.role === 'ADMIN' && task.status === 'submitted' && (
-                       <Button 
-                         variant="ghost" 
-                         size="icon" 
-                         className="h-7 w-7 rounded-full text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-950/20"
-                         onClick={(e) => {
-                           e.stopPropagation();
-                           navigate(`/tasks/${task.id}`);
-                         }}
-                       >
-                         <Check size={14} />
-                       </Button>
-                     )}
-                     <Button 
-                       variant="ghost" 
-                       size="icon" 
-                       className="h-7 w-7 rounded-full text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20"
-                       onClick={(e) => {
-                         e.stopPropagation();
-                         handleDeleteTask(task.id);
-                       }}
-                     >
-                       <Trash2 size={14} />
-                     </Button>
-                   </div>
-                  </Fragment>
+                 <div 
+                   className="px-4 py-3 border-b border-border/50 hover:bg-accent/50 cursor-pointer flex items-center gap-2 text-sm text-muted-foreground"
+                   onClick={() => navigate(`/tasks/${task.id}`)}
+                 >
+                   <Calendar size={14} className="shrink-0" />
+                   <span>{formatDate(task.deadline)}</span>
+                 </div>
+                 {isAdmin && (
+                    <div className="px-4 py-3 border-b border-border/50 flex items-center justify-center">
+                      <AlertDialog open={alertOpen && taskToDelete === task.id} onOpenChange={(open) => {
+                        setAlertOpen(open);
+                        if (!open) setTaskToDelete(null);
+                      }}>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              confirmDelete(task.id);
+                            }}
+                            className="text-red-500 hover:text-red-700 hover:bg-red-500/10 cursor-pointer"
+                          >
+                            <Trash2 size={14} />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Task</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete this task? This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel 
+                              className="cursor-pointer"
+                              onClick={() => {
+                                setAlertOpen(false);
+                                setTaskToDelete(null);
+                              }}
+                            >
+                              Cancel
+                            </AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={handleDeleteTask}
+                            >
+                              {deletingTaskId === task.id ? (
+                                <Loader2 size={14} className="animate-spin mr-2" />
+                              ) : null}
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  )}
+                </Fragment>
               ))}
             </div>
           ) : (

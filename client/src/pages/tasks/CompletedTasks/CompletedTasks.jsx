@@ -7,15 +7,28 @@ import {
   Calendar,
   CheckCircle2,
   Loader2,
-  Search
+  Search,
+  Trash2
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { apiRequest } from '../../../api/apiClient';
 import BlurFade from '../../../components/animations/BlurFade';
 import GradientText from '../../../components/animations/GradientText';
 import TextHighlighter from '../../../components/animations/TextHighlighter';
+import { AuthContext } from '../../../context/AuthContextInstance';
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from '@/components/ui/alert-dialog';
 
 // Helper function to convert Firestore timestamp to Date
 const convertTimestamp = (timestamp) => {
@@ -44,10 +57,15 @@ const formatDate = (timestamp) => {
 };
 
 const CompletedTasks = () => {
+  const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   const [tasks, setTasks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [deletingTaskId, setDeletingTaskId] = useState(null);
+  const [taskToDelete, setTaskToDelete] = useState(null);
+  const [alertOpen, setAlertOpen] = useState(false);
+  const isAdmin = user?.role === 'ADMIN';
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -64,6 +82,28 @@ const CompletedTasks = () => {
     };
     fetchTasks();
   }, []);
+
+  const confirmDelete = (taskId) => {
+    setTaskToDelete(taskId);
+    setAlertOpen(true);
+  };
+
+  const handleDeleteTask = async () => {
+    const taskId = taskToDelete;
+    if (!taskId) return;
+    try {
+      setDeletingTaskId(taskId);
+      setAlertOpen(false);
+      await apiRequest({ endpoint: `/tasks/${taskId}`, method: 'DELETE' });
+      setTasks(tasks.filter(t => t.id !== taskId));
+      toast.success('Task deleted successfully');
+    } catch (error) {
+      toast.error(error.message || 'Failed to delete task');
+    } finally {
+      setDeletingTaskId(null);
+      setTaskToDelete(null);
+    }
+  };
 
   const getPriorityBadge = (priority) => {
     return (
@@ -119,15 +159,18 @@ const CompletedTasks = () => {
         </div>
       ) : (
         <div className="rounded-xl border bg-card/50 overflow-hidden">
-          <div className="grid grid-cols-[30%_15%_15%_15%_25%] w-full">
+          <div className={`grid w-full ${isAdmin ? 'grid-cols-[25%_10%_10%_15%_25%_15%]' : 'grid-cols-[28%_12%_12%_16%_32%]'}`}>
             <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b">Task Information</div>
             <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l">Status</div>
             <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l">Priority</div>
             <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l">Officer</div>
             <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l">Completed Date</div>
+            {isAdmin && (
+              <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l flex items-center justify-center">Action</div>
+            )}
           </div>
           {filteredTasks.length > 0 ? (
-            <div className="grid grid-cols-[30%_15%_15%_15%_25%] w-full">
+            <div className={`grid w-full ${isAdmin ? 'grid-cols-[25%_10%_10%_15%_25%_15%]' : 'grid-cols-[28%_12%_12%_16%_32%]'}`}>
               {filteredTasks.map((task) => (
                 <div key={task.id} className="contents">
                   <div 
@@ -175,6 +218,55 @@ const CompletedTasks = () => {
                       {formatDate(task.completedAt)}
                     </span>
                   </div>
+                  {isAdmin && (
+                    <div className="px-4 py-3 border-b border-border/50 flex items-center justify-center">
+                      <AlertDialog open={alertOpen && taskToDelete === task.id} onOpenChange={(open) => {
+                        setAlertOpen(open);
+                        if (!open) setTaskToDelete(null);
+                      }}>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              confirmDelete(task.id);
+                            }}
+                            className="text-red-500 hover:text-red-700 hover:bg-red-500/10 cursor-pointer"
+                          >
+                            <Trash2 size={14} />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Completed Task</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete this task? This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel 
+                              className="cursor-pointer"
+                              onClick={() => {
+                                setAlertOpen(false);
+                                setTaskToDelete(null);
+                              }}
+                            >
+                              Cancel
+                            </AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={handleDeleteTask}
+                            >
+                              {deletingTaskId === task.id ? (
+                                <Loader2 size={14} className="animate-spin mr-2" />
+                              ) : null}
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
