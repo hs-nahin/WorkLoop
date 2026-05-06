@@ -43,13 +43,16 @@ const Dashboard = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [officers, setOfficers] = useState([]);
   const [assistants, setAssistants] = useState([]);
-  const [newTask, setNewTask] = useState({ 
-    title: '', 
-    description: '', 
-    location: '', 
-    officerId: '', 
-    priority: 'medium', 
-    deadline: '',
+  const [newTask, setNewTask] = useState({
+    title: '',
+    description: '',
+    location: '',
+    officerId: '',
+    priority: 'medium',
+    deadlineDate: '',
+    deadlineHour: '',
+    deadlineMinute: '',
+    deadlineAmPm: 'AM',
     assistantId: ''
   });
 
@@ -117,7 +120,15 @@ const Dashboard = () => {
     if (!newTask.location.trim()) return toast.error('Location is required');
     if (!newTask.officerId) return toast.error('Assign an IT Officer');
     if (!newTask.priority) return toast.error('Select priority');
-    if (!newTask.deadline) return toast.error('Set a deadline');
+    if (!newTask.deadlineDate) return toast.error('Set a deadline date');
+
+    let deadline = newTask.deadlineDate;
+    if (newTask.deadlineHour && newTask.deadlineMinute) {
+      let hour = parseInt(newTask.deadlineHour);
+      if (newTask.deadlineAmPm === 'PM' && hour !== 12) hour += 12;
+      if (newTask.deadlineAmPm === 'AM' && hour === 12) hour = 0;
+      deadline = `${newTask.deadlineDate}T${hour.toString().padStart(2, '0')}:${newTask.deadlineMinute}:00`;
+    }
 
     try {
       setIsCreating(true);
@@ -127,7 +138,7 @@ const Dashboard = () => {
         location: newTask.location,
         officerId: newTask.officerId,
         priority: newTask.priority,
-        deadline: newTask.deadline,
+        deadline,
         assistantId: newTask.assistantId || null
       };
       console.log('Creating task with data:', taskData);
@@ -138,7 +149,7 @@ const Dashboard = () => {
       });
       console.log('Task created:', result);
       setIsModalOpen(false);
-      setNewTask({ title: '', description: '', location: '', officerId: '', priority: 'medium', deadline: '', assistantId: '' });
+      setNewTask({ title: '', description: '', location: '', officerId: '', priority: 'medium', deadlineDate: '', deadlineHour: '', deadlineMinute: '', deadlineAmPm: 'AM', assistantId: '' });
       toast.success('Task deployed successfully');
       navigate('/tasks');
     } catch (error) {
@@ -402,13 +413,47 @@ const Dashboard = () => {
                         </Select>
                       </div>
                       <div className="grid gap-2">
-                        <Label htmlFor="deadline">Deadline *</Label>
-                        <Input 
-                          id="deadline" 
-                          type="date" 
-                          value={newTask.deadline}
-                          onChange={(e) => setNewTask({...newTask, deadline: e.target.value})}
+                        <Label htmlFor="deadlineDate">Deadline Date *</Label>
+                        <Input
+                          id="deadlineDate"
+                          type="date"
+                          value={newTask.deadlineDate}
+                          onChange={(e) => setNewTask({...newTask, deadlineDate: e.target.value})}
                         />
+                      </div>
+                    </div>
+                    <div className="grid gap-2">
+                      <Label>Deadline Time</Label>
+                      <div className="grid grid-cols-3 gap-2">
+                        <Select value={newTask.deadlineHour} onValueChange={(v) => setNewTask({...newTask, deadlineHour: v})}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Hour" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Array.from({length: 12}, (_, i) => i + 1).map(h => (
+                              <SelectItem key={h} value={h.toString()}>{h}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Select value={newTask.deadlineMinute} onValueChange={(v) => setNewTask({...newTask, deadlineMinute: v})}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Minute" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'].map(m => (
+                              <SelectItem key={m} value={m}>{m}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Select value={newTask.deadlineAmPm} onValueChange={(v) => setNewTask({...newTask, deadlineAmPm: v})}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="AM/PM" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="AM">AM</SelectItem>
+                            <SelectItem value="PM">PM</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                   </div>
