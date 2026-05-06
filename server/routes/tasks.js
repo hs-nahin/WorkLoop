@@ -6,6 +6,7 @@ const {
   getTaskById, 
   acceptTask, 
   addProgressReport, 
+  incompleteTask,
   submitTask, 
   approveTask, 
   rejectTask, 
@@ -31,6 +32,9 @@ router.patch('/:id/accept', verifyToken, authorize(['IT OFFICER', 'ASSISTANT']),
 
 // Add progress report
 router.patch('/:id/progress', verifyToken, authorize(['IT OFFICER', 'ASSISTANT']), addProgressReport);
+
+// Mark task as incomplete
+router.patch('/:id/incomplete', verifyToken, authorize(['IT OFFICER', 'ASSISTANT']), incompleteTask);
 
 // Submit task completion
 router.patch('/:id/submit', verifyToken, authorize(['IT OFFICER', 'ASSISTANT']), submitTask);

@@ -94,7 +94,7 @@ const acceptTask = async (req, res) => {
         }
         
         await adminDb.collection('tasks').doc(id).update({
-            status: 'accepted',
+            status: 'in progress',
             acceptedAt: admin.firestore.FieldValue.serverTimestamp(),
             acceptedBy: req.user.uid
         });
@@ -151,9 +151,9 @@ const submitTask = async (req, res) => {
         
         const task = taskDoc.data();
         
-        // Only accepted tasks can be submitted
-        if (task.status !== 'accepted' && task.status !== 'rejected') {
-            return res.status(400).json({ message: 'Task must be accepted before submission' });
+        // Only in progress tasks can be submitted
+        if (task.status !== 'in progress') {
+            return res.status(400).json({ message: 'Task must be in progress before submission' });
         }
         
         await adminDb.collection('tasks').doc(id).update({
@@ -177,6 +177,35 @@ const submitTask = async (req, res) => {
         res.json({ id: updatedDoc.id, ...updatedDoc.data() });
     } catch (error) {
         console.error('Error submitting task:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+// Mark task as incomplete (officer marks task as incomplete)
+const incompleteTask = async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        const taskDoc = await adminDb.collection('tasks').doc(id).get();
+        
+        if (!taskDoc.exists) return res.status(404).json({ message: 'Task not found' });
+        
+        const task = taskDoc.data();
+        
+        // Only in progress tasks can be marked as incomplete
+        if (task.status !== 'in progress') {
+            return res.status(400).json({ message: 'Only in progress tasks can be marked as incomplete' });
+        }
+        
+        await adminDb.collection('tasks').doc(id).update({
+            status: 'incomplete',
+            completedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+        
+        const updatedDoc = await adminDb.collection('tasks').doc(id).get();
+        res.json({ id: updatedDoc.id, ...updatedDoc.data() });
+    } catch (error) {
+        console.error('Error marking task as incomplete:', error);
         res.status(500).json({ message: 'Server error' });
     }
 };
@@ -327,7 +356,8 @@ module.exports = {
     createTask, 
     getTaskById, 
     acceptTask, 
-    addProgressReport, 
+    addProgressReport,
+    incompleteTask,
     submitTask, 
     approveTask, 
     rejectTask, 

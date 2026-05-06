@@ -23,23 +23,26 @@ export default function Users() {
       try {
         console.log('[Users] Fetching /users...');
         const data = await apiRequest({ endpoint: '/users' });
-        console.log('[Users] Data:', data);
+        console.log('[Users] Data received:', data);
         
-        // Filter valid users: must have email with @ and valid role
-        const validUsers = (data || []).filter(u => 
-          u.email?.includes('@') && 
-          ['IT OFFICER', 'ASSISTANT', 'ADMIN'].includes(u.role?.toUpperCase())
-        );
+        // Filter valid users: must have a role (email check removed as not all users have email in doc)
+        const validUsers = (data || []).filter(u => {
+          const role = u.role?.toUpperCase();
+          return role && ['IT OFFICER', 'ASSISTANT', 'ADMIN'].includes(role);
+        });
         
-        // Deduplicate by email or uid
+        console.log('[Users] Valid users after filtering:', validUsers);
+        
+        // Deduplicate by uid or userId
         const seen = new Set();
         const uniqueUsers = validUsers.filter(u => {
-          const key = u.email || u.uid || u.userId;
+          const key = u.uid || u.userId || u.email;
           if (seen.has(key)) return false;
           seen.add(key);
           return true;
         });
         
+        console.log('[Users] Final users set:', uniqueUsers);
         setUsers(uniqueUsers);
       } catch (err) {
         console.error('[Users] Error:', err);

@@ -1,14 +1,20 @@
 const express = require('express');
 const router = express.Router();
 const { adminDb } = require('../firebase-admin');
-const { verifyToken, selfOrAdmin } = require('../middleware/auth');
+const { verifyToken, selfOrAdmin, authorize } = require('../middleware/auth');
 
 router.get('/', verifyToken, async (req, res) => {
   try {
     const snapshot = await adminDb.collection('users').get();
-    const users = snapshot.docs
-      .map(doc => ({ uid: doc.id, ...doc.data() }))
-      .filter(u => u.isActive !== false);
+    const users = snapshot.docs.map(doc => {
+      const data = doc.data();
+      return { 
+        uid: doc.id, 
+        userId: doc.id, 
+        id: doc.id, 
+        ...data 
+      };
+    }).filter(u => u.role && u.isActive !== false); // Must have role and not be deactivated
     res.json(users);
   } catch (error) {
     console.error('Get users error:', error);
@@ -25,7 +31,7 @@ router.get('/:uid', verifyToken, async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    res.json({ uid: userDoc.id, ...userDoc.data() });
+    res.json({ uid: userDoc.id, userId: userDoc.id, id: userDoc.id, ...userDoc.data() });
   } catch (error) {
     console.error('Get user error:', error);
     res.status(500).json({ message: error.message });

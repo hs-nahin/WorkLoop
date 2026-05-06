@@ -65,25 +65,7 @@ const TaskDetail = () => {
     }
   };
 
-  const handleAddProgress = async () => {
-    if (!progressMessage.trim()) return toast.error('Please provide progress message');
-    
-    try {
-      await apiRequest({ 
-        endpoint: `/tasks/${id}/progress`, 
-        method: 'PATCH',
-        body: { message: progressMessage }
-      });
-      toast.success('Progress report added!');
-      setProgressMessage('');
-      const data = await apiRequest({ endpoint: `/tasks/${id}` });
-      setTask(data);
-    } catch (error) {
-      toast.error(error.message || 'Failed to add progress');
-    }
-  };
-
-  const handleSubmitReport = async () => {
+  const handleCompleteTask = async () => {
     if (!report.trim()) return toast.error('Please provide a completion report');
     
     try {
@@ -98,6 +80,20 @@ const TaskDetail = () => {
       setReport('');
     } catch (error) {
       toast.error(error.message || 'Submission failed');
+    }
+  };
+
+  const handleIncompleteTask = async () => {
+    try {
+      await apiRequest({ 
+        endpoint: `/tasks/${id}/incomplete`, 
+        method: 'PATCH' 
+      });
+      toast.error('Task marked as incomplete');
+      const data = await apiRequest({ endpoint: `/tasks/${id}` });
+      setTask(data);
+    } catch (error) {
+      toast.error(error.message || 'Failed to mark task as incomplete');
     }
   };
 
@@ -138,9 +134,10 @@ const TaskDetail = () => {
       case 'approved': return 'text-green-600 dark:text-green-400 border-green-600/30 dark:border-green-400/30 bg-green-600/10 dark:bg-green-400/10';
       case 'completed': return 'text-green-600 dark:text-green-400 border-green-600/30 dark:border-green-400/30 bg-green-600/10 dark:bg-green-400/10';
       case 'pending': return 'text-yellow-600 dark:text-yellow-400 border-yellow-600/30 dark:border-yellow-400/30 bg-yellow-600/10 dark:bg-yellow-400/10';
-      case 'accepted': return 'text-blue-600 dark:text-blue-400 border-blue-600/30 dark:border-blue-400/30 bg-blue-600/10 dark:bg-blue-400/10';
+      case 'in progress': return 'text-blue-600 dark:text-blue-400 border-blue-600/30 dark:border-blue-400/30 bg-blue-600/10 dark:bg-blue-400/10';
       case 'submitted': return 'text-purple-600 dark:text-purple-400 border-purple-600/30 dark:border-purple-400/30 bg-purple-600/10 dark:bg-purple-400/10';
       case 'rejected': return 'text-red-600 dark:text-red-400 border-red-600/30 dark:border-red-400/30 bg-red-600/10 dark:bg-red-400/10';
+      case 'incomplete': return 'text-orange-600 dark:text-orange-400 border-orange-600/30 dark:border-orange-400/30 bg-orange-600/10 dark:bg-orange-400/10';
       default: return 'text-gray-600 dark:text-gray-400 border-gray-600/30 dark:border-gray-400/30 bg-gray-600/10 dark:bg-gray-400/10';
     }
   };
@@ -216,7 +213,7 @@ const TaskDetail = () => {
           </BlurFade>
 
           {/* Accept Task - for officers */}
-          {user?.role === 'IT OFFICER' && task.officerId === user.userId && task.status === 'pending' && (
+          {user?.role === 'IT OFFICER' && (task.officerId === user.uid || task.officerId === user.id) && task.status === 'pending' && (
             <BlurFade delay={100}>
               <MagicCard>
                 <div className="space-y-4">
@@ -233,9 +230,48 @@ const TaskDetail = () => {
             </BlurFade>
           )}
 
-          {/* Add Progress Report - for officers with accepted tasks */}
-          {user?.role === 'IT OFFICER' && task.officerId === user.userId && task.status === 'accepted' && (
+          {/* In Progress Actions - Complete & Incomplete buttons */}
+          {user?.role === 'IT OFFICER' && (task.officerId === user.uid || task.officerId === user.id) && task.status === 'in progress' && (
             <BlurFade delay={100}>
+              <MagicCard>
+                <div className="space-y-4">
+                  <h3 className="text-lg font-bold text-foreground">Task Actions</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Mark task as complete to submit for review, or mark as incomplete if work cannot be finished
+                  </p>
+                  
+                  <div className="flex gap-3">
+                    <Button 
+                      onClick={handleCompleteTask}
+                      className="flex-1 cursor-pointer"
+                    >
+                      Complete Task
+                    </Button>
+                    <Button 
+                      onClick={handleIncompleteTask}
+                      variant="destructive"
+                      className="flex-1 cursor-pointer"
+                    >
+                      Mark Incomplete
+                    </Button>
+                  </div>
+                  
+                  <div className="mt-4">
+                    <Textarea 
+                      value={report}
+                      onChange={(e) => setReport(e.target.value)}
+                      placeholder="Add completion report (required for Complete action)..."
+                      className="w-full h-32"
+                    />
+                  </div>
+                </div>
+              </MagicCard>
+            </BlurFade>
+          )}
+
+          {/* Add Progress Report - for officers with in progress tasks */}
+          {user?.role === 'IT OFFICER' && (task.officerId === user.uid || task.officerId === user.id) && task.status === 'in progress' && (
+            <BlurFade delay={150}>
               <MagicCard>
                 <div className="space-y-4">
                   <h3 className="text-lg font-bold text-foreground">Add Progress Report</h3>
@@ -246,7 +282,7 @@ const TaskDetail = () => {
                     className="w-full h-32"
                   />
                   <Button 
-                    onClick={handleAddProgress}
+                    onClick={handleCompleteTask}
                     className="cursor-pointer"
                   >
                     Add Progress Update
@@ -270,32 +306,6 @@ const TaskDetail = () => {
               </MagicCard>
             </BlurFade>
           )}
-
-          {/* Submit Completion Report - for officers with accepted tasks */}
-          {user?.role === 'IT OFFICER' && task.officerId === user.userId && (task.status === 'accepted' || task.status === 'rejected') && (
-            <BlurFade delay={200}>
-              <MagicCard>
-                <div className="space-y-4">
-                  <h3 className="text-lg font-bold text-foreground">Submit Work Report</h3>
-                  <div className="p-4 rounded-xl bg-muted/50 border border-border italic text-sm text-muted-foreground">
-                    "{task.completionReport || 'No report submitted yet'}"
-                  </div>
-                  <Textarea 
-                    value={report}
-                    onChange={(e) => setReport(e.target.value)}
-                    placeholder="Describe the work performed, problems solved, and any remaining issues..."
-                    className="w-full h-32"
-                  />
-                  <Button 
-                    onClick={handleSubmitReport}
-                    className="cursor-pointer"
-                  >
-                    Submit for Review
-                  </Button>
-                </div>
-              </MagicCard>
-            </BlurFade>
-          )}
         </div>
 
         <div className="space-y-6">
@@ -313,26 +323,26 @@ const TaskDetail = () => {
                     className="absolute top-5 left-0 h-1 bg-gradient-to-r from-sky-600 via-blue-500 to-purple-500 rounded-full -z-0 transition-all duration-500"
                     style={{
                       width: task.status === 'pending' ? '0%' :
-                             task.status === 'accepted' ? '50%' :
-                             ['submitted', 'approved', 'completed', 'rejected'].includes(task.status) ? '100%' : '0%'
+                             task.status === 'in progress' ? '50%' :
+                             ['submitted', 'approved', 'completed', 'rejected', 'incomplete'].includes(task.status) ? '100%' : '0%'
                     }}
                   ></div>
 
                   {/* Step1: Pending */}
                   <div className="flex flex-col items-center gap-2 z-10">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
-                      ['pending', 'accepted', 'submitted', 'approved', 'completed', 'rejected'].includes(task.status)
+                      ['pending', 'in progress', 'submitted', 'approved', 'completed', 'rejected', 'incomplete'].includes(task.status)
                         ? 'bg-sky-600 text-white shadow-lg shadow-sky-600/25'
                         : 'bg-muted text-muted-foreground'
                     }`}>
-                      {['accepted', 'submitted', 'approved', 'completed', 'rejected'].includes(task.status) ? (
+                      {['in progress', 'submitted', 'approved', 'completed', 'rejected', 'incomplete'].includes(task.status) ? (
                         <CheckCircle2 size={18} />
                       ) : (
                         <Clock size={18} />
                       )}
                     </div>
                     <span className={`text-xs font-medium ${
-                      ['pending', 'accepted', 'submitted', 'approved', 'completed', 'rejected'].includes(task.status)
+                      ['pending', 'in progress', 'submitted', 'approved', 'completed', 'rejected', 'incomplete'].includes(task.status)
                         ? 'text-foreground'
                         : 'text-muted-foreground'
                     }`}>Pending</span>
@@ -341,20 +351,20 @@ const TaskDetail = () => {
                   {/* Step 2: In Progress */}
                   <div className="flex flex-col items-center gap-2 z-10">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
-                      ['accepted', 'submitted', 'approved', 'completed', 'rejected'].includes(task.status)
+                      ['in progress', 'submitted', 'approved', 'completed', 'rejected', 'incomplete'].includes(task.status)
                         ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/25'
                         : 'bg-muted text-muted-foreground'
                     }`}>
-                      {['submitted', 'approved', 'completed', 'rejected'].includes(task.status) ? (
+                      {['submitted', 'approved', 'completed', 'rejected', 'incomplete'].includes(task.status) ? (
                         <CheckCircle2 size={18} />
-                      ) : ['accepted'].includes(task.status) ? (
+                      ) : task.status === 'in progress' ? (
                         <Loader2 size={18} className="animate-spin" />
                       ) : (
                         <Circle size={18} />
                       )}
                     </div>
                     <span className={`text-xs font-medium ${
-                      ['accepted', 'submitted', 'approved', 'completed', 'rejected'].includes(task.status)
+                      ['in progress', 'submitted', 'approved', 'completed', 'rejected', 'incomplete'].includes(task.status)
                         ? 'text-foreground'
                         : 'text-muted-foreground'
                     }`}>In Progress</span>
@@ -363,22 +373,22 @@ const TaskDetail = () => {
                   {/* Step 3: Submitted */}
                   <div className="flex flex-col items-center gap-2 z-10">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
-                      ['submitted', 'approved', 'completed', 'rejected'].includes(task.status)
+                      ['submitted', 'approved', 'completed', 'rejected', 'incomplete'].includes(task.status)
                         ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/25'
                         : 'bg-muted text-muted-foreground'
                     }`}>
                       {['approved', 'completed'].includes(task.status) ? (
                         <CheckCircle2 size={18} />
-                      ) : ['submitted'].includes(task.status) ? (
+                      ) : task.status === 'submitted' ? (
                         <CheckCircle2 size={18} className="animate-pulse" />
-                      ) : ['rejected'].includes(task.status) ? (
+                      ) : ['rejected', 'incomplete'].includes(task.status) ? (
                         <CheckCircle2 size={18} />
                       ) : (
                         <Circle size={18} />
                       )}
                     </div>
                     <span className={`text-xs font-medium ${
-                      ['submitted', 'approved', 'completed', 'rejected'].includes(task.status)
+                      ['submitted', 'approved', 'completed', 'rejected', 'incomplete'].includes(task.status)
                         ? 'text-foreground'
                         : 'text-muted-foreground'
                     }`}>Submitted</span>
@@ -388,18 +398,19 @@ const TaskDetail = () => {
                 {/* Status Message */}
                 <div className={`text-center text-xs font-medium p-2 rounded-lg ${
                   task.status === 'pending' ? 'text-sky-600 bg-sky-600/10' :
-                  task.status === 'accepted' ? 'text-blue-600 bg-blue-500/10' :
+                  task.status === 'in progress' ? 'text-blue-600 bg-blue-500/10' :
                   task.status === 'submitted' ? 'text-purple-600 bg-purple-500/10' :
                   task.status === 'approved' || task.status === 'completed' ? 'text-green-600 bg-green-500/10' :
-                  task.status === 'rejected' ? 'text-red-600 bg-red-500/10' :
+                  task.status === 'rejected' || task.status === 'incomplete' ? 'text-red-600 bg-red-500/10' :
                   'text-muted-foreground bg-muted/50'
                 }`}>
                   {task.status === 'pending' && '⏳ Task is pending assignment'}
-                  {task.status === 'accepted' && '🔄 Task is in progress'}
+                  {task.status === 'in progress' && '🔄 Task is in progress'}
                   {task.status === 'submitted' && '⏳ Waiting for admin approval'}
                   {task.status === 'approved' && '✅ Task has been approved'}
                   {task.status === 'completed' && '✅ Task completed'}
                   {task.status === 'rejected' && '❌ Task was rejected'}
+                  {task.status === 'incomplete' && '⚠️ Task marked as incomplete'}
                 </div>
               </div>
             </MagicCard>

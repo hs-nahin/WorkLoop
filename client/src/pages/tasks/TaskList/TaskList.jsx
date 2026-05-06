@@ -58,12 +58,23 @@ const TaskList = () => {
     const fetchUsers = async () => {
       try {
         const data = await apiRequest({ endpoint: '/users' });
-        const officerList = data.filter(user => user.role === 'IT OFFICER');
+        console.log('[TaskList] Users fetched:', data);
+        
+        // Filter users with IT OFFICER role (case-insensitive)
+        const officerList = data.filter(user => {
+          const role = user.role?.toUpperCase();
+          return role === 'IT OFFICER';
+        });
+        console.log('[TaskList] Officers:', officerList);
         setOfficers(officerList);
-        const assistantList = data.filter(user => user.role === 'ASSISTANT');
+        
+        const assistantList = data.filter(user => {
+          const role = user.role?.toUpperCase();
+          return role === 'ASSISTANT';
+        });
         setAssistants(assistantList);
       } catch (error) {
-        console.error('Failed to fetch users:', error);
+        console.error('[TaskList] Failed to fetch users:', error);
       }
     };
     if (user?.role === 'ADMIN') {
