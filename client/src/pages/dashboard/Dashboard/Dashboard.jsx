@@ -263,8 +263,7 @@ const Dashboard = () => {
              <BlurFade delay={500}>
                <Card className="border-border bg-card/50 backdrop-blur-sm">
                 <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
+<div>
                       <CardTitle className="text-lg font-semibold">
                         Personnel Overview
                       </CardTitle>
@@ -272,17 +271,6 @@ const Dashboard = () => {
                         IT Officers and Assistants registered in the system
                       </CardDescription>
                     </div>
-                    {user?.role === 'ADMIN' && (
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => navigate('/users')}
-                        className="cursor-pointer"
-                      >
-                        View All
-                      </Button>
-                    )}
-                  </div>
                 </CardHeader>
                 <CardContent>
                    <div className="space-y-4">

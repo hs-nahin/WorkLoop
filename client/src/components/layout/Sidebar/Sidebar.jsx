@@ -9,7 +9,6 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
-  Users
 } from "lucide-react";
 import { useContext, useState } from "react";
 import { Link, useLocation } from "react-router";
@@ -28,7 +27,6 @@ const Sidebar = () => {
     { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard, roles: ["ADMIN", "IT OFFICER", "ASSISTANT"] },
     { name: "Tasks", path: "/tasks", icon: CheckSquare, roles: ["ADMIN", "IT OFFICER", "ASSISTANT"] },
     { name: "Completed", path: "/completed", icon: CheckCircle2, roles: ["ADMIN", "IT OFFICER", "ASSISTANT"] },
-    { name: "Users", path: "/users", icon: Users, roles: ["ADMIN"] },
   ];
 
   const filteredItems = menuItems.filter(item => item.roles.includes(user?.role));

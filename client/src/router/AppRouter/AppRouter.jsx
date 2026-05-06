@@ -5,7 +5,6 @@ import Settings from "@/pages/settings/Settings";
 import TaskDetail from "@/pages/tasks/TaskDetail/TaskDetail";
 import TaskList from "@/pages/tasks/TaskList/TaskList";
 import CompletedTasks from "@/pages/tasks/CompletedTasks/CompletedTasks";
-import Users from "@/pages/users/Users";
 import { createBrowserRouter, RouterProvider } from "react-router";
 import ProtectedRoute from "../ProtectedRoute/ProtectedRoute";
 
@@ -37,11 +36,6 @@ const router = createBrowserRouter([
           {
             path: 'completed',
             element: <CompletedTasks />,
-          },
-          {
-            path: 'users',
-            element: <ProtectedRoute allowedRoles={['ADMIN']} />, 
-            children: [{ element: <Users /> }]
           },
           {
             path: 'settings',
