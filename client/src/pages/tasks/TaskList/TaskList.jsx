@@ -27,6 +27,41 @@ import GradientText from '../../../components/animations/GradientText';
 import TextHighlighter from '../../../components/animations/TextHighlighter';
 import { AuthContext } from '../../../context/AuthContextInstance.js';
 
+// Helper function to convert Firestore timestamp to Date
+const convertTimestamp = (timestamp) => {
+  if (!timestamp) return null;
+  if (typeof timestamp.toDate === 'function') {
+    return timestamp.toDate();
+  }
+  if (timestamp._seconds) {
+    return new Date(timestamp._seconds * 1000);
+  }
+  return new Date(timestamp);
+};
+
+// Helper function to convert 12-hour to 24-hour format
+const convertTo24Hour = (hour12, ampm) => {
+  if (ampm === 'AM') {
+    return hour12 === 12 ? 0 : hour12;
+  } else {
+    return hour12 === 12 ? 12 : hour12 + 12;
+  }
+};
+
+// Helper function to format date using browser's local timezone
+const formatDate = (timestamp) => {
+  const date = convertTimestamp(timestamp);
+  if (!date || isNaN(date.getTime())) return 'N/A';
+  return date.toLocaleString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  });
+};
+
 const TaskList = () => {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -34,7 +69,7 @@ const TaskList = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [newTask, setNewTask] = useState({ title: '', description: '', officerId: '', priority: 'medium', deadline: '', location: '', assistants: [] });
+  const [newTask, setNewTask] = useState({ title: '', description: '', location: '', officerId: '', priority: 'medium', deadline: '', deadlineTime: '23:59', deadlineHour: '11', deadlineMinute: '59', deadlineAMPM: 'PM', assistants: [] });
   const [isCreating, setIsCreating] = useState(false);
   const [officers, setOfficers] = useState([]);
   const [assistants, setAssistants] = useState([]);
@@ -44,7 +79,9 @@ const TaskList = () => {
       try {
         setIsLoading(true);
         const data = await apiRequest({ endpoint: '/tasks' });
-        setTasks(data);
+        // Filter out completed tasks - they should only appear in Completed page
+        const activeTasks = data.filter(task => task.status !== 'completed');
+        setTasks(activeTasks);
       } catch (error) {
         toast.error(error.message || 'Failed to fetch tasks');
       } finally {
@@ -92,13 +129,16 @@ const TaskList = () => {
 
     try {
       setIsCreating(true);
+      // Combine date and time into ISO string
+      const deadlineDateTime = new Date(`${newTask.deadline}T${newTask.deadlineTime}:00`);
+      
       const taskData = {
         title: newTask.title,
         description: newTask.description,
         location: newTask.location,
         officerId: newTask.officerId,
         priority: newTask.priority,
-        deadline: newTask.deadline,
+        deadline: deadlineDateTime.toISOString(),
         assistants: newTask.assistants
       };
       const createdTask = await apiRequest({ 
@@ -108,26 +148,12 @@ const TaskList = () => {
       });
       setTasks([createdTask, ...tasks]);
       setIsModalOpen(false);
-      setNewTask({ title: '', description: '', location: '', officerId: '', priority: 'medium', deadline: '', assistants: [] });
+      setNewTask({ title: '', description: '', location: '', officerId: '', priority: 'medium', deadline: '', deadlineTime: '23:59', deadlineHour: '11', deadlineMinute: '59', deadlineAMPM: 'PM', assistants: [] });
       toast.success('Task deployed successfully');
     } catch (error) {
       toast.error(error.message || 'Creation failed');
     } finally {
       setIsCreating(false);
-    }
-  };
-
-  const handleCompleteTask = async (taskId) => {
-    try {
-      await apiRequest({ 
-        endpoint: `/tasks/${taskId}`, 
-        method: 'PUT', 
-        body: { status: 'completed' } 
-      });
-      setTasks(tasks.map(t => t.id === taskId ? { ...t, status: 'completed' } : t));
-      toast.success('Task marked as completed');
-    } catch (error) {
-      toast.error(error.message || 'Failed to complete task');
     }
   };
 
@@ -269,33 +295,95 @@ const TaskList = () => {
                        ))}
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="priority">Priority *</Label>
-                      <Select 
-                        value={newTask.priority} 
-                        onValueChange={(v) => setNewTask({...newTask, priority: v})}
-                      >
-                        <SelectTrigger id="priority">
-                          <SelectValue placeholder="Select Priority" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="low">Low</SelectItem>
-                          <SelectItem value="medium">Medium</SelectItem>
-                          <SelectItem value="high">High</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="deadline">Deadline *</Label>
-                      <Input 
-                        id="deadline"
-                        type="date"
-                        value={newTask.deadline}
-                        onChange={(e) => setNewTask({...newTask, deadline: e.target.value})}
-                      />
-                    </div>
-                  </div>
+                   <div className="grid grid-cols-2 gap-4">
+                     <div className="grid gap-2">
+                       <Label htmlFor="priority">Priority *</Label>
+                       <Select 
+                         value={newTask.priority} 
+                         onValueChange={(v) => setNewTask({...newTask, priority: v})}
+                       >
+                         <SelectTrigger id="priority">
+                           <SelectValue placeholder="Select Priority" />
+                         </SelectTrigger>
+                         <SelectContent>
+                           <SelectItem value="low">Low</SelectItem>
+                           <SelectItem value="medium">Medium</SelectItem>
+                           <SelectItem value="high">High</SelectItem>
+                         </SelectContent>
+                       </Select>
+                     </div>
+                     <div className="grid gap-2">
+                       <Label htmlFor="deadline">Deadline *</Label>
+                       <Input 
+                         id="deadline"
+                         type="date"
+                         value={newTask.deadline}
+                         onChange={(e) => setNewTask({...newTask, deadline: e.target.value})}
+                       />
+                     </div>
+                   </div>
+                   <div className="grid gap-2">
+                     <Label htmlFor="deadlineTime">Deadline Time *</Label>
+                     <div className="flex items-center gap-2">
+                       <Select 
+                         value={newTask.deadlineHour || '11'} 
+                         onValueChange={(v) => {
+                           const hour = parseInt(v);
+                           const minute = newTask.deadlineMinute || '59';
+                           const ampm = newTask.deadlineAMPM || 'PM';
+                           const time24 = convertTo24Hour(hour, ampm);
+                           setNewTask({...newTask, deadlineHour: v, deadlineTime: `${time24}:${minute}`});
+                         }}
+                       >
+                         <SelectTrigger className="w-20">
+                           <SelectValue />
+                         </SelectTrigger>
+                         <SelectContent>
+                           {Array.from({length: 12}, (_, i) => i + 1).map(h => (
+                             <SelectItem key={h} value={h.toString()}>{h}</SelectItem>
+                           ))}
+                         </SelectContent>
+                       </Select>
+                       <span className="text-sm">:</span>
+                       <Select 
+                         value={newTask.deadlineMinute || '59'} 
+                         onValueChange={(v) => {
+                           const hour = newTask.deadlineHour || '11';
+                           const minute = v;
+                           const ampm = newTask.deadlineAMPM || 'PM';
+                           const time24 = convertTo24Hour(parseInt(hour), ampm);
+                           setNewTask({...newTask, deadlineMinute: v, deadlineTime: `${time24}:${minute}`});
+                         }}
+                       >
+                         <SelectTrigger className="w-20">
+                           <SelectValue />
+                         </SelectTrigger>
+                         <SelectContent>
+                           {Array.from({length: 60}, (_, i) => i.toString().padStart(2, '0')).map(m => (
+                             <SelectItem key={m} value={m}>{m}</SelectItem>
+                           ))}
+                         </SelectContent>
+                       </Select>
+                       <Select 
+                         value={newTask.deadlineAMPM || 'PM'} 
+                         onValueChange={(v) => {
+                           const hour = newTask.deadlineHour || '11';
+                           const minute = newTask.deadlineMinute || '59';
+                           const time24 = convertTo24Hour(parseInt(hour), v);
+                           setNewTask({...newTask, deadlineAMPM: v, deadlineTime: `${time24}:${minute}`});
+                         }}
+                       >
+                         <SelectTrigger className="w-20">
+                           <SelectValue />
+                         </SelectTrigger>
+                         <SelectContent>
+                           <SelectItem value="AM">AM</SelectItem>
+                           <SelectItem value="PM">PM</SelectItem>
+                         </SelectContent>
+                       </Select>
+                     </div>
+                     <p className="text-xs text-muted-foreground">Task must be completed by this date and time</p>
+                   </div>
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancel</Button>
@@ -386,37 +474,39 @@ const TaskList = () => {
                       <span className="text-xs text-muted-foreground">No assistant</span>
                     )}
                   </div>
-                  <div 
-                    className="px-4 py-3 border-b border-border/50 hover:bg-accent/50 cursor-pointer flex items-center gap-2 text-sm text-muted-foreground"
-                    onClick={() => navigate(`/tasks/${task.id}`)}
-                  >
-                    <Calendar size={14} className="shrink-0" />
-                    <span>{task.deadline || 'No date'}</span>
-                  </div>
-                  <div className="px-4 py-3 border-b border-border/50 hover:bg-accent/50 flex items-center justify-end gap-1">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-7 w-7 rounded-full text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-950/20"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleCompleteTask(task.id);
-                      }}
-                    >
-                      <Check size={14} />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-7 w-7 rounded-full text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteTask(task.id);
-                      }}
-                    >
-                      <Trash2 size={14} />
-                    </Button>
-                  </div>
+                   <div 
+                     className="px-4 py-3 border-b border-border/50 hover:bg-accent/50 cursor-pointer flex items-center gap-2 text-sm text-muted-foreground"
+                     onClick={() => navigate(`/tasks/${task.id}`)}
+                   >
+                     <Calendar size={14} className="shrink-0" />
+                     <span>{formatDate(task.deadline)}</span>
+                   </div>
+                   <div className="px-4 py-3 border-b border-border/50 hover:bg-accent/50 flex items-center justify-end gap-1">
+                     {user?.role === 'ADMIN' && task.status === 'submitted' && (
+                       <Button 
+                         variant="ghost" 
+                         size="icon" 
+                         className="h-7 w-7 rounded-full text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-950/20"
+                         onClick={(e) => {
+                           e.stopPropagation();
+                           navigate(`/tasks/${task.id}`);
+                         }}
+                       >
+                         <Check size={14} />
+                       </Button>
+                     )}
+                     <Button 
+                       variant="ghost" 
+                       size="icon" 
+                       className="h-7 w-7 rounded-full text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20"
+                       onClick={(e) => {
+                         e.stopPropagation();
+                         handleDeleteTask(task.id);
+                       }}
+                     >
+                       <Trash2 size={14} />
+                     </Button>
+                   </div>
                   </Fragment>
               ))}
             </div>

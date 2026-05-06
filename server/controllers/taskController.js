@@ -210,26 +210,32 @@ const incompleteTask = async (req, res) => {
     }
 };
 
-// Admin approve task
+// Admin approve task - moves to completed
 const approveTask = async (req, res) => {
     try {
         const { id } = req.params;
+        const { feedback } = req.body;
+        
         const taskDoc = await adminDb.collection('tasks').doc(id).get();
         if (!taskDoc.exists) return res.status(404).json({ message: 'Task not found' });
         
         await adminDb.collection('tasks').doc(id).update({
-            status: 'approved',
+            status: 'completed',
             completedAt: admin.firestore.FieldValue.serverTimestamp(),
-            adminFeedback: null
+            adminFeedback: feedback || null
         });
         
         // Create notification for officer
         const task = taskDoc.data();
+        const notificationMessage = feedback 
+            ? `Task "${task.title}" has been approved. Feedback: ${feedback}`
+            : `Task "${task.title}" has been approved and completed`;
+        
         await adminDb.collection('notifications').add({
             type: 'task_approved',
             taskId: id,
             taskTitle: task.title,
-            message: `Task "${task.title}" has been approved`,
+            message: notificationMessage,
             userId: task.officerId,
             read: false,
             createdAt: admin.firestore.FieldValue.serverTimestamp()
@@ -243,7 +249,7 @@ const approveTask = async (req, res) => {
     }
 };
 
-// Admin reject task with feedback
+// Admin reject task with feedback - returns to in progress
 const rejectTask = async (req, res) => {
     try {
         const { id } = req.params;
@@ -257,10 +263,10 @@ const rejectTask = async (req, res) => {
         if (!taskDoc.exists) return res.status(404).json({ message: 'Task not found' });
         
         await adminDb.collection('tasks').doc(id).update({
-            status: 'rejected',
+            status: 'in progress',
             adminFeedback: feedback,
-            submittedAt: null,
-            completionReport: null
+            submittedAt: null
+            // Keep completionReport and progressReports for officer to review
         });
         
         // Create notification for officer

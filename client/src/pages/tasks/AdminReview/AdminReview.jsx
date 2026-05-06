@@ -19,20 +19,24 @@ const AdminReview = () => {
 
   const fetchTasks = async () => {
     try {
-      const data = await apiRequest({ endpoint: '/tasks/status/submitted' });
-      setTasks(data);
+      const data = await apiRequest({ endpoint: '/tasks' });
+      const submittedTasks = data.filter(task => task.status === 'submitted');
+      setTasks(submittedTasks);
     } catch (error) {
       console.error('Error fetching tasks:', error);
     }
   };
 
   const handleApprove = async (taskId) => {
+    const feedbackMsg = feedback[taskId];
     try {
       await apiRequest({ 
         endpoint: `/tasks/${taskId}/approve`, 
-        method: 'PATCH' 
+        method: 'PATCH',
+        body: feedbackMsg?.trim() ? { feedback: feedbackMsg } : {}
       });
       toast.success('Task approved successfully!');
+      setFeedback(prev => ({ ...prev, [taskId]: '' }));
       fetchTasks();
     } catch (error) {
       toast.error(error.message || 'Approval failed');

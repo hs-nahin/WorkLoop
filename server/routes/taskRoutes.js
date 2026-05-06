@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getTasks, createTask, getTaskById, updateTask, deleteTask, submitTask, decideTask } = require('../controllers/taskController');
+const { getTasks, createTask, getTaskById, updateTask, deleteTask, submitTask, approveTask, rejectTask } = require('../controllers/taskController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
 router.route('/')
@@ -13,6 +13,7 @@ router.route('/:id')
     .delete(protect, authorize('ADMIN'), deleteTask);
 
 router.patch('/:id/submit', protect, authorize('IT OFFICER'), submitTask);
-router.patch('/:id/decide', protect, authorize('ADMIN'), decideTask);
+router.patch('/:id/approve', protect, authorize('ADMIN'), approveTask);
+router.patch('/:id/reject', protect, authorize('ADMIN'), rejectTask);
 
 module.exports = router;

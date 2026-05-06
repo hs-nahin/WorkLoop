@@ -12,6 +12,35 @@ import TextHighlighter from '../../../components/animations/TextHighlighter';
 import Confetti from '../../../components/animations/Confetti';
 import { AuthContext } from '../../../context/AuthContext';
 
+// Helper function to convert Firestore timestamp to Date
+const convertTimestamp = (timestamp) => {
+  if (!timestamp) return null;
+  // Firestore Timestamp object with toDate method
+  if (typeof timestamp.toDate === 'function') {
+    return timestamp.toDate();
+  }
+  // Firestore Timestamp serialized as { _seconds, _nanoseconds }
+  if (timestamp._seconds) {
+    return new Date(timestamp._seconds * 1000);
+  }
+  // Already a Date object or string
+  return new Date(timestamp);
+};
+
+// Helper function to format date using browser's local timezone
+const formatDate = (timestamp) => {
+  const date = convertTimestamp(timestamp);
+  if (!date || isNaN(date.getTime())) return 'N/A';
+  return date.toLocaleString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  });
+};
+
 const TaskDetail = () => {
   const { id } = useParams();
   const { user } = useContext(AuthContext);
@@ -19,7 +48,6 @@ const TaskDetail = () => {
   const [task, setTask] = useState(null);
   const [report, setReport] = useState('');
   const [feedback, setFeedback] = useState('');
-  const [progressMessage, setProgressMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [officers, setOfficers] = useState([]);
 
@@ -74,7 +102,7 @@ const TaskDetail = () => {
         method: 'PATCH', 
         body: { report }, 
       });
-      toast.success('Task submitted for review!');
+      toast.success('Task submitted for admin review!');
       const data = await apiRequest({ endpoint: `/tasks/${id}` });
       setTask(data);
       setReport('');
@@ -101,7 +129,8 @@ const TaskDetail = () => {
     try {
       await apiRequest({ 
         endpoint: `/tasks/${id}/approve`, 
-        method: 'PATCH' 
+        method: 'PATCH',
+        body: feedback ? { feedback } : {}
       });
       toast.success('Task approved!');
       navigate('/dashboard');
@@ -173,12 +202,53 @@ const TaskDetail = () => {
                   <p className="text-foreground leading-relaxed">{task.description}</p>
                 </div>
 
-                {task.location && (
-                  <div className="space-y-2">
-                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Location</span>
-                    <p className="text-foreground">{task.location}</p>
-                  </div>
-                )}
+                 {task.location && (
+                   <div className="space-y-2">
+                     <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Location</span>
+                     <p className="text-foreground">{task.location}</p>
+                   </div>
+                 )}
+
+                 {/* Show Completion Report for submitted/completed tasks */}
+                 {(task.status === 'submitted' || task.status === 'completed') && task.completionReport && (
+                   <div className="space-y-2">
+                     <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Completion Report</span>
+                     <div className="p-4 rounded-xl bg-muted/50 border border-border italic text-sm text-foreground">
+                       "{task.completionReport}"
+                     </div>
+                   </div>
+                 )}
+
+                  {/* Show Admin Feedback for completed/rejected tasks */}
+                  {(task.status === 'completed' || task.status === 'rejected') && task.adminFeedback && (
+                    <div className="space-y-2">
+                      <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                        {task.status === 'rejected' ? 'Rejection Feedback' : 'Admin Feedback'}
+                      </span>
+                      <div className={`p-4 rounded-xl border text-sm ${
+                        task.status === 'rejected' 
+                          ? 'bg-red-600/10 border-red-600/30 text-foreground' 
+                          : 'bg-green-600/10 border-green-600/30 text-foreground'
+                      }`}>
+                        {task.adminFeedback}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Show Progress Reports for completed/submitted tasks */}
+                  {(task.status === 'completed' || task.status === 'submitted' || task.status === 'rejected') && task.progressReports && task.progressReports.length > 0 && (
+                    <div className="space-y-3">
+                      <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Progress History</span>
+                      {task.progressReports.map((report, index) => (
+                        <div key={index} className="p-4 rounded-lg bg-muted/50 border border-border">
+                          <p className="text-sm text-foreground">{report.message}</p>
+                          <p className="text-xs text-muted-foreground mt-2">
+                            {report.timestamp?.toDate ? report.timestamp.toDate().toLocaleString() : 'Just now'}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                 <div className="pt-6 border-t border-border grid grid-cols-2 gap-4">
                   <div className="text-xs text-muted-foreground">
@@ -195,18 +265,25 @@ const TaskDetail = () => {
                       task.priority === 'medium' ? 'text-yellow-600 dark:text-yellow-400' : 'text-green-600 dark:text-green-400'
                     }`}>{task.priority?.toUpperCase()}</span>
                   </div>
-                  {task.deadline && (
-                    <div className="text-xs text-muted-foreground">
-                      Deadline: <span className="text-foreground font-medium">{new Date(task.deadline).toLocaleDateString()}</span>
-                    </div>
-                  )}
-                  {task.createdAt && (
-                    <div className="text-xs text-muted-foreground">
-                      Created: <span className="text-foreground font-medium">
-                        {task.createdAt?.toDate ? task.createdAt.toDate().toLocaleDateString() : new Date(task.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                  )}
+                   {task.deadline && (
+                     <div className="text-xs text-muted-foreground">
+                       Deadline: <span className="text-foreground font-medium">{formatDate(task.deadline)}</span>
+                     </div>
+                   )}
+                   {task.createdAt && (
+                     <div className="text-xs text-muted-foreground">
+                       Created: <span className="text-foreground font-medium">
+                         {formatDate(task.createdAt)}
+                       </span>
+                     </div>
+                   )}
+                   {task.completedAt && (
+                     <div className="text-xs text-muted-foreground">
+                       Completed: <span className="text-foreground font-medium">
+                         {formatDate(task.completedAt)}
+                       </span>
+                     </div>
+                   )}
                 </div>
               </div>
             </MagicCard>
@@ -230,82 +307,78 @@ const TaskDetail = () => {
             </BlurFade>
           )}
 
-          {/* In Progress Actions - Complete & Incomplete buttons */}
-          {user?.role === 'IT OFFICER' && (task.officerId === user.uid || task.officerId === user.id) && task.status === 'in progress' && (
-            <BlurFade delay={100}>
-              <MagicCard>
-                <div className="space-y-4">
-                  <h3 className="text-lg font-bold text-foreground">Task Actions</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Mark task as complete to submit for review, or mark as incomplete if work cannot be finished
-                  </p>
-                  
-                  <div className="flex gap-3">
-                    <Button 
-                      onClick={handleCompleteTask}
-                      className="flex-1 cursor-pointer"
-                    >
-                      Complete Task
-                    </Button>
-                    <Button 
-                      onClick={handleIncompleteTask}
-                      variant="destructive"
-                      className="flex-1 cursor-pointer"
-                    >
-                      Mark Incomplete
-                    </Button>
-                  </div>
-                  
-                  <div className="mt-4">
-                    <Textarea 
-                      value={report}
-                      onChange={(e) => setReport(e.target.value)}
-                      placeholder="Add completion report (required for Complete action)..."
-                      className="w-full h-32"
-                    />
-                  </div>
-                </div>
-              </MagicCard>
-            </BlurFade>
-          )}
-
-          {/* Add Progress Report - for officers with in progress tasks */}
-          {user?.role === 'IT OFFICER' && (task.officerId === user.uid || task.officerId === user.id) && task.status === 'in progress' && (
-            <BlurFade delay={150}>
-              <MagicCard>
-                <div className="space-y-4">
-                  <h3 className="text-lg font-bold text-foreground">Add Progress Report</h3>
-                  <Textarea 
-                    value={progressMessage}
-                    onChange={(e) => setProgressMessage(e.target.value)}
-                    placeholder="Describe your progress, what you've done, and any issues..."
-                    className="w-full h-32"
-                  />
-                  <Button 
-                    onClick={handleCompleteTask}
-                    className="cursor-pointer"
-                  >
-                    Add Progress Update
-                  </Button>
-                  
-                  {/* Show existing progress reports */}
-                  {task.progressReports && task.progressReports.length > 0 && (
-                    <div className="space-y-3 mt-4">
-                      <h4 className="text-sm font-bold text-muted-foreground uppercase">Progress History</h4>
+           {/* In Progress Actions - Complete & Incomplete buttons */}
+           {user?.role === 'IT OFFICER' && (task.officerId === user.uid || task.officerId === user.id) && task.status === 'in progress' && (
+             <BlurFade delay={100}>
+               <MagicCard>
+                 <div className="space-y-4">
+                   <h3 className="text-lg font-bold text-foreground">Task Actions</h3>
+                   <p className="text-sm text-muted-foreground">
+                     Add your completion report below and submit for admin review. You can also mark as incomplete if work cannot be finished.
+                   </p>
+                   
+                   <div className="mt-4">
+                     <Textarea 
+                       value={report}
+                       onChange={(e) => setReport(e.target.value)}
+                       placeholder="Describe what you've done, progress made, and any important notes... (required for submission)"
+                       className="w-full h-32"
+                     />
+                   </div>
+                   
+                   <div className="flex gap-3">
+                     <Button 
+                       onClick={handleCompleteTask}
+                       className="flex-1 cursor-pointer"
+                     >
+                       Submit for Review
+                     </Button>
+                     <Button 
+                       onClick={handleIncompleteTask}
+                       variant="destructive"
+                       className="flex-1 cursor-pointer"
+                     >
+                       Mark Incomplete
+                     </Button>
+                   </div>
+                   
+                   {/* Show existing progress reports */}
+                   {task.progressReports && task.progressReports.length > 0 && (
+                     <div className="space-y-3 mt-4">
+                       <h4 className="text-sm font-bold text-muted-foreground uppercase">Progress History</h4>
                       {task.progressReports.map((report, index) => (
                         <div key={index} className="p-3 rounded-lg bg-muted/50 border border-border">
                           <p className="text-sm text-foreground">{report.message}</p>
                           <p className="text-xs text-muted-foreground mt-2">
-                            {report.timestamp?.toDate ? report.timestamp.toDate().toLocaleString() : 'Just now'}
+                            {formatDate(report.timestamp)}
                           </p>
                         </div>
                       ))}
-                    </div>
-                  )}
-                </div>
-              </MagicCard>
-            </BlurFade>
-          )}
+                     </div>
+                   )}
+                 </div>
+               </MagicCard>
+             </BlurFade>
+           )}
+
+           {/* Show Progress History for in progress tasks */}
+           {user?.role === 'IT OFFICER' && (task.officerId === user.uid || task.officerId === user.id) && task.status === 'in progress' && task.progressReports && task.progressReports.length > 0 && (
+             <BlurFade delay={150}>
+               <MagicCard>
+                 <div className="space-y-4">
+                   <h3 className="text-lg font-bold text-foreground">Progress History</h3>
+                   {task.progressReports.map((report, index) => (
+                     <div key={index} className="p-3 rounded-lg bg-muted/50 border border-border">
+                       <p className="text-sm text-foreground">{report.message}</p>
+                       <p className="text-xs text-muted-foreground mt-2">
+                         {report.timestamp?.toDate ? report.timestamp.toDate().toLocaleString() : 'Just now'}
+                       </p>
+                     </div>
+                   ))}
+                 </div>
+               </MagicCard>
+             </BlurFade>
+           )}
         </div>
 
         <div className="space-y-6">

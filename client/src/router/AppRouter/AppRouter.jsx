@@ -4,6 +4,7 @@ import Dashboard from "@/pages/dashboard/Dashboard/Dashboard";
 import Settings from "@/pages/settings/Settings";
 import TaskDetail from "@/pages/tasks/TaskDetail/TaskDetail";
 import TaskList from "@/pages/tasks/TaskList/TaskList";
+import CompletedTasks from "@/pages/tasks/CompletedTasks/CompletedTasks";
 import Users from "@/pages/users/Users";
 import { createBrowserRouter, RouterProvider } from "react-router";
 import ProtectedRoute from "../ProtectedRoute/ProtectedRoute";
@@ -32,6 +33,10 @@ const router = createBrowserRouter([
           {
             path: 'tasks/:id',
             element: <TaskDetail />,
+          },
+          {
+            path: 'completed',
+            element: <CompletedTasks />,
           },
           {
             path: 'users',
