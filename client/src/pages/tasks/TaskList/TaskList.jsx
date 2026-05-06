@@ -72,12 +72,7 @@ const TaskList = () => {
   const navigate = useNavigate();
   const [tasks, setTasks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [newTask, setNewTask] = useState({ title: '', description: '', location: '', officerId: '', priority: 'medium', deadline: '', deadlineTime: '23:59', deadlineHour: '11', deadlineMinute: '59', deadlineAMPM: 'PM', assistants: [] });
-  const [isCreating, setIsCreating] = useState(false);
-  const [officers, setOfficers] = useState([]);
-  const [assistants, setAssistants] = useState([]);
   const [taskToDelete, setTaskToDelete] = useState(null);
   const [alertOpen, setAlertOpen] = useState(false);
   const [deletingTaskId, setDeletingTaskId] = useState(null);
@@ -100,77 +95,11 @@ const TaskList = () => {
     fetchTasks();
   }, []);
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const data = await apiRequest({ endpoint: '/users' });
-        console.log('[TaskList] Users fetched:', data);
-        
-        // Filter users with IT OFFICER role (case-insensitive)
-        const officerList = data.filter(user => {
-          const role = user.role?.toUpperCase();
-          return role === 'IT OFFICER';
-        });
-        console.log('[TaskList] Officers:', officerList);
-        setOfficers(officerList);
-        
-        const assistantList = data.filter(user => {
-          const role = user.role?.toUpperCase();
-          return role === 'ASSISTANT';
-        });
-        setAssistants(assistantList);
-      } catch (error) {
-        console.error('[TaskList] Failed to fetch users:', error);
-      }
-    };
-    if (user?.role === 'ADMIN') {
-      fetchUsers();
-    }
-  }, [user]);
-
-  const handleCreateTask = async () => {
-    if (!newTask.title.trim()) return toast.error('Title is required');
-    if (!newTask.description.trim()) return toast.error('Description is required');
-    if (!newTask.location.trim()) return toast.error('Location is required');
-    if (!newTask.officerId) return toast.error('Assign an IT Officer');
-    if (!newTask.priority) return toast.error('Select priority');
-    if (!newTask.deadline) return toast.error('Set a deadline');
-
-    try {
-      setIsCreating(true);
-      // Combine date and time into ISO string
-      const deadlineDateTime = new Date(`${newTask.deadline}T${newTask.deadlineTime}:00`);
-      
-      const taskData = {
-        title: newTask.title,
-        description: newTask.description,
-        location: newTask.location,
-        officerId: newTask.officerId,
-        priority: newTask.priority,
-        deadline: deadlineDateTime.toISOString(),
-        assistants: newTask.assistants
-      };
-      const createdTask = await apiRequest({ 
-        endpoint: '/tasks', 
-        method: 'POST', 
-        body: taskData 
-      });
-      setTasks([createdTask, ...tasks]);
-      setIsModalOpen(false);
-      setNewTask({ title: '', description: '', location: '', officerId: '', priority: 'medium', deadline: '', deadlineTime: '23:59', deadlineHour: '11', deadlineMinute: '59', deadlineAMPM: 'PM', assistants: [] });
-      toast.success('Task deployed successfully');
-    } catch (error) {
-      toast.error(error.message || 'Creation failed');
-    } finally {
-      setIsCreating(false);
-    }
-  };
-
   const confirmDelete = (taskId) => {
     setTaskToDelete(taskId);
     setAlertOpen(true);
   };
-
+  
   const handleDeleteTask = async () => {
     const taskId = taskToDelete;
     if (!taskId) return;
