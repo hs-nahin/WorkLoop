@@ -257,12 +257,14 @@ const TaskList = () => {
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="officer">Assign IT Officer *</Label>
-                    <Select 
-                      value={newTask.officerId} 
+                    <Select
+                      value={newTask.officerId}
                       onValueChange={(v) => setNewTask({...newTask, officerId: v})}
                     >
                       <SelectTrigger id="officer">
-                        <SelectValue placeholder="Select IT Officer" />
+                        <SelectValue placeholder="Select IT Officer">
+                          {newTask.officerId ? officers.find(o => o.uid === newTask.officerId)?.name : null}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                       {officers.map(officer => (

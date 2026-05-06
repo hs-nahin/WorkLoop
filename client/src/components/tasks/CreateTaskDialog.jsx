@@ -137,7 +137,9 @@ export function CreateTaskDialog({ open, onOpenChange }) {
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select officer" />
+                  <SelectValue placeholder="Select officer">
+                    {newTask.officerId ? officers.find(o => o.uid === newTask.officerId)?.name : null}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {officers.map((officer) => (
