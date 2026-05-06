@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
-  Building2,
   CheckCircle2,
   CheckSquare,
   ChevronLeft,
@@ -9,6 +8,8 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 import { useContext, useState } from "react";
 import { Link, useLocation } from "react-router";
@@ -36,24 +37,15 @@ const Sidebar = () => {
       <div className="px-6 mb-8 flex items-center justify-between">
         {/* WorkLoop Brand Logo and Name */}
         <Link to="/dashboard" className="flex items-center gap-2 group">
-          <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm group-hover:scale-110 transition-transform">
+          <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm group-hover:scale-110 transition-transform shadow-sm">
             WL
           </div>
           {sidebarOpen && (
-            <span className="font-bold text-base text-darkGray group-hover:text-black transition-colors">
+            <span className="font-bold text-base text-darkGray group-hover:text-black transition-colors tracking-tight">
               <span className="text-gray-500">Work</span><span className="text-sky-600">Loop</span>
             </span>
           )}
         </Link>
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="p-2 h-9 w-9 cursor-pointer" 
-          onClick={toggleSidebar}
-          aria-label="Toggle Sidebar"
-        >
-          {sidebarOpen ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
-        </Button>
       </div>
 
       <nav className="flex-1 px-3 space-y-1">
@@ -62,14 +54,17 @@ const Sidebar = () => {
             key={item.path} 
             to={item.path} 
             className={cn(
-              "flex items-center gap-4 px-3 py-2 rounded-lg transition-all duration-200 group",
+              "flex items-center gap-4 px-3 py-2 rounded-lg transition-all duration-200 group relative outline-none",
               location.pathname === item.path 
-                ? "bg-primary text-primary-foreground font-medium shadow-md" 
+                ? "bg-primary/10 text-primary font-semibold shadow-sm" 
                 : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
             )}
           >
-            <item.icon size={20} className={cn("shrink-0", location.pathname === item.path ? "text-primary-foreground" : "group-hover:text-foreground")} />
-            {sidebarOpen && <span className="text-sm">{item.name}</span>}
+            <item.icon size={20} className={cn("shrink-0 transition-colors", location.pathname === item.path ? "text-primary" : "group-hover:text-foreground")} />
+            {sidebarOpen && <span className="text-sm transition-opacity duration-200">{item.name}</span>}
+            {location.pathname === item.path && (
+              <div className="absolute left-0 w-1 h-6 bg-primary rounded-r-full" />
+            )}
           </Link>
         ))}
       </nav>
@@ -79,7 +74,7 @@ const Sidebar = () => {
         <Button 
           variant="ghost" 
           className={cn(
-            "w-full justify-start gap-4 text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer",
+            "w-full justify-start gap-4 text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer transition-colors outline-none",
             !sidebarOpen && "justify-center px-0"
           )} 
           onClick={logout}
@@ -91,33 +86,49 @@ const Sidebar = () => {
     </div>
   );
 
-  return (
-    <>
-      <aside 
-        className={cn(
-          "hidden lg:flex flex-col h-screen transition-all duration-300 z-50 border-r bg-card",
-          sidebarOpen ? "w-64" : "w-20"
-        )}
-      >
-        {content}
-      </aside>
-
-      <Sheet>
-        <SheetTrigger asChild>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="lg:hidden fixed top-3 left-3 z-50"
-          >
-            <Menu size={20} />
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="left" className="w-64 p-0 bg-card">
+    return (
+      <>
+        <aside 
+          className={cn(
+            "hidden lg:flex flex-col h-screen transition-all duration-300 z-50 border-r bg-card relative",
+            sidebarOpen ? "w-64" : "w-20"
+          )}
+        >
           {content}
-        </SheetContent>
-      </Sheet>
-    </>
-  );
+          <div 
+            className={cn(
+              "absolute -right-2 top-1/2 -translate-y-1/2 flex items-center justify-center z-50 transition-all duration-300",
+              sidebarOpen ? "translate-x-0" : "-translate-x-1"
+            )}
+          >
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-7 w-7 rounded-full p-0 bg-card border shadow-sm hover:bg-accent cursor-pointer transition-transform hover:scale-110 flex items-center justify-center" 
+              onClick={toggleSidebar}
+              aria-label="Toggle Sidebar"
+            >
+              {sidebarOpen ? <PanelLeftClose size={14} /> : <PanelLeftOpen size={14} />}
+            </Button>
+          </div>
+        </aside>
+
+         <Sheet>
+          <SheetTrigger asChild={false}>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="lg:hidden fixed top-3 left-3 z-50"
+            >
+              <Menu size={20} />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-64 p-0 bg-card">
+            {content}
+          </SheetContent>
+        </Sheet>
+      </>
+    );
 };
 
 export default Sidebar;

@@ -163,15 +163,23 @@ const submitTask = async (req, res) => {
             submittedBy: req.user.uid
         });
         
-        // Create notification for admin
-        await adminDb.collection('notifications').add({
-            type: 'task_submitted',
-            taskId: id,
-            taskTitle: task.title,
-            message: `Task "${task.title}" has been submitted for review`,
-            read: false,
-            createdAt: admin.firestore.FieldValue.serverTimestamp()
-        });
+        // Create notifications for all admins
+        const adminQuery = await adminDb.collection('users').where('role', '==', 'ADMIN').get();
+        
+        if (!adminQuery.empty) {
+            const notificationsPromises = adminQuery.docs.map(adminDoc => {
+                return adminDb.collection('notifications').add({
+                    type: 'task_submitted',
+                    taskId: id,
+                    taskTitle: task.title,
+                    message: `Task "${task.title}" has been submitted for review`,
+                    userId: adminDoc.id,
+                    read: false,
+                    createdAt: admin.firestore.FieldValue.serverTimestamp()
+                });
+            });
+            await Promise.all(notificationsPromises);
+        }
         
         const updatedDoc = await adminDb.collection('tasks').doc(id).get();
         res.json({ id: updatedDoc.id, ...updatedDoc.data() });
@@ -317,7 +325,7 @@ const deleteTask = async (req, res) => {
 const getNotifications = async (req, res) => {
     try {
         const notificationsSnapshot = await adminDb.collection('notifications')
-            .where('userId', '==', null)
+            .where('userId', '==', req.user.uid)
             .orderBy('createdAt', 'desc')
             .get();
         

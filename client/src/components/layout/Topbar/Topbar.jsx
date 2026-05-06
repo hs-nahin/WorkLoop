@@ -4,11 +4,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Bell, LogOut, Settings, User } from "lucide-react";
+import { Bell, LogOut, Settings, User, Trash2 } from "lucide-react";
 import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { apiRequest } from "../../../api/apiClient";
 import { AuthContext } from "../../../context/AuthContextInstance.js";
+import { db } from "../../../lib/firebase";
+import { collection, query, where, orderBy, onSnapshot, updateDoc, doc, deleteDoc } from "firebase/firestore";
 
 const TopBar = () => {
   const { user, logout } = useContext(AuthContext);
@@ -18,54 +20,76 @@ const TopBar = () => {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    if (user?.role !== 'ADMIN') return;
-    
-    let cancelled = false;
-    
-    const fetchNotifications = async () => {
-      if (cancelled) return;
-      try {
-        const endpoint = user.role === 'ADMIN' ? '/tasks/notifications' : '/tasks/notifications/officer';
-        const data = await apiRequest({ endpoint });
-        if (!cancelled) {
-          setNotifications(data);
-          setUnreadCount(data.filter(n => !n.read).length);
-        }
-      } catch (error) {
-        console.error('Error fetching notifications:', error);
+    if (!user?.uid) return;
+
+    const notificationsRef = collection(db, 'notifications');
+    const q = query(
+      notificationsRef,
+      where('userId', '==', user.uid),
+      orderBy('createdAt', 'desc')
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      console.log('Notification snapshot received. Count:', snapshot.docs.length);
+      const notifs = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      console.log('Fetched Notifications:', notifs);
+      setNotifications(notifs);
+      setUnreadCount(notifs.filter(n => !n.read).length);
+    }, (error) => {
+      console.error('Full Firestore Error Object:', error);
+      if (error.code === 'failed-precondition') {
+        console.error('Firestore Index missing: Please create an index for notifications (userId, createdAt)');
+      } else {
+        console.error('Error listening to notifications:', error);
       }
-    };
-    
-    fetchNotifications();
-    const interval = setInterval(fetchNotifications, 30000);
-    
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-    };
-  }, [user, setNotifications, setUnreadCount]);
+    });
+
+    return () => unsubscribe();
+  }, [user?.uid]);
 
   const handleNotificationClick = async (notification) => {
-    // Mark as read
     if (!notification.read) {
       try {
-        await apiRequest({ 
-          endpoint: `/tasks/notifications/${notification.id}/read`, 
-          method: 'PATCH' 
-        });
-        setNotifications(prev => 
-          prev.map(n => n.id === notification.id ? { ...n, read: true } : n)
-        );
-        setUnreadCount(prev => Math.max(0, prev - 1));
+        const notificationRef = doc(db, 'notifications', notification.id);
+        await updateDoc(notificationRef, { read: true });
       } catch (error) {
         console.error('Error marking notification as read:', error);
       }
     }
-    
-    // Navigate to task
+
     if (notification.taskId) {
       navigate(`/tasks/${notification.taskId}`);
+      setOpen(false);
     }
+  };
+
+  const handleDeleteNotification = async (e, notificationId) => {
+    e.stopPropagation();
+    try {
+      const notificationRef = doc(db, 'notifications', notificationId);
+      await deleteDoc(notificationRef);
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+    }
+  };
+
+  const formatTime = (timestamp) => {
+    if (!timestamp) return 'Just now';
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString();
   };
 
   const getRoleBadgeColor = (role) => {
@@ -85,8 +109,8 @@ const TopBar = () => {
     <header className="h-16 border-b bg-card/80 backdrop-blur-md px-4 md:px-6 flex items-center justify-between sticky top-0 z-40">
       <div className="flex items-center gap-4">
         <div className="hidden md:block">
-          <Badge 
-            variant="outline" 
+          <Badge
+            variant="outline"
             className={`font-medium opacity-70 ${getRoleBadgeColor(user?.role)} text-foreground`}
           >
             {user?.role || "Guest"} Session
@@ -94,8 +118,8 @@ const TopBar = () => {
         </div>
         {user?.role === "ADMIN" && (
           <div className="flex items-center gap-1">
-            <Badge 
-              variant="solid" 
+            <Badge
+              variant="solid"
               className="bg-sky-50 text-sky-600 dark:bg-sky-950 dark:text-sky-50 font-bold"
             >
               Verified
@@ -105,7 +129,7 @@ const TopBar = () => {
       </div>
 
       <div className="flex items-center gap-2 md:gap-4">
-        {user?.role === 'ADMIN' && (
+        {user && (
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
               <Button variant="ghost" size="icon" className="relative text-muted-foreground cursor-pointer">
@@ -118,8 +142,11 @@ const TopBar = () => {
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-80 p-0" align="end">
-              <div className="p-4 border-b">
+              <div className="p-4 border-b flex justify-between items-center">
                 <h3 className="font-semibold">Notifications</h3>
+                <span className="text-xs text-muted-foreground">
+                  {unreadCount} unread
+                </span>
               </div>
               <div className="max-h-80 overflow-y-auto">
                 {notifications.length === 0 ? (
@@ -128,17 +155,25 @@ const TopBar = () => {
                   </div>
                 ) : (
                   notifications.map(notification => (
-                    <div 
+                    <div
                       key={notification.id}
                       onClick={() => handleNotificationClick(notification)}
                       className={`p-4 border-b cursor-pointer hover:bg-accent transition-colors ${!notification.read ? 'bg-accent/50' : ''}`}
                     >
-                      <p className="text-sm font-medium">{notification.message}</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {notification.createdAt?.toDate ? 
-                          notification.createdAt.toDate().toLocaleString() : 
-                          'Just now'}
-                      </p>
+                      <div className="flex justify-between items-start gap-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium">{notification.message}</p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {formatTime(notification.createdAt)}
+                          </p>
+                        </div>
+                        <button
+                          onClick={(e) => handleDeleteNotification(e, notification.id)}
+                          className="text-muted-foreground hover:text-destructive transition-colors p-1"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </div>
                   ))
                 )}
@@ -174,8 +209,8 @@ const TopBar = () => {
               <span>Settings</span>
             </DropdownMenuItem>
             <div className="h-px bg-border my-1" />
-            <DropdownMenuItem 
-              className="gap-2 text-destructive focus:text-destructive cursor-pointer" 
+            <DropdownMenuItem
+              className="gap-2 text-destructive focus:text-destructive cursor-pointer"
               onClick={logout}
             >
               <LogOut size={16} />

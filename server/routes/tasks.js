@@ -60,4 +60,16 @@ router.get('/notifications/officer', verifyToken, authorize(['IT OFFICER', 'ASSI
 // Mark notification as read
 router.patch('/notifications/:id/read', verifyToken, markNotificationRead);
 
+// Delete notification
+router.delete('/notifications/:id', verifyToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        await require('../config/firebase').adminDb.collection('notifications').doc(id).delete();
+        res.json({ message: 'Notification deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting notification:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
 module.exports = router;
