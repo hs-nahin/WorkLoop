@@ -1,20 +1,14 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import {
   AlertCircle,
   ArrowLeft,
   Calendar,
-  Check,
   CheckCircle2,
   Clock,
   Loader2,
-  Plus,
   Search,
   Trash2
 } from 'lucide-react';
@@ -213,7 +207,7 @@ const TaskList = () => {
     t.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  return (
+return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3">
@@ -240,189 +234,6 @@ const TaskList = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          {user?.role === 'ADMIN' && (
-            <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-              <DialogTrigger asChild>
-                <Button className="gap-2">
-                  <Plus size={18} />
-                  <span>New Task</span>
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle className="text-xl font-bold">Initialize New Task</DialogTitle>
-                  <DialogDescription>Define the requirements for the IT operation.</DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-6 py-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="title">Task Title *</Label>
-                    <Input 
-                      id="title"
-                      placeholder="e.g. Network Migration" 
-                      value={newTask.title}
-                      onChange={(e) => setNewTask({...newTask, title: e.target.value})}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="description">Description *</Label>
-                    <Textarea 
-                      id="description"
-                      placeholder="Detailed requirements..." 
-                      value={newTask.description}
-                      onChange={(e) => setNewTask({...newTask, description: e.target.value})}
-                      className="min-h-24"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="location">Location *</Label>
-                    <Input 
-                      id="location"
-                      placeholder="Shed A / Floor 2 / Server Room" 
-                      value={newTask.location}
-                      onChange={(e) => setNewTask({...newTask, location: e.target.value})}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="officer">Assign IT Officer *</Label>
-                    <Select
-                      value={newTask.officerId}
-                      onValueChange={(v) => setNewTask({...newTask, officerId: v})}
-                    >
-                      <SelectTrigger id="officer">
-                        <SelectValue placeholder="Select IT Officer">
-                          {newTask.officerId ? officers.find(o => o.uid === newTask.officerId)?.name : null}
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                      {officers.map(officer => (
-                           <SelectItem key={officer.uid} value={officer.uid}>
-                             {officer.name}
-                           </SelectItem>
-                         ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label>Assign Assistants (Optional)</Label>
-                    <div className="border rounded-md p-3 max-h-32 overflow-y-auto space-y-2">
-                      {assistants.map(assistant => (
-                         <div key={assistant.uid} className="flex items-center space-x-2">
-                           <input
-                             type="checkbox"
-                             id={`assistant-${assistant.uid}`}
-                             checked={newTask.assistants.includes(assistant.uid)}
-                             onChange={(e) => {
-                               const updated = e.target.checked
-                                 ? [...newTask.assistants, assistant.uid]
-                                 : newTask.assistants.filter(id => id !== assistant.uid);
-                               setNewTask({...newTask, assistants: updated});
-                             }}
-                             className="rounded border-gray-300"
-                           />
-                           <label htmlFor={`assistant-${assistant.uid}`} className="text-sm">{assistant.name}</label>
-                         </div>
-                       ))}
-                    </div>
-                  </div>
-                   <div className="grid grid-cols-2 gap-4">
-                     <div className="grid gap-2">
-                       <Label htmlFor="priority">Priority *</Label>
-                       <Select 
-                         value={newTask.priority} 
-                         onValueChange={(v) => setNewTask({...newTask, priority: v})}
-                       >
-                         <SelectTrigger id="priority">
-                           <SelectValue placeholder="Select Priority" />
-                         </SelectTrigger>
-                         <SelectContent>
-                           <SelectItem value="low">Low</SelectItem>
-                           <SelectItem value="medium">Medium</SelectItem>
-                           <SelectItem value="high">High</SelectItem>
-                         </SelectContent>
-                       </Select>
-                     </div>
-                     <div className="grid gap-2">
-                       <Label htmlFor="deadline">Deadline *</Label>
-                       <Input 
-                         id="deadline"
-                         type="date"
-                         value={newTask.deadline}
-                         onChange={(e) => setNewTask({...newTask, deadline: e.target.value})}
-                       />
-                     </div>
-                   </div>
-                   <div className="grid gap-2">
-                     <Label htmlFor="deadlineTime">Deadline Time *</Label>
-                     <div className="flex items-center gap-2">
-                       <Select 
-                         value={newTask.deadlineHour || '11'} 
-                         onValueChange={(v) => {
-                           const hour = parseInt(v);
-                           const minute = newTask.deadlineMinute || '59';
-                           const ampm = newTask.deadlineAMPM || 'PM';
-                           const time24 = convertTo24Hour(hour, ampm);
-                           setNewTask({...newTask, deadlineHour: v, deadlineTime: `${time24}:${minute}`});
-                         }}
-                       >
-                         <SelectTrigger className="w-20">
-                           <SelectValue />
-                         </SelectTrigger>
-                         <SelectContent>
-                           {Array.from({length: 12}, (_, i) => i + 1).map(h => (
-                             <SelectItem key={h} value={h.toString()}>{h}</SelectItem>
-                           ))}
-                         </SelectContent>
-                       </Select>
-                       <span className="text-sm">:</span>
-                       <Select 
-                         value={newTask.deadlineMinute || '59'} 
-                         onValueChange={(v) => {
-                           const hour = newTask.deadlineHour || '11';
-                           const minute = v;
-                           const ampm = newTask.deadlineAMPM || 'PM';
-                           const time24 = convertTo24Hour(parseInt(hour), ampm);
-                           setNewTask({...newTask, deadlineMinute: v, deadlineTime: `${time24}:${minute}`});
-                         }}
-                       >
-                         <SelectTrigger className="w-20">
-                           <SelectValue />
-                         </SelectTrigger>
-                         <SelectContent>
-                           {Array.from({length: 60}, (_, i) => i.toString().padStart(2, '0')).map(m => (
-                             <SelectItem key={m} value={m}>{m}</SelectItem>
-                           ))}
-                         </SelectContent>
-                       </Select>
-                       <Select 
-                         value={newTask.deadlineAMPM || 'PM'} 
-                         onValueChange={(v) => {
-                           const hour = newTask.deadlineHour || '11';
-                           const minute = newTask.deadlineMinute || '59';
-                           const time24 = convertTo24Hour(parseInt(hour), v);
-                           setNewTask({...newTask, deadlineAMPM: v, deadlineTime: `${time24}:${minute}`});
-                         }}
-                       >
-                         <SelectTrigger className="w-20">
-                           <SelectValue />
-                         </SelectTrigger>
-                         <SelectContent>
-                           <SelectItem value="AM">AM</SelectItem>
-                           <SelectItem value="PM">PM</SelectItem>
-                         </SelectContent>
-                       </Select>
-                     </div>
-                     <p className="text-xs text-muted-foreground">Task must be completed by this date and time</p>
-                   </div>
-                </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-                  <Button onClick={handleCreateTask} disabled={isCreating}>
-                    {isCreating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating...</> : 'Create Task'}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          )}
         </div>
       </header>
 
