@@ -1,6 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { InputGroupAddon } from '@/components/ui/input-group-addon';
 import { cn } from '@/lib/utils';
 import {
   ArrowLeft,
@@ -66,6 +67,18 @@ const CompletedTasks = () => {
   const [taskToDelete, setTaskToDelete] = useState(null);
   const [alertOpen, setAlertOpen] = useState(false);
   const isAdmin = user?.role === 'ADMIN';
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        document.getElementById('search-completed-input')?.focus();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -140,14 +153,22 @@ const CompletedTasks = () => {
           </div>
         </div>        
         <div className="flex items-center gap-3">
-          <div className="relative w-full md:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
-            <Input 
-              placeholder="Search completed tasks..." 
-              className="pl-9"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+          <div className="flex items-center gap-0 overflow-hidden rounded-lg border border-input focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 transition-all bg-background shadow-sm w-full md:w-[450px]">
+            <div className="flex items-center justify-center pl-3 text-muted-foreground transition-colors group-focus-within:text-primary">
+              <Search size={16} />
+            </div>
+            <div className="relative flex-1">
+              <Input 
+                id="search-completed-input"
+                placeholder="Search by completed task title or description..." 
+                className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 px-3 h-9 w-full pr-12"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <kbd className="absolute right-2 top-1/2 -translate-y-1/2 hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border border-muted-foreground/20 bg-transparent px-1.5 font-mono text-[10px] font-medium text-muted-foreground/70 opacity-100">
+                <span className="text-xs">⌘</span>K
+              </kbd>
+            </div>
           </div>
         </div>
       </header>
