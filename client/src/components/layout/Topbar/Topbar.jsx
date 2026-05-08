@@ -208,24 +208,25 @@ const TopBar = () => {
               </Avatar>
             </div>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuItem className="gap-2 cursor-pointer">
-              <User size={16} />
-              <span>Profile</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="gap-2 cursor-pointer">
-              <Settings size={16} />
-              <span>Settings</span>
-            </DropdownMenuItem>
-            <div className="h-px bg-border my-1" />
-            <DropdownMenuItem
-              className="gap-2 text-destructive focus:text-destructive cursor-pointer"
-              onClick={logout}
-            >
-              <LogOut size={16} />
-              <span>Log out</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => navigate('/profile')}>
+                <User size={16} />
+                <span>Profile</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => navigate('/settings')}>
+                <Settings size={16} />
+                <span>Settings</span>
+              </DropdownMenuItem>
+              <div className="h-px bg-border my-1" />
+              <DropdownMenuItem
+                className="gap-2 text-destructive focus:text-destructive cursor-pointer"
+                onClick={logout}
+              >
+                <LogOut size={16} />
+                <span>Log out</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+
         </DropdownMenu>
       </div>
     </header>

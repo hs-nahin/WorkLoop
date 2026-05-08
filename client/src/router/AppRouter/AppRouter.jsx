@@ -3,6 +3,7 @@ import Login from "@/pages/auth/Login/Login";
 import Dashboard from "@/pages/dashboard/Dashboard/Dashboard";
 import UserPerformanceDashboard from "@/pages/dashboard/UserPerformanceDashboard/UserPerformanceDashboard";
 import Settings from "@/pages/settings/Settings";
+import Profile from "@/pages/profile/Profile";
 import TaskDetail from "@/pages/tasks/TaskDetail/TaskDetail";
 import TaskList from "@/pages/tasks/TaskList/TaskList";
 import CompletedTasks from "@/pages/tasks/CompletedTasks/CompletedTasks";
@@ -38,14 +39,19 @@ const router = createBrowserRouter([
             path: 'completed',
             element: <CompletedTasks />,
           },
-          {
-            path: 'settings',
-            element: <Settings />,
-          },
-          {
-            path: 'performance',
-            element: <UserPerformanceDashboard />,
-          },
+            {
+              path: 'settings',
+              element: <Settings />,
+            },
+            {
+              path: 'profile',
+              element: <Profile />,
+            },
+            {
+              path: 'performance',
+              element: <UserPerformanceDashboard />,
+            },
+
           {
             index: true,
             element: <Dashboard />,

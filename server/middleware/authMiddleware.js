@@ -28,6 +28,14 @@ const protect = async (req, res, next) => {
                 return res.status(401).json({ message: 'Not authorized, token failed' });
             }
         }
+        
+        // IMPORTANT: Fetch current role from Firestore to prevent stale token roles
+        const userDoc = await admin.firestore().collection('users').doc(decoded.userId).get();
+        if (userDoc.exists) {
+            decoded.role = userDoc.data().role || 'USER';
+            decoded.name = userDoc.data().name;
+        }
+
         req.user = decoded;
         next();
     } catch (error) {

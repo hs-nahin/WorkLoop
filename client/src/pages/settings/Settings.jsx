@@ -8,13 +8,19 @@ import {
   CardTitle
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Label } from '@/components/ui/label';
 import {
   Camera,
   CheckCircle2,
   Loader2,
   Lock,
   ShieldCheck,
-  User
+  User,
+  Bell,
+  Eye,
+  Settings as SettingsIcon,
+  Trash2,
+  ChevronRight
 } from 'lucide-react';
 import { useContext, useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -34,7 +40,6 @@ const Settings = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Use the user data from context instead of calling non-existent endpoint
     if (user) {
       setProfile({
         name: user.name || '',
@@ -43,7 +48,6 @@ const Settings = () => {
       });
       setIsLoading(false);
     } else {
-      // Fallback: try to fetch from API
       const fetchProfile = async () => {
         try {
           const data = await apiRequest({ endpoint: '/users/me' });
@@ -54,7 +58,6 @@ const Settings = () => {
           });
         } catch (error) {
           console.error('Failed to fetch profile:', error);
-          // Use data from context as fallback
           if (user) {
             setProfile({
               name: user.name || '',
@@ -83,7 +86,7 @@ const Settings = () => {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <header className="flex flex-col gap-2">
         <TextHighlighter text="Account Settings" className="text-3xl font-bold tracking-tight" />
-        <GradientText text="View your operational profile and system preferences" className="text-sm opacity-70 block" />
+        <GradientText text="Manage your system operational preferences" className="text-sm opacity-70 block" />
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -156,12 +159,47 @@ const Settings = () => {
                     <span className="text-muted-foreground">Session Encryption</span>
                   </div>
                   <CheckCircle2 size={16} className="text-green-500" />
-
-                  <CheckCircle2 size={16} className="text-green-500" />
                 </div>
               </CardContent>
             </Card>
           </BlurFade>
+
+          {user?.role === 'ADMIN' && (
+            <BlurFade delay={200}>
+              <Card className="border-border bg-card/50 backdrop-blur-sm shadow-sm border-l-4 border-l-primary">
+                <CardHeader>
+                  <CardTitle className="text-sm font-bold text-foreground uppercase tracking-widest flex items-center gap-2">
+                    <SettingsIcon size={14} />
+                    Admin Controls
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer group">
+                    <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground group-hover:text-foreground">
+                      <Eye size={14} />
+                      Audit System Logs
+                    </div>
+                    <ChevronRight size={14} className="text-muted-foreground" />
+                  </div>
+                  <div className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer group">
+                    <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground group-hover:text-foreground">
+                      <User size={14} />
+                      User Management
+                    </div>
+                    <ChevronRight size={14} className="text-muted-foreground" />
+                  </div>
+                  <div className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-s-colors cursor-pointer group text-destructive">
+                    <div className="flex items-center gap-2 text-xs font-medium group-hover:text-destructive">
+                      <Trash2 size={14} />
+                      Purge System Cache
+ la-
+                    </div>
+                    <ChevronRight size={14} className="text-muted-foreground" />
+                  </div>
+                </CardContent>
+              </Card>
+            </BlurFade>
+          )}
         </div>
       </div>
     </div>
@@ -169,3 +207,4 @@ const Settings = () => {
 };
 
 export default Settings;
+
