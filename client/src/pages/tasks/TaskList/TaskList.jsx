@@ -213,7 +213,8 @@ return (
           {/* Table Body */}
           {filteredTasks.length > 0 ? (
             <div className={`grid w-full ${isAdmin ? 'grid-cols-[25%_10%_10%_15%_15%_20%_5%]' : 'grid-cols-[28%_12%_12%_15%_15%_30%]'}`}>
-              {filteredTasks.map((task) => (
+              {filteredTasks.map((task) => {
+                  return (
                   <Fragment key={task.id}>
                   <div 
                     className="px-4 py-3 border-b border-border/50 hover:bg-accent/50 cursor-pointer"
@@ -270,64 +271,40 @@ return (
                       <span className="text-xs text-muted-foreground">No assistant</span>
                     )}
                   </div>
-                 <div 
-                   className="px-4 py-3 border-b border-border/50 hover:bg-accent/50 cursor-pointer flex items-center gap-2 text-sm text-muted-foreground"
-                   onClick={() => navigate(`/tasks/${task.id}`)}
-                 >
-                   <Calendar size={14} className="shrink-0" />
-                   <span>{formatDate(task.deadline)}</span>
-                 </div>
-                 {isAdmin && (
+                  <div 
+                    className="px-4 py-3 border-b border-border/50 hover:bg-accent/50 cursor-pointer flex items-center gap-2 text-sm text-muted-foreground"
+                    onClick={() => navigate(`/tasks/${task.id}`)}
+                  >
+                    <Calendar size={14} className="shrink-0" />
+                    {task.deadline ? (
+                      <span className="text-sm text-muted-foreground">
+                        {formatDate(task.deadline)}
+                      </span>
+                    ) : <span className="text-sm text-muted-foreground">No deadline</span>}
+                  </div>
+                  {isAdmin && (
                     <div className="px-4 py-3 border-b border-border/50 flex items-center justify-center">
-                      <AlertDialog open={alertOpen && taskToDelete === task.id} onOpenChange={(open) => {
-                        setAlertOpen(open);
-                        if (!open) setTaskToDelete(null);
-                      }}>
+                      <AlertDialog open={alertOpen && taskToDelete === task.id} onOpenChange={(open) => { setAlertOpen(open); if (!open) setTaskToDelete(null); }}>
                         <AlertDialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              confirmDelete(task.id);
-                            }}
-                            className="text-red-500 hover:text-red-700 hover:bg-red-500/10 cursor-pointer"
-                          >
+                          <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); confirmDelete(task.id); }} className="text-red-500 hover:text-red-700 hover:bg-red-500/10 cursor-pointer">
                             <Trash2 size={14} />
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
                             <AlertDialogTitle>Delete Task</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Are you sure you want to delete this task? This action cannot be undone.
-                            </AlertDialogDescription>
+                            <AlertDialogDescription>Are you sure you want to delete this task? This action cannot be undone.</AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel 
-                              className="cursor-pointer"
-                              onClick={() => {
-                                setAlertOpen(false);
-                                setTaskToDelete(null);
-                              }}
-                            >
-                              Cancel
-                            </AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={handleDeleteTask}
-                            >
-                              {deletingTaskId === task.id ? (
-                                <Loader2 size={14} className="animate-spin mr-2" />
-                              ) : null}
-                              Delete
-                            </AlertDialogAction>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeleteTask()}>Delete</AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
                     </div>
                   )}
-                </Fragment>
-              ))}
+                  </Fragment>);
+                })}
             </div>
           ) : (
             <div className="px-4 py-16 flex items-center justify-center text-muted-foreground italic">

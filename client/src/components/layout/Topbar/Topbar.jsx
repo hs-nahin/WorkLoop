@@ -1,4 +1,5 @@
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import LiveClock from "@/components/ui/LiveClock";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -129,6 +130,8 @@ const TopBar = () => {
       </div>
 
       <div className="flex items-center gap-2 md:gap-4">
+        <LiveClock />
+
         {user && (
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
