@@ -51,8 +51,11 @@ const createTask = async (req, res) => {
             adminFeedback: null,
             progressReports: [],
             acceptedAt: null,
+            workStartedAt: null,
             submittedAt: null,
-            completedAt: null
+            completedAt: null,
+            totalDurationSeconds: null,
+            isTimerRunning: false
         };
         
         const docRef = await adminDb.collection('tasks').add(newTask);
@@ -93,10 +96,14 @@ const acceptTask = async (req, res) => {
             return res.status(400).json({ message: 'Task is not available for acceptance' });
         }
         
+        const now = admin.firestore.Timestamp.now();
         await adminDb.collection('tasks').doc(id).update({
             status: 'in progress',
-            acceptedAt: admin.firestore.FieldValue.serverTimestamp(),
-            acceptedBy: req.user.uid
+            acceptedAt: now,
+            acceptedBy: req.user.uid,
+            workStartedAt: now,
+            isTimerRunning: true,
+            totalDurationSeconds: 0
         });
         
         const updatedDoc = await adminDb.collection('tasks').doc(id).get();
@@ -156,11 +163,19 @@ const submitTask = async (req, res) => {
             return res.status(400).json({ message: 'Task must be in progress before submission' });
         }
         
+        const now = admin.firestore.Timestamp.now();
+        const sessionDuration = task.workStartedAt 
+            ? (now.toMillis() - task.workStartedAt.toMillis()) / 1000 
+            : 0;
+        const totalDuration = (task.totalDurationSeconds || 0) + sessionDuration;
+        
         await adminDb.collection('tasks').doc(id).update({
             status: 'submitted',
             completionReport: report,
-            submittedAt: admin.firestore.FieldValue.serverTimestamp(),
-            submittedBy: req.user.uid
+            submittedAt: now,
+            submittedBy: req.user.uid,
+            totalDurationSeconds: totalDuration,
+            isTimerRunning: false
         });
         
         // Create notifications for all admins
@@ -205,9 +220,17 @@ const incompleteTask = async (req, res) => {
             return res.status(400).json({ message: 'Only in progress tasks can be marked as incomplete' });
         }
         
+        const now = admin.firestore.Timestamp.now();
+        const sessionDuration = task.workStartedAt 
+            ? (now.toMillis() - task.workStartedAt.toMillis()) / 1000 
+            : 0;
+        const totalDuration = (task.totalDurationSeconds || 0) + sessionDuration;
+        
         await adminDb.collection('tasks').doc(id).update({
             status: 'incomplete',
-            completedAt: admin.firestore.FieldValue.serverTimestamp()
+            completedAt: now,
+            totalDurationSeconds: totalDuration,
+            isTimerRunning: false
         });
         
         const updatedDoc = await adminDb.collection('tasks').doc(id).get();
@@ -230,7 +253,8 @@ const approveTask = async (req, res) => {
         await adminDb.collection('tasks').doc(id).update({
             status: 'completed',
             completedAt: admin.firestore.FieldValue.serverTimestamp(),
-            adminFeedback: feedback || null
+            adminFeedback: feedback || null,
+            isTimerRunning: false
         });
         
         // Create notification for officer
@@ -270,10 +294,13 @@ const rejectTask = async (req, res) => {
         const taskDoc = await adminDb.collection('tasks').doc(id).get();
         if (!taskDoc.exists) return res.status(404).json({ message: 'Task not found' });
         
+        const now = admin.firestore.Timestamp.now();
         await adminDb.collection('tasks').doc(id).update({
             status: 'in progress',
             adminFeedback: feedback,
-            submittedAt: null
+            submittedAt: null,
+            workStartedAt: now,
+            isTimerRunning: true
             // Keep completionReport and progressReports for officer to review
         });
         

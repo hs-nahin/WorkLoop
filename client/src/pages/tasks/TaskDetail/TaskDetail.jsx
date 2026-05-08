@@ -41,6 +41,23 @@ const formatDate = (timestamp) => {
   });
 };
 
+// Helper to format seconds into human-readable duration
+const formatDuration = (seconds) => {
+  if (!seconds || seconds < 0) return '0m';
+  if (seconds < 60) return `${Math.round(seconds)}s`;
+  
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  
+  const parts = [];
+  if (days > 0) parts.push(`${days}d`);
+  if (hours > 0) parts.push(`${hours}h`);
+  if (minutes > 0 || parts.length === 0) parts.push(`${minutes}m`);
+  
+  return parts.join(' ');
+};
+
 const TaskDetail = () => {
   const { id } = useParams();
   const { user } = useContext(AuthContext);
@@ -50,6 +67,8 @@ const TaskDetail = () => {
   const [feedback, setFeedback] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [officers, setOfficers] = useState([]);
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const [timerInterval, setTimerInterval] = useState(null);
 
   useEffect(() => {
     const fetchTask = async () => {
@@ -78,6 +97,43 @@ const TaskDetail = () => {
     fetchTask();
     fetchUsers();
   }, [id, navigate]);
+
+  // Timer management for live duration tracking
+  useEffect(() => {
+    // Clear existing interval
+    if (timerInterval) clearInterval(timerInterval);
+    
+    if (!task) return;
+
+    // Calculate initial elapsed time
+    const calculateElapsed = () => {
+      const totalCompleted = task.totalDurationSeconds || 0;
+      
+      if (task.isTimerRunning && task.workStartedAt) {
+        const workStarted = convertTimestamp(task.workStartedAt);
+        if (workStarted) {
+          const currentSession = (Date.now() - workStarted.getTime()) / 1000;
+          return totalCompleted + currentSession;
+        }
+      }
+      return totalCompleted;
+    };
+
+    setElapsedTime(calculateElapsed());
+
+    // Set up interval for live updates if timer is running
+    if (task.isTimerRunning && task.workStartedAt) {
+      const interval = setInterval(() => {
+        setElapsedTime(calculateElapsed());
+      }, 1000);
+      setTimerInterval(interval);
+    }
+
+    // Cleanup interval on unmount or task change
+    return () => {
+      if (timerInterval) clearInterval(timerInterval);
+    };
+  }, [task]);
 
   const handleAcceptTask = async () => {
     try {
@@ -469,25 +525,72 @@ const TaskDetail = () => {
                 </div>
 
                 {/* Status Message */}
-                <div className={`text-center text-xs font-medium p-2 rounded-lg ${
-                  task.status === 'pending' ? 'text-sky-600 bg-sky-600/10' :
-                  task.status === 'in progress' ? 'text-blue-600 bg-blue-500/10' :
-                  task.status === 'submitted' ? 'text-purple-600 bg-purple-500/10' :
-                  task.status === 'approved' || task.status === 'completed' ? 'text-green-600 bg-green-500/10' :
-                  task.status === 'rejected' || task.status === 'incomplete' ? 'text-red-600 bg-red-500/10' :
-                  'text-muted-foreground bg-muted/50'
-                }`}>
-                  {task.status === 'pending' && '⏳ Task is pending assignment'}
-                  {task.status === 'in progress' && '🔄 Task is in progress'}
-                  {task.status === 'submitted' && '⏳ Waiting for admin approval'}
-                  {task.status === 'approved' && '✅ Task has been approved'}
-                  {task.status === 'completed' && '✅ Task completed'}
-                  {task.status === 'rejected' && '❌ Task was rejected'}
-                  {task.status === 'incomplete' && '⚠️ Task marked as incomplete'}
-                </div>
-              </div>
-            </MagicCard>
-          </BlurFade>
+                 <div className={`text-center text-xs font-medium p-2 rounded-lg ${
+                   task.status === 'pending' ? 'text-sky-600 bg-sky-600/10' :
+                   task.status === 'in progress' ? 'text-blue-600 bg-blue-500/10' :
+                   task.status === 'submitted' ? 'text-purple-600 bg-purple-500/10' :
+                   task.status === 'approved' || task.status === 'completed' ? 'text-green-600 bg-green-500/10' :
+                   task.status === 'rejected' || task.status === 'incomplete' ? 'text-red-600 bg-red-500/10' :
+                   'text-muted-foreground bg-muted/50'
+                 }`}>
+                   {task.status === 'pending' && '⏳ Task is pending assignment'}
+                   {task.status === 'in progress' && '🔄 Task is in progress'}
+                   {task.status === 'submitted' && '⏳ Waiting for admin approval'}
+                   {task.status === 'approved' && '✅ Task has been approved'}
+                   {task.status === 'completed' && '✅ Task completed'}
+                   {task.status === 'rejected' && '❌ Task was rejected'}
+                   {task.status === 'incomplete' && '⚠️ Task marked as incomplete'}
+                 </div>
+
+                 {/* Time Tracking Section */}
+                 {(task.workStartedAt || task.totalDurationSeconds) && (
+                   <div className="pt-4 border-t border-border space-y-3">
+                     <h4 className="text-sm font-bold text-foreground uppercase tracking-widest">Time Tracking</h4>
+                     
+                     {task.workStartedAt && (
+                       <div className="text-xs text-muted-foreground">
+                         Task Started: <span className="text-foreground font-medium">{formatDate(task.workStartedAt)}</span>
+                       </div>
+                     )}
+
+                     {task.isTimerRunning && (
+                       <div className="text-xs text-muted-foreground">
+                         Elapsed Time: <span className="text-foreground font-mono font-medium text-blue-600 dark:text-blue-400">
+                           {formatDuration(elapsedTime)}
+                         </span>
+                       </div>
+                     )}
+
+                     {task.totalDurationSeconds !== null && !task.isTimerRunning && (
+                       <div className="text-xs text-muted-foreground">
+                         Final Duration: <span className="text-foreground font-mono font-medium">
+                           {formatDuration(task.totalDurationSeconds)}
+                         </span>
+                       </div>
+                     )}
+
+                     {task.acceptedAt && (
+                       <div className="text-xs text-muted-foreground">
+                         Accepted: <span className="text-foreground font-medium">{formatDate(task.acceptedAt)}</span>
+                       </div>
+                     )}
+
+                     {task.submittedAt && (
+                       <div className="text-xs text-muted-foreground">
+                         Submitted: <span className="text-foreground font-medium">{formatDate(task.submittedAt)}</span>
+                       </div>
+                     )}
+
+                     {task.completedAt && (
+                       <div className="text-xs text-muted-foreground">
+                         Completed: <span className="text-foreground font-medium">{formatDate(task.completedAt)}</span>
+                       </div>
+                     )}
+                   </div>
+                 )}
+               </div>
+             </MagicCard>
+           </BlurFade>
 
           {/* Admin Review Section */}
           {user?.role === 'ADMIN' && task.status === 'submitted' && (
