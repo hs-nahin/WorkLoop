@@ -22,9 +22,43 @@ import GradientText from '../../../components/animations/GradientText';
 import TextHighlighter from '../../../components/animations/TextHighlighter';
 import { AuthContext } from '../../../context/AuthContextInstance.js';
 import {
+  AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { useRealTimeTasks } from '@/hooks/useRealtime';
+
+// Helper function to convert Firestore timestamp
+const convertTimestamp = (timestamp) => {
+  if (!timestamp) return null;
+  if (typeof timestamp.toDate === 'function') {
+    return timestamp.toDate();
+  }
+  if (timestamp._seconds) {
+    return new Date(timestamp._seconds * 1000);
+  }
+  return new Date(timestamp);
+};
+
+// Helper function to format date
+const formatDate = (timestamp) => {
+  const date = convertTimestamp(timestamp);
+  if (!date || isNaN(date.getTime())) return 'N/A';
+  return date.toLocaleString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  });
+};
 
 const TaskList = () => {
   const { user } = useContext(AuthContext);
@@ -36,6 +70,18 @@ const TaskList = () => {
   const [alertOpen, setAlertOpen] = useState(false);
   const [deletingTaskId, setDeletingTaskId] = useState(null);
   const isAdmin = user?.role === 'ADMIN';
+
+  // Real-time tasks - auto-updates when any task changes
+  const { tasks: realtimeTasks, loading: tasksLoading } = useRealTimeTasks(user?.role, user?.uid);
+
+  // Update when real-time data changes
+  useEffect(() => {
+    if (realtimeTasks) {
+      const activeTasks = realtimeTasks.filter(task => task.status !== 'completed');
+      setTasks(activeTasks);
+      setIsLoading(tasksLoading);
+    }
+  }, [realtimeTasks, tasksLoading]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {

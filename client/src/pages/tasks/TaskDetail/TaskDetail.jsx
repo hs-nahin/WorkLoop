@@ -14,6 +14,7 @@ import { AuthContext } from '../../../context/AuthContext';
 import TaskDiscussion from '../../../components/tasks/TaskDiscussion/TaskDiscussion';
 import SubtaskWorkflow from '../../../components/tasks/SubtaskWorkflow/SubtaskWorkflow';
 import AttachmentPanel from '../../../components/tasks/Attachments/AttachmentPanel';
+import { useRealTimeTask } from '@/hooks/useRealtime';
 
 // Helper function to convert Firestore timestamp to Date
 const convertTimestamp = (timestamp) => {
@@ -70,20 +71,18 @@ const TaskDetail = () => {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [timerInterval, setTimerInterval] = useState(null);
 
-  useEffect(() => {
-    const fetchTask = async () => {
-      try {
-        const data = await apiRequest({ endpoint: `/tasks/${id}` });
-        setTask(data);
-      } catch (error) {
-        console.error('Task not found:', error.message);
-        toast.error('Task not found');
-        navigate('/dashboard');
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  // Real-time task listener - auto-updates when task changes
+  const { task: realtimeTask, loading: taskLoading } = useRealTimeTask(id);
 
+  // Update when real-time data changes
+  useEffect(() => {
+    if (realtimeTask) {
+      setTask(realtimeTask);
+      setIsLoading(taskLoading);
+    }
+  }, [realtimeTask, taskLoading]);
+
+  useEffect(() => {
     const fetchUsers = async () => {
       try {
         const data = await apiRequest({ endpoint: '/users' });
@@ -94,9 +93,8 @@ const TaskDetail = () => {
       }
     };
 
-    fetchTask();
     fetchUsers();
-  }, [id, navigate]);
+  }, []);
 
   // Timer management for live duration tracking
   useEffect(() => {

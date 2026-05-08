@@ -30,15 +30,31 @@ import BlurFade from "@/components/animations/BlurFade";
 
 import NumberTicker from "@/components/animations/NumberTicker.jsx";
 import { AuthContext } from "@/context/AuthContextInstance";
+import { useRealTimeStats } from "@/hooks/useRealtime";
 
 const Dashboard = () => {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
+  
+  // Real-time stats - auto-updates when tasks change
+  const { stats: realtimeStats, loading: statsLoading } = useRealTimeStats(user?.uid, user?.role);
+  
   const [stats, setStats] = useState({
     totalTasks: 0,
     pendingTasks: 0,
     completedTasks: 0,
   });
+  
+  // Update when real-time data changes
+  useEffect(() => {
+    if (realtimeStats) {
+      setStats({
+        totalTasks: realtimeStats.total,
+        pendingTasks: realtimeStats.pending,
+        completedTasks: realtimeStats.completed,
+      });
+    }
+  }, [realtimeStats]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [officers, setOfficers] = useState([]);
