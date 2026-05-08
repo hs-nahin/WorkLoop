@@ -13,19 +13,17 @@ import Confetti from '../../../components/animations/Confetti';
 import { AuthContext } from '../../../context/AuthContext';
 import TaskDiscussion from '../../../components/tasks/TaskDiscussion/TaskDiscussion';
 import SubtaskWorkflow from '../../../components/tasks/SubtaskWorkflow/SubtaskWorkflow';
+import AttachmentPanel from '../../../components/tasks/Attachments/AttachmentPanel';
 
 // Helper function to convert Firestore timestamp to Date
 const convertTimestamp = (timestamp) => {
   if (!timestamp) return null;
-  // Firestore Timestamp object with toDate method
   if (typeof timestamp.toDate === 'function') {
     return timestamp.toDate();
   }
-  // Firestore Timestamp serialized as { _seconds, _nanoseconds }
   if (timestamp._seconds) {
     return new Date(timestamp._seconds * 1000);
   }
-  // Already a Date object or string
   return new Date(timestamp);
 };
 
@@ -446,6 +444,11 @@ const TaskDetail = () => {
             {/* Subtask Workflow Section */}
             <BlurFade delay={250}>
               <SubtaskWorkflow taskId={id} task={task} />
+            </BlurFade>
+
+            {/* Attachment & Version Control Section */}
+            <BlurFade delay={300}>
+              <AttachmentPanel taskId={id} task={task} />
             </BlurFade>
          </div>
 

@@ -22,51 +22,9 @@ import GradientText from '../../../components/animations/GradientText';
 import TextHighlighter from '../../../components/animations/TextHighlighter';
 import { AuthContext } from '../../../context/AuthContextInstance.js';
 import {
-  AlertDialog,
-  AlertDialogTrigger,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
   AlertDialogAction,
   AlertDialogCancel,
 } from '@/components/ui/alert-dialog';
-
-// Helper function to convert Firestore timestamp to Date
-const convertTimestamp = (timestamp) => {
-  if (!timestamp) return null;
-  if (typeof timestamp.toDate === 'function') {
-    return timestamp.toDate();
-  }
-  if (timestamp._seconds) {
-    return new Date(timestamp._seconds * 1000);
-  }
-  return new Date(timestamp);
-};
-
-// Helper function to convert 12-hour to 24-hour format
-const convertTo24Hour = (hour12, ampm) => {
-  if (ampm === 'AM') {
-    return hour12 === 12 ? 0 : hour12;
-  } else {
-    return hour12 === 12 ? 12 : hour12 + 12;
-  }
-};
-
-// Helper function to format date using browser's local timezone
-const formatDate = (timestamp) => {
-  const date = convertTimestamp(timestamp);
-  if (!date || isNaN(date.getTime())) return 'N/A';
-  return date.toLocaleString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: true
-  });
-};
 
 const TaskList = () => {
   const { user } = useContext(AuthContext);

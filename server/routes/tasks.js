@@ -18,7 +18,10 @@ const {
   createSubtask,
   getSubtasks,
   updateSubtask,
-  deleteSubtask
+  deleteSubtask,
+  createAttachment,
+  getAttachments,
+  deleteAttachment
 } = require('../controllers/taskController');
 const { verifyToken, authorize } = require('../middleware/auth');
 
@@ -88,5 +91,15 @@ router.patch('/:id/subtasks/:subtaskId', verifyToken, updateSubtask);
 
 // Delete subtask (officers/admins only)
 router.delete('/:id/subtasks/:subtaskId', verifyToken, authorize(['ADMIN', 'IT OFFICER']), deleteSubtask);
+
+// Attachment routes (Version Control)
+// Create attachment metadata (after uploading to Storage)
+router.post('/:id/attachments', verifyToken, createAttachment);
+
+// Get all attachments for a task
+router.get('/:id/attachments', verifyToken, getAttachments);
+
+// Delete attachment (uploader, officer of task, or admin)
+router.delete('/:id/attachments/:attachmentId', verifyToken, deleteAttachment);
 
 module.exports = router;

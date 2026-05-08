@@ -1,5 +1,6 @@
 const admin = require('firebase-admin');
 const { adminDb, adminAuth } = require('../firebase-admin');
+const { writeAuditLog } = require('../middleware/auth');
 
 // Helper to create system messages in task discussion thread
 const createSystemMessage = async (taskId, message) => {
@@ -536,6 +537,153 @@ const deleteSubtask = async (req, res) => {
     }
 };
 
+// Attachment Version Control Functions
+const getFileBaseName = (filename) => {
+    // Remove version suffix like -v1, -v2, etc. and extension
+    return filename.replace(/-\d+$/, '').replace(/\.[^/.]+$/, '');
+};
+
+const getNextVersion = async (taskId, baseFileName) => {
+    try {
+        const attachmentsSnapshot = await adminDb.collection('tasks').doc(taskId).collection('attachments')
+            .where('baseFileName', '==', baseFileName)
+            .orderBy('version', 'desc')
+            .limit(1)
+            .get();
+        
+        if (attachmentsSnapshot.empty) return 1;
+        const latest = attachmentsSnapshot.docs[0].data();
+        return (latest.version || 0) + 1;
+    } catch (error) {
+        console.error('Error getting next version:', error);
+        return 1;
+    }
+};
+
+const createAttachment = async (req, res) => {
+    try {
+        const { id: taskId } = req.params;
+        const { fileName, fileUrl, fileSize, fileType, notes } = req.body;
+
+        console.log('Create attachment - Task ID:', taskId);
+        console.log('Create attachment - File:', fileName, fileUrl);
+
+        if (!fileName || !fileUrl) {
+            return res.status(400).json({ message: 'fileName and fileUrl are required' });
+        }
+
+        // Verify task exists
+        const taskDoc = await adminDb.collection('tasks').doc(taskId).get();
+        if (!taskDoc.exists) {
+            console.log('Task not found:', taskId);
+            return res.status(404).json({ message: 'Task not found' });
+        }
+        const taskData = taskDoc.data();
+
+        const baseFileName = getFileBaseName(fileName);
+        const version = await getNextVersion(taskId, baseFileName);
+
+        const newAttachment = {
+            fileName,
+            baseFileName,
+            fileUrl,
+            fileSize: fileSize || null,
+            fileType: fileType || null,
+            uploadedBy: req.user.uid,
+            uploaderName: req.user.name || 'Unknown',
+            uploaderRole: req.user.role || 'USER',
+            uploadedAt: admin.firestore.FieldValue.serverTimestamp(),
+            version,
+            notes: notes || null
+        };
+
+        const docRef = await adminDb.collection('tasks').doc(taskId).collection('attachments').add(newAttachment);
+        
+        console.log('Attachment created successfully:', docRef.id);
+        
+        // Create system message for attachment upload
+        try {
+            await createSystemMessage(taskId, `${req.user.name || 'User'} uploaded ${fileName} (v${version})`);
+        } catch (msgError) {
+            console.error('Error creating system message:', msgError);
+        }
+        
+        // Audit trail
+        try {
+            await writeAuditLog('attachment_uploaded', req.user, {
+                targetId: taskId,
+                targetTitle: taskData.title,
+                description: `${req.user.name || 'User'} uploaded ${fileName} (v${version})`
+            });
+        } catch (auditError) {
+            console.error('Error writing audit log:', auditError);
+        }
+        
+        const createdAttachment = { id: docRef.id, ...newAttachment };
+        res.status(201).json(createdAttachment);
+    } catch (error) {
+        console.error('Error creating attachment:', error);
+        res.status(500).json({ message: 'Server error: ' + error.message });
+    }
+};
+
+const getAttachments = async (req, res) => {
+    try {
+        const { id: taskId } = req.params;
+        const attachmentsSnapshot = await adminDb.collection('tasks').doc(taskId).collection('attachments')
+            .orderBy('uploadedAt', 'desc')
+            .get();
+        
+        const attachments = attachmentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        res.json(attachments);
+    } catch (error) {
+        console.error('Error fetching attachments:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+const deleteAttachment = async (req, res) => {
+    try {
+        const { id: taskId, attachmentId } = req.params;
+        
+        // Get attachment details for system message
+        const attachmentDoc = await adminDb.collection('tasks').doc(taskId).collection('attachments').doc(attachmentId).get();
+        if (!attachmentDoc.exists) return res.status(404).json({ message: 'Attachment not found' });
+        
+        const attachmentData = attachmentDoc.data();
+        
+        // Check permissions: uploader, officer assigned to task, or admin
+        const taskDoc = await adminDb.collection('tasks').doc(taskId).get();
+        const task = taskDoc.exists ? taskDoc.data() : null;
+        
+        const canDelete = 
+            req.user.uid === attachmentData.uploadedBy ||
+            req.user.role === 'ADMIN' ||
+            (task && task.officerId === req.user.uid);
+        
+        if (!canDelete) {
+            return res.status(403).json({ message: 'Insufficient permissions to delete this attachment' });
+        }
+        
+        await adminDb.collection('tasks').doc(taskId).collection('attachments').doc(attachmentId).delete();
+        
+        // Create system message
+        await createSystemMessage(taskId, `Attachment "${attachmentData.fileName}" (v${attachmentData.version}) was deleted`);
+        
+        // Audit trail
+        await writeAuditLog('attachment_deleted', req.user, {
+            targetId: taskId,
+            targetTitle: task?.title || 'Unknown',
+            description: `${req.user.name || 'User'} deleted "${attachmentData.fileName}" (v${attachmentData.version})`
+        });
+        
+        res.json({ message: 'Attachment deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting attachment:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
 module.exports = { 
     getTasks, 
     createTask, 
@@ -554,5 +702,8 @@ module.exports = {
     createSubtask,
     getSubtasks,
     updateSubtask,
-    deleteSubtask
+    deleteSubtask,
+    createAttachment,
+    getAttachments,
+    deleteAttachment
 };
