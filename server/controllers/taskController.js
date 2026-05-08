@@ -128,6 +128,24 @@ const acceptTask = async (req, res) => {
         // Create system message for status change
         await createSystemMessage(id, `Task accepted by ${req.user.name || 'Officer'} - status changed to In Progress`);
         
+        // Create notifications for all admins that task has been accepted
+        const adminQuery = await adminDb.collection('users').where('role', '==', 'ADMIN').get();
+        
+        if (!adminQuery.empty) {
+            const notificationsPromises = adminQuery.docs.map(adminDoc => {
+                return adminDb.collection('notifications').add({
+                    type: 'task_accepted',
+                    taskId: id,
+                    taskTitle: task.title,
+                    message: `Task "${task.title}" has been accepted by ${req.user.name || 'Officer'}`,
+                    userId: adminDoc.id,
+                    read: false,
+                    createdAt: admin.firestore.FieldValue.serverTimestamp()
+                });
+            });
+            await Promise.all(notificationsPromises);
+        }
+        
         const updatedDoc = await adminDb.collection('tasks').doc(id).get();
         res.json({ id: updatedDoc.id, ...updatedDoc.data() });
     } catch (error) {
