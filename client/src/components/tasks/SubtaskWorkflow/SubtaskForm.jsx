@@ -46,6 +46,17 @@ const SubtaskForm = ({ subtask, onSubmit, onCancel, users }) => {
   // Get selected user for display
   const selectedUser = users.find(u => (u.userId || u.id) === formData.assignedUserId);
 
+  // Sort users: Officers first (A-Z), then others (A-Z)
+  const sortedUsers = [...users].sort((a, b) => {
+    const aIsOfficer = a.role === 'IT_OFFICER' || a.role === 'IT OFFICER';
+    const bIsOfficer = b.role === 'IT_OFFICER' || b.role === 'IT OFFICER';
+
+    if (aIsOfficer && !bIsOfficer) return -1;
+    if (!aIsOfficer && bIsOfficer) return 1;
+    
+    return a.name.localeCompare(b.name);
+  });
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4 p-4 border border-border rounded-lg bg-muted/50 mb-4">
       <h4 className="text-sm font-bold">{subtask ? 'Edit Subtask' : 'Create New Subtask'}</h4>
@@ -89,27 +100,28 @@ const SubtaskForm = ({ subtask, onSubmit, onCancel, users }) => {
                   <span className="text-xs text-muted-foreground ml-1">({selectedUser.role})</span>
                 </div>
               ) : (
-                <span className="text-muted-foreground">Select technician</span>
+                <span className="text-muted-foreground">Select assignee</span>
               )}
             </SelectValue>
           </SelectTrigger>
-          <SelectContent>
-            {users.length > 0 ? (
-              users.map((user) => (
-                <SelectItem key={user.userId || user.id} value={user.userId || user.id}>
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold">
-                      {user.name?.charAt(0) || 'U'}
-                    </div>
-                    <span>{user.name}</span>
-                    <span className="text-xs text-muted-foreground ml-auto">({user.role})</span>
-                  </div>
-                </SelectItem>
-              ))
-            ) : (
-              <div className="p-2 text-sm text-muted-foreground text-center">No technicians available</div>
-            )}
-          </SelectContent>
+           <SelectContent>
+             {sortedUsers.length > 0 ? (
+               sortedUsers.map((user) => (
+                 <SelectItem key={user.userId || user.id} value={user.userId || user.id}>
+                   <div className="flex items-center gap-2">
+                     <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold">
+                       {user.name?.charAt(0) || 'U'}
+                     </div>
+                     <span>{user.name}</span>
+                     <span className="text-xs text-muted-foreground ml-auto">({user.role})</span>
+                   </div>
+                 </SelectItem>
+               ))
+             ) : (
+               <div className="p-2 text-sm text-muted-foreground text-center">No users available</div>
+             )}
+           </SelectContent>
+
         </Select>
       </div>
 
