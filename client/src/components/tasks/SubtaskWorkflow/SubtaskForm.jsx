@@ -4,14 +4,20 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useContext } from 'react';
 import { AuthContext } from '@/context/AuthContext';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const SubtaskForm = ({ subtask, onSubmit, onCancel, users }) => {
-  const { user } = useContext(AuthContext);
+  const { user: currentUser } = useContext(AuthContext);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    assignedUserId: '',
-    deadline: ''
+    assignedUserId: ''
   });
 
   useEffect(() => {
@@ -19,26 +25,26 @@ const SubtaskForm = ({ subtask, onSubmit, onCancel, users }) => {
       setFormData({
         title: subtask.title || '',
         description: subtask.description || '',
-        assignedUserId: subtask.assignedUserId || '',
-        deadline: subtask.deadline ? new Date(subtask.deadline).toISOString().split('T')[0] : ''
+        assignedUserId: subtask.assignedUserId || ''
       });
     }
   }, [subtask]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
+  const handleChange = (name, value) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.title.trim()) return;
+    if (!formData.title.trim() || !formData.assignedUserId) return;
 
-    onSubmit({
-      ...formData,
-      deadline: formData.deadline ? new Date(formData.deadline) : null
-    });
+    // Remove deadline from submission - subtasks don't have deadlines
+    const { deadline, ...submitData } = formData;
+    onSubmit(submitData);
   };
+
+  // Get selected user for display
+  const selectedUser = users.find(u => (u.userId || u.id) === formData.assignedUserId);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 p-4 border border-border rounded-lg bg-muted/50 mb-4">
@@ -49,7 +55,7 @@ const SubtaskForm = ({ subtask, onSubmit, onCancel, users }) => {
         <Input
           name="title"
           value={formData.title}
-          onChange={handleChange}
+          onChange={(e) => handleChange('title', e.target.value)}
           placeholder="Subtask title"
           required
         />
@@ -60,7 +66,7 @@ const SubtaskForm = ({ subtask, onSubmit, onCancel, users }) => {
         <Textarea
           name="description"
           value={formData.description}
-          onChange={handleChange}
+          onChange={(e) => handleChange('description', e.target.value)}
           placeholder="Describe the subtask..."
           className="h-20"
         />
@@ -68,31 +74,50 @@ const SubtaskForm = ({ subtask, onSubmit, onCancel, users }) => {
 
       <div>
         <label className="text-xs font-medium text-muted-foreground">Assign To *</label>
-        <Input
-          name="assignedUserId"
-          value={formData.assignedUserId}
-          onChange={handleChange}
-          placeholder="User ID (TODO: replace with dropdown)"
-          required
-        />
-        {/* TODO: Replace with dropdown of users fetched from API */}
-      </div>
-
-      <div>
-        <label className="text-xs font-medium text-muted-foreground">Deadline</label>
-        <Input
-          type="date"
-          name="deadline"
-          value={formData.deadline}
-          onChange={handleChange}
-        />
+        <Select 
+          value={formData.assignedUserId} 
+          onValueChange={(value) => handleChange('assignedUserId', value)}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue>
+              {selectedUser ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold">
+                    {selectedUser.name?.charAt(0) || 'U'}
+                  </div>
+                  <span>{selectedUser.name}</span>
+                  <span className="text-xs text-muted-foreground ml-1">({selectedUser.role})</span>
+                </div>
+              ) : (
+                <span className="text-muted-foreground">Select technician</span>
+              )}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {users.length > 0 ? (
+              users.map((user) => (
+                <SelectItem key={user.userId || user.id} value={user.userId || user.id}>
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold">
+                      {user.name?.charAt(0) || 'U'}
+                    </div>
+                    <span>{user.name}</span>
+                    <span className="text-xs text-muted-foreground ml-auto">({user.role})</span>
+                  </div>
+                </SelectItem>
+              ))
+            ) : (
+              <div className="p-2 text-sm text-muted-foreground text-center">No technicians available</div>
+            )}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="flex gap-2 justify-end">
         <Button type="button" variant="ghost" onClick={onCancel} size="sm">
           Cancel
         </Button>
-        <Button type="submit" size="sm" className="cursor-pointer">
+        <Button type="submit" size="sm" className="cursor-pointer" disabled={!formData.assignedUserId}>
           {subtask ? 'Update' : 'Create'} Subtask
         </Button>
       </div>

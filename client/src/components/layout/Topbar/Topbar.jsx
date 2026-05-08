@@ -25,29 +25,35 @@ const TopBar = () => {
     const notificationsRef = collection(db, 'notifications');
     const q = query(
       notificationsRef,
-      where('userId', '==', user.uid),
-      orderBy('createdAt', 'desc')
+      where('userId', '==', user.uid)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      console.log('Notification snapshot received. Count:', snapshot.docs.length);
-      const notifs = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      console.log('Fetched Notifications:', notifs);
-      setNotifications(notifs);
-      setUnreadCount(notifs.filter(n => !n.read).length);
-    }, (error) => {
-      console.error('Full Firestore Error Object:', error);
-      if (error.code === 'failed-precondition') {
-        console.error('Firestore Index missing: Please create an index for notifications (userId, createdAt)');
-      } else {
-        console.error('Error listening to notifications:', error);
+      try {
+        let notifs = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        
+        // Sort locally by createdAt
+        notifs = notifs.sort((a, b) => {
+          const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(0);
+          const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(0);
+          return dateB - dateA;
+        });
+        
+        setNotifications(notifs);
+        setUnreadCount(notifs.filter(n => !n.read).length);
+      } catch (err) {
+        console.error('Error processing notifications:', err);
       }
+    }, (error) => {
+      console.error('Error listening to notifications:', error);
     });
 
-    return () => unsubscribe();
+    return () => {
+      try { unsubscribe(); } catch (e) {}
+    };
   }, [user?.uid]);
 
   const handleNotificationClick = async (notification) => {
