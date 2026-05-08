@@ -1,6 +1,7 @@
 import MainLayout from "@/components/layout/MainLayout";
 import Login from "@/pages/auth/Login/Login";
 import Dashboard from "@/pages/dashboard/Dashboard/Dashboard";
+import UserPerformanceDashboard from "@/pages/dashboard/UserPerformanceDashboard/UserPerformanceDashboard";
 import Settings from "@/pages/settings/Settings";
 import TaskDetail from "@/pages/tasks/TaskDetail/TaskDetail";
 import TaskList from "@/pages/tasks/TaskList/TaskList";
@@ -40,6 +41,10 @@ const router = createBrowserRouter([
           {
             path: 'settings',
             element: <Settings />,
+          },
+          {
+            path: 'performance',
+            element: <UserPerformanceDashboard />,
           },
           {
             index: true,

@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
+  BarChart3,
   CheckCircle2,
   CheckSquare,
   ChevronLeft,
@@ -28,6 +29,7 @@ const Sidebar = () => {
     { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard, roles: ["ADMIN", "IT OFFICER", "ASSISTANT"] },
     { name: "Tasks", path: "/tasks", icon: CheckSquare, roles: ["ADMIN", "IT OFFICER", "ASSISTANT"] },
     { name: "Completed", path: "/completed", icon: CheckCircle2, roles: ["ADMIN", "IT OFFICER", "ASSISTANT"] },
+    { name: "Performance", path: "/performance", icon: BarChart3, roles: ["ADMIN"] },
   ];
 
   const filteredItems = menuItems.filter(item => item.roles.includes(user?.role));
