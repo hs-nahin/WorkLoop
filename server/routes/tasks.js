@@ -14,7 +14,11 @@ const {
   deleteTask,
   getNotifications,
   getOfficerNotifications,
-  markNotificationRead
+  markNotificationRead,
+  createSubtask,
+  getSubtasks,
+  updateSubtask,
+  deleteSubtask
 } = require('../controllers/taskController');
 const { verifyToken, authorize } = require('../middleware/auth');
 
@@ -71,5 +75,18 @@ router.delete('/notifications/:id', verifyToken, async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 });
+
+// Subtask routes (Assistant Workflow)
+// Create subtask (officers/admins only)
+router.post('/:id/subtasks', verifyToken, authorize(['ADMIN', 'IT OFFICER']), createSubtask);
+
+// Get all subtasks for a task
+router.get('/:id/subtasks', verifyToken, getSubtasks);
+
+// Update subtask (assigned user can update status, officers/admins can update all)
+router.patch('/:id/subtasks/:subtaskId', verifyToken, updateSubtask);
+
+// Delete subtask (officers/admins only)
+router.delete('/:id/subtasks/:subtaskId', verifyToken, authorize(['ADMIN', 'IT OFFICER']), deleteSubtask);
 
 module.exports = router;

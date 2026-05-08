@@ -1,6 +1,24 @@
 const admin = require('firebase-admin');
 const { adminDb, adminAuth } = require('../firebase-admin');
 
+// Helper to create system messages in task discussion thread
+const createSystemMessage = async (taskId, message) => {
+  try {
+    await adminDb.collection('tasks').doc(taskId).collection('messages').add({
+      text: message,
+      senderId: 'system',
+      senderName: 'System',
+      senderRole: 'SYSTEM',
+      senderAvatar: null,
+      attachmentUrl: null,
+      type: 'system',
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+  } catch (error) {
+    console.error('Error creating system message:', error);
+  }
+};
+
 const getTasks = async (req, res) => {
     try {
         const tasksSnapshot = await adminDb.collection('tasks').orderBy('createdAt', 'desc').get();
@@ -105,6 +123,9 @@ const acceptTask = async (req, res) => {
             isTimerRunning: true,
             totalDurationSeconds: 0
         });
+
+        // Create system message for status change
+        await createSystemMessage(id, `Task accepted by ${req.user.name || 'Officer'} - status changed to In Progress`);
         
         const updatedDoc = await adminDb.collection('tasks').doc(id).get();
         res.json({ id: updatedDoc.id, ...updatedDoc.data() });
@@ -177,6 +198,9 @@ const submitTask = async (req, res) => {
             totalDurationSeconds: totalDuration,
             isTimerRunning: false
         });
+
+        // Create system message for status change
+        await createSystemMessage(id, `Task submitted by ${req.user.name || 'Officer'} - status changed to Submitted`);
         
         // Create notifications for all admins
         const adminQuery = await adminDb.collection('users').where('role', '==', 'ADMIN').get();
@@ -232,6 +256,9 @@ const incompleteTask = async (req, res) => {
             totalDurationSeconds: totalDuration,
             isTimerRunning: false
         });
+
+        // Create system message for status change
+        await createSystemMessage(id, `Task marked as Incomplete by ${req.user.name || 'Officer'}`);
         
         const updatedDoc = await adminDb.collection('tasks').doc(id).get();
         res.json({ id: updatedDoc.id, ...updatedDoc.data() });
@@ -256,6 +283,9 @@ const approveTask = async (req, res) => {
             adminFeedback: feedback || null,
             isTimerRunning: false
         });
+
+        // Create system message for status change
+        await createSystemMessage(id, `Task approved by ${req.user.name || 'Admin'} - status changed to Completed`);
         
         // Create notification for officer
         const task = taskDoc.data();
@@ -303,6 +333,9 @@ const rejectTask = async (req, res) => {
             isTimerRunning: true
             // Keep completionReport and progressReports for officer to review
         });
+
+        // Create system message for status change
+        await createSystemMessage(id, `Task rejected by ${req.user.name || 'Admin'} - status changed to In Progress. Feedback: ${feedback}`);
         
         // Create notification for officer
         const task = taskDoc.data();
@@ -392,6 +425,117 @@ const markNotificationRead = async (req, res) => {
     }
 };
 
+// Subtask CRUD for Assistant Workflow
+const createSubtask = async (req, res) => {
+    try {
+        const { id: taskId } = req.params;
+        const { title, description, assignedUserId, deadline } = req.body;
+
+        if (!title || !assignedUserId) {
+            return res.status(400).json({ message: 'Title and assigned user are required' });
+        }
+
+        // Verify task exists
+        const taskDoc = await adminDb.collection('tasks').doc(taskId).get();
+        if (!taskDoc.exists) return res.status(404).json({ message: 'Task not found' });
+
+        // Get assigned user details
+        const userDoc = await adminDb.collection('users').doc(assignedUserId).get();
+        if (!userDoc.exists) return res.status(404).json({ message: 'Assigned user not found' });
+        const userData = userDoc.data();
+
+        const newSubtask = {
+            title,
+            description: description || '',
+            assignedUserId,
+            assignedUserName: userData.name || 'Unknown',
+            assignedUserRole: userData.role || 'ASSISTANT',
+            status: 'pending',
+            deadline: deadline || null,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        };
+
+        const docRef = await adminDb.collection('tasks').doc(taskId).collection('subtasks').add(newSubtask);
+        
+        // Create system message for subtask creation
+        await createSystemMessage(taskId, `Subtask "${title}" created and assigned to ${userData.name || 'user'}`);
+        
+        const createdSubtask = { id: docRef.id, ...newSubtask };
+        res.status(201).json(createdSubtask);
+    } catch (error) {
+        console.error('Error creating subtask:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+const getSubtasks = async (req, res) => {
+    try {
+        const { id: taskId } = req.params;
+        const subtasksSnapshot = await adminDb.collection('tasks').doc(taskId).collection('subtasks')
+            .orderBy('createdAt', 'asc')
+            .get();
+        
+        const subtasks = subtasksSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        res.json(subtasks);
+    } catch (error) {
+        console.error('Error fetching subtasks:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+const updateSubtask = async (req, res) => {
+    try {
+        const { id: taskId, subtaskId } = req.params;
+        const updates = req.body;
+
+        // Only allow updating status, description, deadline, assigned user
+        const allowedUpdates = ['status', 'description', 'deadline', 'assignedUserId', 'assignedUserName', 'assignedUserRole'];
+        const filteredUpdates = {};
+        Object.keys(updates).forEach(key => {
+            if (allowedUpdates.includes(key)) {
+                filteredUpdates[key] = updates[key];
+            }
+        });
+        filteredUpdates.updatedAt = admin.firestore.FieldValue.serverTimestamp();
+
+        await adminDb.collection('tasks').doc(taskId).collection('subtasks').doc(subtaskId).update(filteredUpdates);
+        
+        // Create system message for subtask status change
+        if (updates.status) {
+            const subtaskDoc = await adminDb.collection('tasks').doc(taskId).collection('subtasks').doc(subtaskId).get();
+            const subtask = subtaskDoc.data();
+            await createSystemMessage(taskId, `Subtask "${subtask.title}" status changed to ${updates.status}`);
+        }
+
+        const updatedDoc = await adminDb.collection('tasks').doc(taskId).collection('subtasks').doc(subtaskId).get();
+        res.json({ id: updatedDoc.id, ...updatedDoc.data() });
+    } catch (error) {
+        console.error('Error updating subtask:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+const deleteSubtask = async (req, res) => {
+    try {
+        const { id: taskId, subtaskId } = req.params;
+        
+        // Get subtask title for system message
+        const subtaskDoc = await adminDb.collection('tasks').doc(taskId).collection('subtasks').doc(subtaskId).get();
+        const subtaskTitle = subtaskDoc.exists ? subtaskDoc.data().title : 'Unknown';
+        
+        await adminDb.collection('tasks').doc(taskId).collection('subtasks').doc(subtaskId).delete();
+        
+        // Create system message
+        await createSystemMessage(taskId, `Subtask "${subtaskTitle}" deleted`);
+        
+        res.json({ message: 'Subtask deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting subtask:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
 module.exports = { 
     getTasks, 
     createTask, 
@@ -406,5 +550,9 @@ module.exports = {
     deleteTask, 
     getNotifications, 
     getOfficerNotifications, 
-    markNotificationRead
+    markNotificationRead,
+    createSubtask,
+    getSubtasks,
+    updateSubtask,
+    deleteSubtask
 };

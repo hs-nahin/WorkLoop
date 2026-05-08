@@ -11,6 +11,8 @@ import MagicCard from '../../../components/animations/MagicCard';
 import TextHighlighter from '../../../components/animations/TextHighlighter';
 import Confetti from '../../../components/animations/Confetti';
 import { AuthContext } from '../../../context/AuthContext';
+import TaskDiscussion from '../../../components/tasks/TaskDiscussion/TaskDiscussion';
+import SubtaskWorkflow from '../../../components/tasks/SubtaskWorkflow/SubtaskWorkflow';
 
 // Helper function to convert Firestore timestamp to Date
 const convertTimestamp = (timestamp) => {
@@ -434,10 +436,20 @@ const TaskDetail = () => {
                  </div>
                </MagicCard>
              </BlurFade>
-           )}
-        </div>
+            )}
 
-        <div className="space-y-6">
+            {/* Task Discussion Section */}
+            <BlurFade delay={200}>
+              <TaskDiscussion taskId={id} task={task} />
+            </BlurFade>
+
+            {/* Subtask Workflow Section */}
+            <BlurFade delay={250}>
+              <SubtaskWorkflow taskId={id} task={task} />
+            </BlurFade>
+         </div>
+
+         <div className="space-y-6">
           {/* Task Workflow Panel */}
           <BlurFade delay={100}>
             <MagicCard>
