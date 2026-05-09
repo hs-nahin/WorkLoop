@@ -1,6 +1,7 @@
 import { Circle, Loader2, CheckCircle2, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { hasPermission } from '@/lib/permissions';
 
 const statusConfig = {
   pending: { icon: Circle, color: 'text-yellow-600 dark:text-yellow-400', bg: 'bg-yellow-600/10', label: 'Pending' },
@@ -12,11 +13,10 @@ const SubtaskList = ({ subtasks, task, user, canEdit, onEdit, onUpdateStatus, on
   const [expandedId, setExpandedId] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
 
-  // Only assigned user or ADMIN can update status
   const canUpdateStatus = (subtask) => {
     if (!user) return false;
-    if (user.role === 'ADMIN') return true;
-    if (user.uid === subtask.assignedUserId || user.id === subtask.assignedUserId) return true;
+    if (hasPermission(user.role, 'SUBTASK_UPDATE_STATUS') && (user.uid === subtask.assignedUserId || user.id === subtask.assignedUserId)) return true;
+    if (hasPermission(user.role, 'SUBTASK_EDIT')) return true;
     return false;
   };
 

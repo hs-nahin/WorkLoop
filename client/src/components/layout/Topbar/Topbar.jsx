@@ -10,6 +10,7 @@ import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { apiRequest } from "../../../api/apiClient";
 import { AuthContext } from "../../../context/AuthContextInstance.js";
+import { hasPermission } from "../../../lib/permissions";
 import { db } from "../../../lib/firebase";
 import { collection, query, where, orderBy, onSnapshot, updateDoc, doc, deleteDoc } from "firebase/firestore";
 
@@ -123,7 +124,7 @@ const TopBar = () => {
             {user?.role || "Guest"} Session
           </Badge>
         </div>
-        {user?.role === "ADMIN" && (
+        {hasPermission(user?.role, "DASHBOARD_ADMIN") && (
           <div className="flex items-center gap-1">
             <Badge
               variant="solid"

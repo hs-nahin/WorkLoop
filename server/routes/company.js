@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const { adminDb, adminStorage } = require('../firebase-admin');
-const { verifyToken, adminOnly, writeAuditLog } = require('../middleware/auth');
+const { verifyToken, writeAuditLog } = require('../middleware/auth');
+const { checkPermission } = require('../config/permissions');
 
 const DEFAULT_COMPANY = {
   companyName: 'WorkLoop',
@@ -24,7 +25,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.put('/', verifyToken, adminOnly, async (req, res) => {
+router.put('/', verifyToken, checkPermission('COMPANY_SETTINGS'), async (req, res) => {
   try {
     const { companyName, appTitle, primaryColor, locations } = req.body;
 
@@ -48,7 +49,7 @@ router.put('/', verifyToken, adminOnly, async (req, res) => {
   }
 });
 
-router.post('/logo', verifyToken, adminOnly, async (req, res) => {
+router.post('/logo', verifyToken, checkPermission('COMPANY_SETTINGS'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });

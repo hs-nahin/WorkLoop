@@ -2,8 +2,9 @@
 import { useContext } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router';
 import { AuthContext } from '../../context/AuthContext';
+import { hasPermission } from '../../lib/permissions';
 
-const ProtectedRoute = ({ allowedRoles }) => {
+const ProtectedRoute = ({ allowedPermissions }) => {
   const { user, token, loading } = useContext(AuthContext);
   const location = useLocation();
 
@@ -17,11 +18,11 @@ const ProtectedRoute = ({ allowedRoles }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  const userRole = user?.role?.toUpperCase() || 'USER';
+  const role = user?.role || '';
   
-  if (allowedRoles && allowedRoles.length > 0) {
-    const allowedRolesUpper = allowedRoles.map(r => r.toUpperCase());
-    if (!allowedRolesUpper.includes(userRole)) {
+  if (allowedPermissions && allowedPermissions.length > 0) {
+    const hasAccess = allowedPermissions.some(p => hasPermission(role, p));
+    if (!hasAccess) {
       return <Navigate to="/dashboard" replace />;
     }
   }

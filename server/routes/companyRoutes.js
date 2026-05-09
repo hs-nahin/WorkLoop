@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const { getCompany, updateCompany } = require('../controllers/companyController');
-const { protect, authorize } = require('../middleware/authMiddleware');
+const { protect } = require('../middleware/authMiddleware');
+const { checkPermission } = require('../config/permissions');
 
 router.get('/', protect, getCompany);
-router.put('/', protect, authorize('ADMIN'), updateCompany);
+router.put('/', protect, checkPermission('COMPANY_SETTINGS'), updateCompany);
 
 module.exports = router;

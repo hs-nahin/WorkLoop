@@ -8,6 +8,7 @@ import { Plus, Users, Trash2 } from 'lucide-react';
 import SubtaskList from './SubtaskList';
 import SubtaskForm from './SubtaskForm';
 import { apiRequest } from '@/api/apiClient';
+import { hasPermission } from '@/lib/permissions';
 import { toast } from 'sonner';
 
 const SubtaskWorkflow = ({ taskId, task }) => {
@@ -77,10 +78,9 @@ const SubtaskWorkflow = ({ taskId, task }) => {
     return () => unsubscribe();
   }, [taskId, users]);
 
-  // Only ADMIN can manage subtasks
   const canManageSubtasks = () => {
     if (!user) return false;
-    return user.role === 'ADMIN';
+    return hasPermission(user.role, 'SUBTASK_CREATE');
   };
 
   const handleCreateSubtask = async (subtaskData) => {

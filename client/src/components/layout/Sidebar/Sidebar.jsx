@@ -6,11 +6,13 @@ import {
   CheckSquare,
   ChevronLeft,
   ChevronRight,
+  History,
   LayoutDashboard,
   LogOut,
   Menu,
   PanelLeftClose,
   PanelLeftOpen,
+  Shield,
 } from "lucide-react";
 import { useContext, useState } from "react";
 import { Link, useLocation } from "react-router";
@@ -18,6 +20,7 @@ import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog";
 import { AppContext } from "../../../context/AppContext.jsx";
 import { AuthContext } from "../../../context/AuthContextInstance.js";
 import { cn } from "../../../lib/utils";
+import { hasPermission } from "../../../lib/permissions";
 
 const Sidebar = () => {
   const { sidebarOpen, toggleSidebar } = useContext(AppContext);
@@ -26,13 +29,15 @@ const Sidebar = () => {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   const menuItems = [
-    { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard, roles: ["ADMIN", "IT OFFICER", "ASSISTANT"] },
-    { name: "Tasks", path: "/tasks", icon: CheckSquare, roles: ["ADMIN", "IT OFFICER", "ASSISTANT"] },
-    { name: "Completed", path: "/completed", icon: CheckCircle2, roles: ["ADMIN", "IT OFFICER", "ASSISTANT"] },
-    { name: "Performance", path: "/performance", icon: BarChart3, roles: ["ADMIN"] },
+    { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard, roles: ["PROFILE_VIEW"] },
+    { name: "Tasks", path: "/tasks", icon: CheckSquare, roles: ["COMMENT_CREATE"] },
+    { name: "Completed", path: "/completed", icon: CheckCircle2, roles: ["COMMENT_CREATE"] },
+    { name: "Performance", path: "/performance", icon: BarChart3, roles: ["PERFORMANCE_VIEW"] },
+    { name: "Audit Logs", path: "/audit-logs", icon: History, roles: ["AUDIT_LOG_VIEW"] },
+    { name: "Permissions", path: "/permissions", icon: Shield, roles: ["COMPANY_SETTINGS"] },
   ];
 
-  const filteredItems = menuItems.filter(item => item.roles.includes(user?.role));
+  const filteredItems = menuItems.filter(item => item.roles.some(r => hasPermission(user?.role, r)));
 
   const content = (
     <div className="flex flex-col h-full py-6">

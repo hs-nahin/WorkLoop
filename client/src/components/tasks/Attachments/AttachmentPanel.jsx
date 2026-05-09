@@ -9,6 +9,7 @@ import { apiRequest } from '@/api/apiClient';
 import AttachmentUpload from './AttachmentUpload';
 import FilePreview from './FilePreview';
 import { toast } from 'sonner';
+import { hasPermission } from '@/lib/permissions';
 
 const AttachmentPanel = ({ taskId, task }) => {
   const { user } = useContext(AuthContext);
@@ -53,18 +54,12 @@ const AttachmentPanel = ({ taskId, task }) => {
   }, [taskId]);
 
   const canUpload = () => {
-    // TEMPORARILY ALLOW ALL AUTHENTICATED USERS FOR TESTING
-    if (!user) return false;
-    return true;
-    /* ORIGINAL LOGIC (commented for testing):
     if (!user || !task) return false;
-    return (
+    return hasPermission(user.role, 'ATTACHMENT_UPLOAD') && (
       user.uid === task.officerId ||
       user.uid === task.assistantId ||
-      user.role === 'ADMIN' ||
-      user.role === 'IT OFFICER'
+      hasPermission(user.role, 'TASK_VIEW_ALL')
     );
-    */
   };
 
   const canDelete = (attachment) => {

@@ -2,6 +2,8 @@ import MainLayout from "@/components/layout/MainLayout";
 import Login from "@/pages/auth/Login/Login";
 import Dashboard from "@/pages/dashboard/Dashboard/Dashboard";
 import UserPerformanceDashboard from "@/pages/dashboard/UserPerformanceDashboard/UserPerformanceDashboard";
+import AuditLogs from "@/pages/audit-logs/AuditLogs/AuditLogs";
+import PermissionsEditor from "@/pages/permissions/PermissionsEditor/PermissionsEditor";
 import Settings from "@/pages/settings/Settings";
 import Profile from "@/pages/profile/Profile";
 import TaskDetail from "@/pages/tasks/TaskDetail/TaskDetail";
@@ -50,6 +52,14 @@ const router = createBrowserRouter([
             {
               path: 'performance',
               element: <UserPerformanceDashboard />,
+            },
+            {
+              path: 'audit-logs',
+              element: <AuditLogs />,
+            },
+            {
+              path: 'permissions',
+              element: <PermissionsEditor />,
             },
 
           {

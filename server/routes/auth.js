@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const { admin, adminAuth, adminDb } = require('../firebase-admin');
-const { verifyToken, adminOnly, selfOrAdmin, writeAuditLog } = require('../middleware/auth');
+const { verifyToken, selfOrAdmin, writeAuditLog } = require('../middleware/auth');
+const { checkPermission } = require('../config/permissions');
 
-router.post('/create-user', verifyToken, adminOnly, async (req, res) => {
+router.post('/create-user', verifyToken, checkPermission('USER_CREATE'), async (req, res) => {
   try {
     const { name, email, password, displayId, role, location } = req.body;
     
@@ -44,7 +45,7 @@ router.post('/create-user', verifyToken, adminOnly, async (req, res) => {
   }
 });
 
-router.put('/update-user/:uid', verifyToken, adminOnly, async (req, res) => {
+router.put('/update-user/:uid', verifyToken, checkPermission('USER_EDIT'), async (req, res) => {
   try {
     const { uid } = req.params;
     const { name, displayId, role, location } = req.body;
@@ -74,7 +75,7 @@ router.put('/update-user/:uid', verifyToken, adminOnly, async (req, res) => {
   }
 });
 
-router.delete('/delete-user/:uid', verifyToken, adminOnly, async (req, res) => {
+router.delete('/delete-user/:uid', verifyToken, checkPermission('USER_DELETE'), async (req, res) => {
   try {
     const { uid } = req.params;
     
@@ -97,7 +98,7 @@ router.delete('/delete-user/:uid', verifyToken, adminOnly, async (req, res) => {
   }
 });
 
-router.patch('/toggle-user/:uid', verifyToken, adminOnly, async (req, res) => {
+router.patch('/toggle-user/:uid', verifyToken, checkPermission('USER_TOGGLE'), async (req, res) => {
   try {
     const { uid } = req.params;
     
@@ -126,7 +127,7 @@ router.patch('/toggle-user/:uid', verifyToken, adminOnly, async (req, res) => {
   }
 });
 
-router.patch('/reset-password/:uid', verifyToken, adminOnly, async (req, res) => {
+router.patch('/reset-password/:uid', verifyToken, checkPermission('USER_PASSWORD_RESET'), async (req, res) => {
   try {
     const { uid } = req.params;
     const { newPassword } = req.body;

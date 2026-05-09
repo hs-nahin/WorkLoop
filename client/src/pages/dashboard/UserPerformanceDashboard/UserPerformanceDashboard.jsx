@@ -1,6 +1,7 @@
 import { useContext, useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router';
 import { AuthContext } from '../../../context/AuthContext';
+import { hasPermission } from '../../../lib/permissions';
 import { db } from '../../../lib/firebase';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { BarChart3, Users, TrendingUp, AlertTriangle, CheckCircle2, Search, ArrowUpDown } from 'lucide-react';
@@ -40,7 +41,7 @@ const UserPerformanceDashboard = () => {
 
   // Redirect if not admin
   useEffect(() => {
-    if (user && user.role !== 'ADMIN') {
+    if (user && !hasPermission(user.role, 'PERFORMANCE_VIEW')) {
       toast.error('Access denied. Admin only.');
       navigate('/dashboard');
     }
@@ -48,7 +49,7 @@ const UserPerformanceDashboard = () => {
 
   // Fetch users and tasks using Firestore real-time listeners
   useEffect(() => {
-    if (!user || user.role !== 'ADMIN') return;
+    if (!user || !hasPermission(user.role, 'PERFORMANCE_VIEW')) return;
 
     setLoading(true);
 

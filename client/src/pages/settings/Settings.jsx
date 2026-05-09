@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { useContext, useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router';
 import { apiRequest } from '../../api/apiClient';
 import BlurFade from '../../components/animations/BlurFade';
 import GradientText from '../../components/animations/GradientText';
@@ -32,6 +33,7 @@ import { AuthContext } from '../../context/AuthContextInstance.js';
 
 const Settings = () => {
   const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [profile, setProfile] = useState({
     name: '',
     email: '',
@@ -174,25 +176,33 @@ const Settings = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer group">
+                  <div
+                    className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer group"
+                    onClick={() => navigate('/audit-logs')}
+                  >
                     <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground group-hover:text-foreground">
                       <Eye size={14} />
                       Audit System Logs
                     </div>
                     <ChevronRight size={14} className="text-muted-foreground" />
                   </div>
-                  <div className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer group">
+                  <div
+                    className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer group"
+                    onClick={() => navigate('/permissions')}
+                  >
                     <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground group-hover:text-foreground">
-                      <User size={14} />
-                      User Management
+                      <ShieldCheck size={14} />
+                      Role Permissions
                     </div>
                     <ChevronRight size={14} className="text-muted-foreground" />
                   </div>
-                  <div className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-s-colors cursor-pointer group text-destructive">
-                    <div className="flex items-center gap-2 text-xs font-medium group-hover:text-destructive">
-                      <Trash2 size={14} />
-                      Purge System Cache
- la-
+                  <div
+                    className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer group"
+                    onClick={() => navigate('/settings')}
+                  >
+                    <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground group-hover:text-foreground">
+                      <SettingsIcon size={14} />
+                      System Configuration
                     </div>
                     <ChevronRight size={14} className="text-muted-foreground" />
                   </div>

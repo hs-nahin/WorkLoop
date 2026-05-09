@@ -23,46 +23,47 @@ const {
   getAttachments,
   deleteAttachment
 } = require('../controllers/taskController');
-const { verifyToken, authorize } = require('../middleware/auth');
+const { verifyToken } = require('../middleware/auth');
+const { checkPermission } = require('../config/permissions');
 
 // Get all tasks
 router.get('/', verifyToken, getTasks);
 
 // Create new task (admin only)
-router.post('/', verifyToken, authorize(['ADMIN']), createTask);
+router.post('/', verifyToken, checkPermission('TASK_CREATE'), createTask);
 
 // Get task by ID
 router.get('/:id', verifyToken, getTaskById);
 
 // Accept task (officer accepts task)
-router.patch('/:id/accept', verifyToken, authorize(['IT OFFICER', 'ASSISTANT']), acceptTask);
+router.patch('/:id/accept', verifyToken, checkPermission('TASK_ACCEPT'), acceptTask);
 
 // Add progress report
-router.patch('/:id/progress', verifyToken, authorize(['IT OFFICER', 'ASSISTANT']), addProgressReport);
+router.patch('/:id/progress', verifyToken, checkPermission('TASK_ADD_PROGRESS'), addProgressReport);
 
 // Mark task as incomplete
-router.patch('/:id/incomplete', verifyToken, authorize(['IT OFFICER', 'ASSISTANT']), incompleteTask);
+router.patch('/:id/incomplete', verifyToken, checkPermission('TASK_MARK_INCOMPLETE'), incompleteTask);
 
 // Submit task completion
-router.patch('/:id/submit', verifyToken, authorize(['IT OFFICER', 'ASSISTANT']), submitTask);
+router.patch('/:id/submit', verifyToken, checkPermission('TASK_SUBMIT'), submitTask);
 
 // Admin approve task
-router.patch('/:id/approve', verifyToken, authorize(['ADMIN']), approveTask);
+router.patch('/:id/approve', verifyToken, checkPermission('TASK_APPROVE'), approveTask);
 
 // Admin reject task
-router.patch('/:id/reject', verifyToken, authorize(['ADMIN']), rejectTask);
+router.patch('/:id/reject', verifyToken, checkPermission('TASK_REJECT'), rejectTask);
 
 // Update task (admin only)
-router.put('/:id', verifyToken, authorize(['ADMIN']), updateTask);
+router.put('/:id', verifyToken, checkPermission('TASK_EDIT'), updateTask);
 
 // Delete task (admin only)
-router.delete('/:id', verifyToken, authorize(['ADMIN']), deleteTask);
+router.delete('/:id', verifyToken, checkPermission('TASK_DELETE'), deleteTask);
 
 // Get notifications for admin
-router.get('/notifications', verifyToken, authorize(['ADMIN']), getNotifications);
+router.get('/notifications', verifyToken, checkPermission('NOTIFICATIONS_ADMIN_VIEW'), getNotifications);
 
 // Get notifications for officer
-router.get('/notifications/officer', verifyToken, authorize(['IT OFFICER', 'ASSISTANT']), getOfficerNotifications);
+router.get('/notifications/officer', verifyToken, checkPermission('NOTIFICATIONS_OFFICER_VIEW'), getOfficerNotifications);
 
 // Mark notification as read
 router.patch('/notifications/:id/read', verifyToken, markNotificationRead);
@@ -81,7 +82,7 @@ router.delete('/notifications/:id', verifyToken, async (req, res) => {
 
 // Subtask routes (Assistant Workflow)
 // Create subtask (officers/admins only)
-router.post('/:id/subtasks', verifyToken, authorize(['ADMIN', 'IT OFFICER']), createSubtask);
+router.post('/:id/subtasks', verifyToken, checkPermission('SUBTASK_CREATE'), createSubtask);
 
 // Get all subtasks for a task
 router.get('/:id/subtasks', verifyToken, getSubtasks);
@@ -90,7 +91,7 @@ router.get('/:id/subtasks', verifyToken, getSubtasks);
 router.patch('/:id/subtasks/:subtaskId', verifyToken, updateSubtask);
 
 // Delete subtask (officers/admins only)
-router.delete('/:id/subtasks/:subtaskId', verifyToken, authorize(['ADMIN', 'IT OFFICER']), deleteSubtask);
+router.delete('/:id/subtasks/:subtaskId', verifyToken, checkPermission('SUBTASK_DELETE'), deleteSubtask);
 
 // Attachment routes (Version Control)
 // Create attachment metadata (after uploading to Storage)

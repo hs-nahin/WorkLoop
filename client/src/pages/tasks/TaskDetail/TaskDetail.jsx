@@ -5,6 +5,7 @@ import { useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
 import { ArrowLeft, Calendar, CheckCircle2, Circle, Clock, Loader2, Pencil } from 'lucide-react';
 import { apiRequest } from '../../../api/apiClient';
+import { hasPermission } from '../../../lib/permissions';
 import BlurFade from '../../../components/animations/BlurFade';
 import GradientText from '../../../components/animations/GradientText';
 import MagicCard from '../../../components/animations/MagicCard';
@@ -14,6 +15,7 @@ import { AuthContext } from '../../../context/AuthContext';
 import TaskDiscussion from '../../../components/tasks/TaskDiscussion/TaskDiscussion';
 import SubtaskWorkflow from '../../../components/tasks/SubtaskWorkflow/SubtaskWorkflow';
 import AttachmentPanel from '../../../components/tasks/Attachments/AttachmentPanel';
+import ActivityTimeline from '../../../components/tasks/ActivityTimeline/ActivityTimeline';
 import { useRealTimeTask } from '@/hooks/useRealtime';
 
 // Helper function to convert Firestore timestamp to Date
@@ -367,8 +369,8 @@ const TaskDetail = () => {
                        <span className="text-foreground font-medium">
                          {task.deadline ? formatDate(task.deadline) : 'Not set'}
                        </span>
-                       {user?.role === 'ADMIN' && (task.status === 'pending' || task.status === 'in progress') && (
-                         <button onClick={handleEditDeadline} className="ml-1.5 inline-flex align-middle text-muted-foreground hover:text-foreground transition-colors" title="Edit deadline">
+{hasPermission(user?.role, 'TASK_EDIT') && (task.status === 'pending' || task.status === 'in progress') && (
+                          <button onClick={handleEditDeadline} className="ml-1.5 inline-flex align-middle text-muted-foreground hover:text-foreground transition-colors" title="Edit deadline">
                            <Pencil size={12} />
                          </button>
                        )}
@@ -394,7 +396,7 @@ const TaskDetail = () => {
           </BlurFade>
 
           {/* Accept Task - for officers */}
-          {user?.role === 'IT OFFICER' && (task.officerId === user.uid || task.officerId === user.id) && task.status === 'pending' && (
+          {hasPermission(user?.role, 'TASK_ACCEPT') && (task.officerId === user.uid || task.officerId === user.id) && task.status === 'pending' && (
             <BlurFade delay={100}>
               <MagicCard>
                 <div className="space-y-4">
@@ -412,7 +414,7 @@ const TaskDetail = () => {
           )}
 
            {/* In Progress Actions - Complete & Incomplete buttons */}
-           {user?.role === 'IT OFFICER' && (task.officerId === user.uid || task.officerId === user.id) && task.status === 'in progress' && (
+           {hasPermission(user?.role, 'TASK_SUBMIT') && (task.officerId === user.uid || task.officerId === user.id) && task.status === 'in progress' && (
              <BlurFade delay={100}>
                <MagicCard>
                  <div className="space-y-4">
@@ -466,7 +468,7 @@ const TaskDetail = () => {
            )}
 
            {/* Show Progress History for in progress tasks */}
-           {user?.role === 'IT OFFICER' && (task.officerId === user.uid || task.officerId === user.id) && task.status === 'in progress' && task.progressReports && task.progressReports.length > 0 && (
+           {hasPermission(user?.role, 'TASK_ADD_PROGRESS') && (task.officerId === user.uid || task.officerId === user.id) && task.status === 'in progress' && task.progressReports && task.progressReports.length > 0 && (
              <BlurFade delay={150}>
                <MagicCard>
                  <div className="space-y-4">
@@ -497,6 +499,17 @@ const TaskDetail = () => {
             {/* Attachment & Version Control Section */}
             <BlurFade delay={300}>
               <AttachmentPanel taskId={id} task={task} />
+            </BlurFade>
+
+            {/* Activity Timeline Section */}
+            <BlurFade delay={350}>
+              <div className="bg-card border border-border rounded-xl p-5">
+                <h3 className="text-sm font-bold text-foreground flex items-center gap-2 mb-4">
+                  <Clock size={16} className="text-muted-foreground" />
+                  Activity Timeline
+                </h3>
+                <ActivityTimeline taskId={id} />
+              </div>
             </BlurFade>
          </div>
 
@@ -656,7 +669,7 @@ const TaskDetail = () => {
            </BlurFade>
 
           {/* Admin Review Section */}
-          {user?.role === 'ADMIN' && task.status === 'submitted' && (
+           {hasPermission(user?.role, 'TASK_APPROVE') && task.status === 'submitted' && (
             <BlurFade delay={200}>
               <MagicCard>
                 <div className="space-y-6">

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { adminDb } = require('../firebase-admin');
-const { verifyToken, selfOrAdmin, authorize } = require('../middleware/auth');
+const { verifyToken, selfOrAdmin } = require('../middleware/auth');
 
 router.get('/', verifyToken, async (req, res) => {
   try {
