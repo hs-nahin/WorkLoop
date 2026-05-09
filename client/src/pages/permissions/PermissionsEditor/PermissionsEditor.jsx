@@ -350,10 +350,15 @@ const PermissionsEditor = () => {
                 : `All ${activeRole} permissions will be restored to their default values. This cannot be undone.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="cursor-pointer">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleReset} className="cursor-pointer">OK</AlertDialogAction>
-          </AlertDialogFooter>
+           <AlertDialogFooter>
+             <AlertDialogCancel 
+               className="cursor-pointer" 
+               onClick={() => setResetDialogOpen(false)}
+             >
+               Cancel
+             </AlertDialogCancel>
+             <AlertDialogAction onClick={handleReset} className="cursor-pointer">OK</AlertDialogAction>
+           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>

@@ -69,7 +69,18 @@ const UserPerformanceDashboard = () => {
   }, [user, navigate]);
 
   useEffect(() => {
-    if (!user || !hasPermission(user.role, 'PERFORMANCE_VIEW')) return;
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        document.getElementById('performance-search-input')?.focus();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  useEffect(() => {
     setLoading(true);
 
     const unsubscribeUsers = onSnapshot(collection(db, 'users'), (snapshot) => {
@@ -345,18 +356,22 @@ const UserPerformanceDashboard = () => {
               <CardTitle className="text-xl font-bold">Workforce Performance Ranking</CardTitle>
               <CardDescription>Detailed efficiency metrics per officer</CardDescription>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="relative flex items-center gap-4">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
-                <input
-                  type="text"
-                  placeholder="Search users..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-2 rounded-lg border border-border bg-background text-sm focus:ring-2 focus:ring-primary outline-none"
-                />
-              </div>
-            </div>
+             <div className="flex items-center gap-3">
+               <div className="relative flex items-center gap-4">
+                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+                 <input
+                   id="performance-search-input"
+                   type="text"
+                   placeholder="Search users..."
+                   value={searchTerm}
+                   onChange={(e) => setSearchTerm(e.target.value)}
+                   className="pl-10 pr-12 py-2 rounded-lg border border-border bg-background text-sm focus:ring-2 focus:ring-primary outline-none transition-all w-full"
+                 />
+                 <kbd className="absolute right-2 top-1/2 -translate-y-1/2 hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border border-muted-foreground/20 bg-transparent px-1.5 font-mono text-[10px] font-medium text-muted-foreground/70 opacity-100">
+                   <span className="text-xs">⌘</span>K
+                 </kbd>
+               </div>
+             </div>
           </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
