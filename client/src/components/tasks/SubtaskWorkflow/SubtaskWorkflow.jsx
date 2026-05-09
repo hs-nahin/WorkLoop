@@ -98,6 +98,32 @@ const SubtaskWorkflow = ({ taskId, task }) => {
         createdAt: new Date(),
         updatedAt: new Date()
       });
+
+      // Real-time notification for the assigned user
+      if (subtaskData.assignedUserId) {
+        await addDoc(collection(db, 'notifications'), {
+          type: 'subtask_assigned',
+          taskId,
+          taskTitle: task?.title || 'Task',
+          message: `New subtask assigned: "${subtaskData.title}" in task "${task?.title || 'Task'}"`,
+          userId: subtaskData.assignedUserId,
+          read: false,
+          createdAt: new Date()
+        });
+      }
+
+      // System message in task discussion
+      await addDoc(collection(db, 'tasks', taskId, 'messages'), {
+        text: `Subtask "${subtaskData.title}" created and assigned to ${assignedUserName}`,
+        senderId: 'system',
+        senderName: 'System',
+        senderRole: 'SYSTEM',
+        senderAvatar: null,
+        attachmentUrl: null,
+        type: 'system',
+        createdAt: new Date()
+      });
+
       setShowForm(false);
       toast.success('Subtask created');
     } catch (error) {
@@ -119,6 +145,23 @@ const SubtaskWorkflow = ({ taskId, task }) => {
 
       const subtaskRef = doc(db, 'tasks', taskId, 'subtasks', subtaskId);
       await updateDoc(subtaskRef, finalUpdates);
+
+      // System message for status change
+      if (updates.status) {
+        const subtaskDoc = await subtaskRef.get();
+        const subtaskTitle = subtaskDoc.exists ? subtaskDoc.data().title : 'Unknown';
+        await addDoc(collection(db, 'tasks', taskId, 'messages'), {
+          text: `Subtask "${subtaskTitle}" status changed to ${updates.status}`,
+          senderId: 'system',
+          senderName: 'System',
+          senderRole: 'SYSTEM',
+          senderAvatar: null,
+          attachmentUrl: null,
+          type: 'system',
+          createdAt: new Date()
+        });
+      }
+
       setEditingSubtask(null);
       toast.success('Subtask updated');
     } catch (error) {
@@ -129,8 +172,27 @@ const SubtaskWorkflow = ({ taskId, task }) => {
 
   const handleDeleteSubtask = async (subtaskId) => {
     try {
+      // Get subtask info before deleting
       const subtaskRef = doc(db, 'tasks', taskId, 'subtasks', subtaskId);
+      const subtaskDoc = await subtaskRef.get();
+      const subtaskData = subtaskDoc.exists ? subtaskDoc.data() : null;
+
       await deleteDoc(subtaskRef);
+
+      // System message for deletion
+      if (subtaskData) {
+        await addDoc(collection(db, 'tasks', taskId, 'messages'), {
+          text: `Subtask "${subtaskData.title}" deleted`,
+          senderId: 'system',
+          senderName: 'System',
+          senderRole: 'SYSTEM',
+          senderAvatar: null,
+          attachmentUrl: null,
+          type: 'system',
+          createdAt: new Date()
+        });
+      }
+
       toast.success('Subtask deleted');
     } catch (error) {
       console.error('Error deleting subtask:', error);

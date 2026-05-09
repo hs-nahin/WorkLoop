@@ -3,7 +3,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useContext, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
-import { ArrowLeft, CheckCircle2, Circle, Clock, Loader2 } from 'lucide-react';
+import { ArrowLeft, Calendar, CheckCircle2, Circle, Clock, Loader2, Pencil } from 'lucide-react';
 import { apiRequest } from '../../../api/apiClient';
 import BlurFade from '../../../components/animations/BlurFade';
 import GradientText from '../../../components/animations/GradientText';
@@ -70,6 +70,8 @@ const TaskDetail = () => {
   const [officers, setOfficers] = useState([]);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [timerInterval, setTimerInterval] = useState(null);
+  const [isEditingDeadline, setIsEditingDeadline] = useState(false);
+  const [editDeadlineValue, setEditDeadlineValue] = useState('');
 
   // Real-time task listener - auto-updates when task changes
   const { task: realtimeTask, loading: taskLoading } = useRealTimeTask(id);
@@ -209,6 +211,28 @@ const TaskDetail = () => {
     }
   };
 
+  const handleUpdateDeadline = async () => {
+    if (!editDeadlineValue) return;
+    try {
+      const newDeadline = new Date(editDeadlineValue);
+      await apiRequest({
+        endpoint: `/tasks/${id}`,
+        method: 'PUT',
+        body: { deadline: newDeadline }
+      });
+      setIsEditingDeadline(false);
+      toast.success('Deadline updated');
+    } catch (error) {
+      toast.error(error.message || 'Failed to update deadline');
+    }
+  };
+
+  const handleEditDeadline = () => {
+    const current = convertTimestamp(task.deadline);
+    setEditDeadlineValue(current ? current.toISOString().slice(0, 16) : '');
+    setIsEditingDeadline(true);
+  };
+
   if (isLoading) return <div className="min-h-screen flex items-center justify-center text-foreground font-mono animate-pulse">Loading Task...</div>;
   if (!task) return null;
 
@@ -319,9 +343,35 @@ const TaskDetail = () => {
                       task.priority === 'medium' ? 'text-yellow-600 dark:text-yellow-400' : 'text-green-600 dark:text-green-400'
                     }`}>{task.priority?.toUpperCase()}</span>
                   </div>
-                   {task.deadline && (
+                   {isEditingDeadline ? (
+                     <div className="text-xs text-muted-foreground col-span-2">
+                       <label className="block mb-1">Deadline:</label>
+                       <div className="flex gap-2">
+                         <input
+                           type="datetime-local"
+                           value={editDeadlineValue}
+                           onChange={(e) => setEditDeadlineValue(e.target.value)}
+                           className="flex-1 rounded-lg border border-input bg-transparent px-2 py-1 text-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                         />
+                         <Button size="sm" onClick={handleUpdateDeadline} className="cursor-pointer h-7 text-xs px-2">
+                           Save
+                         </Button>
+                         <Button size="sm" variant="ghost" onClick={() => setIsEditingDeadline(false)} className="cursor-pointer h-7 text-xs px-2">
+                           Cancel
+                         </Button>
+                       </div>
+                     </div>
+                   ) : (
                      <div className="text-xs text-muted-foreground">
-                       Deadline: <span className="text-foreground font-medium">{formatDate(task.deadline)}</span>
+                       Deadline:{' '}
+                       <span className="text-foreground font-medium">
+                         {task.deadline ? formatDate(task.deadline) : 'Not set'}
+                       </span>
+                       {user?.role === 'ADMIN' && (task.status === 'pending' || task.status === 'in progress') && (
+                         <button onClick={handleEditDeadline} className="ml-1.5 inline-flex align-middle text-muted-foreground hover:text-foreground transition-colors" title="Edit deadline">
+                           <Pencil size={12} />
+                         </button>
+                       )}
                      </div>
                    )}
                    {task.createdAt && (
