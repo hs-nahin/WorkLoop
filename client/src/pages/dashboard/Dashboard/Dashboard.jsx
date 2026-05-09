@@ -246,35 +246,10 @@ const Dashboard = () => {
         </BlurFade>
       </div>
 
-      {/* Visual Analytics Charts */}
+      {/* Activities and Quick Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <BlurFade delay={400}>
-          <TaskStatusChart />
-        </BlurFade>
-        <BlurFade delay={500}>
-          <WeeklyTrendChart />
-        </BlurFade>
-      </div>
-
-      {/* Productivity & Workload */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <BlurFade delay={600}>
-          <UserProductivityRanking />
-        </BlurFade>
-        <BlurFade delay={700}>
-          <WorkloadDistribution />
-        </BlurFade>
-      </div>
-
-      {/* Pending vs Completed Ratio */}
-      <BlurFade delay={800}>
-        <PendingCompletedRatio />
-      </BlurFade>
-
-      {/* Quick Actions & Personnel */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <BlurFade delay={900}>
-          <Card className="border-border bg-card/50 backdrop-blur-sm">
+          <Card className="border-border bg-card/50 backdrop-blur-sm h-full">
             <CardHeader>
               <CardTitle className="text-lg font-semibold">
                 Quick Actions
@@ -304,21 +279,28 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         </BlurFade>
-        
-        <BlurFade delay={1000}>
-          <Card className="border-border bg-card/50 backdrop-blur-sm overflow-hidden">
-            <CardHeader>
-              <div>
-                <CardTitle className="text-lg font-semibold">
-                  Personnel Overview
-                </CardTitle>
-                <CardDescription>
-                  IT Officers and Assistants registered in the system
-                </CardDescription>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
+
+        <BlurFade delay={500}>
+          <RecentActivityFeed />
+        </BlurFade>
+      </div>
+
+      {/* Personnel Overview */}
+      <BlurFade delay={600}>
+        <Card className="border-border bg-card/50 backdrop-blur-sm overflow-hidden">
+          <CardHeader>
+            <div>
+              <CardTitle className="text-lg font-semibold">
+                Personnel Overview
+              </CardTitle>
+              <CardDescription>
+                IT Officers and Assistants registered in the system
+              </CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <h4 className="text-sm font-semibold text-muted-foreground mb-3">IT Officers ({officers.length})</h4>
                   <div className="space-y-2">
@@ -356,14 +338,9 @@ const Dashboard = () => {
                   </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </BlurFade>
-      </div>
-
-      {/* Recent Activity Feed */}
-      <BlurFade delay={1100}>
-        <RecentActivityFeed />
+            </div>
+          </CardContent>
+        </Card>
       </BlurFade>
 
       {/* Create Task Dialog */}
