@@ -247,37 +247,38 @@ const Dashboard = () => {
 
        {/* Quick Actions and Personnel Overview */}
        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-         <BlurFade delay={400}>
-           <Card className="border-border bg-card/50 backdrop-blur-sm h-full w-full lg:col-span-1">
-             <CardHeader>
-               <CardTitle className="text-lg font-semibold">
-                 Quick Actions
-               </CardTitle>
-               <CardDescription>
-                 Manage your workflow effectively
-               </CardDescription>
-             </CardHeader>
-             <CardContent className="flex flex-wrap gap-4">
-               {user?.role === 'ADMIN' && (
-                 <Button 
-                   className="flex items-center gap-2 group cursor-pointer"
-                   onClick={() => setIsModalOpen(true)}
-                 >
-                   <Plus size={16} />
-                   Create New Task
-                 </Button>
-               )}
-               <Button
-                 variant="outline"
-                 className="flex items-center gap-2 group cursor-pointer"
-                 onClick={() => navigate('/tasks')}
-               >
-                 <FileText size={16} />
-                 View All Tasks
-               </Button>
-             </CardContent>
-           </Card>
-         </BlurFade>
+          <BlurFade delay={400}>
+            <Card className="border-border bg-card/50 backdrop-blur-sm h-fit w-full lg:col-span-1">
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold">
+                  Quick Actions
+                </CardTitle>
+                <CardDescription>
+                  Manage your workflow effectively
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-wrap gap-4">
+                {user?.role === 'ADMIN' && (
+                  <Button 
+                    className="flex items-center gap-2 group cursor-pointer"
+                    onClick={() => setIsModalOpen(true)}
+                  >
+                    <Plus size={16} />
+                    Create New Task
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-2 group cursor-pointer"
+                  onClick={() => navigate('/tasks')}
+                >
+                  <FileText size={16} />
+                  View All Tasks
+                </Button>
+              </CardContent>
+            </Card>
+          </BlurFade>
+
  
          <BlurFade delay={600}>
            <Card className="border-border bg-card/50 backdrop-blur-sm h-full lg:col-span-2 overflow-hidden">
