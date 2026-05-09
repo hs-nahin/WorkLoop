@@ -36,7 +36,6 @@ import WeeklyTrendChart from "@/components/dashboard/WeeklyTrendChart/WeeklyTren
 import UserProductivityRanking from "@/components/dashboard/UserProductivityRanking/UserProductivityRanking";
 import PendingCompletedRatio from "@/components/dashboard/PendingCompletedRatio/PendingCompletedRatio";
 import WorkloadDistribution from "@/components/dashboard/WorkloadDistribution/WorkloadDistribution";
-import RecentActivityFeed from "@/components/dashboard/RecentActivityFeed/RecentActivityFeed";
 
 const Dashboard = () => {
   const { user } = useContext(AuthContext);
@@ -246,102 +245,96 @@ const Dashboard = () => {
         </BlurFade>
       </div>
 
-      {/* Activities and Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <BlurFade delay={400}>
-          <Card className="border-border bg-card/50 backdrop-blur-sm h-full">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold">
-                Quick Actions
-              </CardTitle>
-              <CardDescription>
-                Manage your workflow effectively
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-wrap gap-4">
-              {user?.role === 'ADMIN' && (
-                <Button 
-                  className="flex items-center gap-2 group cursor-pointer"
-                  onClick={() => setIsModalOpen(true)}
-                >
-                  <Plus size={16} />
-                  Create New Task
-                </Button>
-              )}
-              <Button
-                variant="outline"
-                className="flex items-center gap-2 group cursor-pointer"
-                onClick={() => navigate('/tasks')}
-              >
-                <FileText size={16} />
-                View All Tasks
-              </Button>
-            </CardContent>
-          </Card>
-        </BlurFade>
+       {/* Quick Actions and Personnel Overview */}
+       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+         <BlurFade delay={400}>
+           <Card className="border-border bg-card/50 backdrop-blur-sm h-full w-full lg:col-span-1">
+             <CardHeader>
+               <CardTitle className="text-lg font-semibold">
+                 Quick Actions
+               </CardTitle>
+               <CardDescription>
+                 Manage your workflow effectively
+               </CardDescription>
+             </CardHeader>
+             <CardContent className="flex flex-wrap gap-4">
+               {user?.role === 'ADMIN' && (
+                 <Button 
+                   className="flex items-center gap-2 group cursor-pointer"
+                   onClick={() => setIsModalOpen(true)}
+                 >
+                   <Plus size={16} />
+                   Create New Task
+                 </Button>
+               )}
+               <Button
+                 variant="outline"
+                 className="flex items-center gap-2 group cursor-pointer"
+                 onClick={() => navigate('/tasks')}
+               >
+                 <FileText size={16} />
+                 View All Tasks
+               </Button>
+             </CardContent>
+           </Card>
+         </BlurFade>
+ 
+         <BlurFade delay={600}>
+           <Card className="border-border bg-card/50 backdrop-blur-sm h-full lg:col-span-2 overflow-hidden">
+             <CardHeader>
+               <div className="flex flex-col">
+                 <CardTitle className="text-lg font-semibold">
+                   Personnel Overview
+                 </CardTitle>
+                 <CardDescription>
+                   IT Officers and Assistants registered in the system
+                 </CardDescription>
+               </div>
+             </CardHeader>
+             <CardContent>
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 <div className="space-y-4">
+                   <h4 className="text-sm font-semibold text-muted-foreground mb-3">IT Officers ({officers.length})</h4>
+                   <div className="space-y-2">
+                     {officers.length > 0 ? officers.map((officer) => (
+                       <div key={officer.uid || officer.userId} className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent/50">
+                         <div className="w-8 h-8 rounded-full bg-blue-400/20 flex items-center justify-center text-xs font-bold text-blue-400 shrink-0">
+                           {officer.name?.charAt(0) || 'U'}
+                         </div>
+                         <div className="flex-1 min-w-0">
+                           <p className="text-sm font-medium truncate">{officer.name}</p>
+                           <p className="text-xs text-muted-foreground truncate">{officer.email}</p>
+                         </div>
+                       </div>
+                     )) : (
+                       <p className="text-xs text-muted-foreground">No IT Officers registered</p>
+                     )}
+                   </div>
+                 </div>
+                 <div className="space-y-4">
+                   <h4 className="text-sm font-semibold text-muted-foreground mb-3">Assistants ({assistants.length})</h4>
+                   <div className="space-y-2">
+                     {assistants.length > 0 ? assistants.map((assistant) => (
+                       <div key={assistant.uid || assistant.userId} className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent/50">
+                         <div className="w-8 h-8 rounded-full bg-purple-400/20 flex items-center justify-center text-xs font-bold text-purple-400 shrink-0">
+                           {assistant.name?.charAt(0) || 'U'}
+                         </div>
+                         <div className="flex-1 min-w-0">
+                           <p className="text-sm font-medium truncate">{assistant.name}</p>
+                           <p className="text-xs text-muted-foreground truncate">{assistant.email}</p>
+                         </div>
+                       </div>
+                     )) : (
+                       <p className="text-xs text-muted-foreground">No Assistants registered</p>
+                     )}
+                   </div>
+                 </div>
+               </div>
+             </CardContent>
+           </Card>
+         </BlurFade>
+       </div>
 
-        <BlurFade delay={500}>
-          <RecentActivityFeed />
-        </BlurFade>
-      </div>
-
-      {/* Personnel Overview */}
-      <BlurFade delay={600}>
-        <Card className="border-border bg-card/50 backdrop-blur-sm overflow-hidden">
-          <CardHeader>
-            <div>
-              <CardTitle className="text-lg font-semibold">
-                Personnel Overview
-              </CardTitle>
-              <CardDescription>
-                IT Officers and Assistants registered in the system
-              </CardDescription>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h4 className="text-sm font-semibold text-muted-foreground mb-3">IT Officers ({officers.length})</h4>
-                  <div className="space-y-2">
-                    {officers.length > 0 ? officers.map((officer) => (
-                      <div key={officer.uid || officer.userId} className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent/50">
-                        <div className="w-8 h-8 rounded-full bg-blue-400/20 flex items-center justify-center text-xs font-bold text-blue-400 shrink-0">
-                          {officer.name?.charAt(0) || 'U'}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{officer.name}</p>
-                          <p className="text-xs text-muted-foreground truncate">{officer.email}</p>
-                        </div>
-                      </div>
-                    )) : (
-                      <p className="text-xs text-muted-foreground">No IT Officers registered</p>
-                    )}
-                  </div>
-                </div>
-                <div>
-                  <h4 className="text-sm font-semibold text-muted-foreground mb-3">Assistants ({assistants.length})</h4>
-                  <div className="space-y-2">
-                    {assistants.length > 0 ? assistants.map((assistant) => (
-                      <div key={assistant.uid || assistant.userId} className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent/50">
-                        <div className="w-8 h-8 rounded-full bg-purple-400/20 flex items-center justify-center text-xs font-bold text-purple-400 shrink-0">
-                          {assistant.name?.charAt(0) || 'U'}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{assistant.name}</p>
-                          <p className="text-xs text-muted-foreground truncate">{assistant.email}</p>
-                        </div>
-                      </div>
-                    )) : (
-                      <p className="text-xs text-muted-foreground">No Assistants registered</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </BlurFade>
 
       {/* Create Task Dialog */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
