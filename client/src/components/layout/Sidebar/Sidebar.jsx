@@ -28,14 +28,13 @@ const Sidebar = () => {
   const location = useLocation();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
-  const menuItems = [
-    { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard, roles: ["PROFILE_VIEW"] },
-    { name: "Tasks", path: "/tasks", icon: CheckSquare, roles: ["COMMENT_CREATE"] },
-    { name: "Completed", path: "/completed", icon: CheckCircle2, roles: ["COMMENT_CREATE"] },
-    { name: "Performance", path: "/performance", icon: BarChart3, roles: ["PERFORMANCE_VIEW"] },
-    { name: "Audit Logs", path: "/audit-logs", icon: History, roles: ["AUDIT_LOG_VIEW"] },
-    { name: "Permissions", path: "/permissions", icon: Shield, roles: ["COMPANY_SETTINGS"] },
-  ];
+    const menuItems = [
+      { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard, roles: ["PROFILE_VIEW"] },
+      { name: "Tasks", path: "/tasks", icon: CheckSquare, roles: ["COMMENT_CREATE"] },
+      { name: "Completed", path: "/completed", icon: CheckCircle2, roles: ["COMMENT_CREATE"] },
+      { name: "Performance", path: "/performance", icon: BarChart3, roles: ["PERFORMANCE_VIEW"] },
+      { name: "Audit Logs", path: "/audit-logs", icon: History, roles: ["AUDIT_LOG_VIEW"] },
+    ];
 
   const filteredItems = menuItems.filter(item => item.roles.some(r => hasPermission(user?.role, r)));
 
