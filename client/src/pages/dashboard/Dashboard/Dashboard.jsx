@@ -381,39 +381,43 @@ const Dashboard = () => {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="officer">Assign IT Officer *</Label>
-              <Select 
-                value={newTask.officerId} 
-                onValueChange={(v) => setNewTask({...newTask, officerId: v})}
-              >
-                <SelectTrigger id="officer">
-                  <SelectValue placeholder="Select IT Officer" />
-                </SelectTrigger>
-                <SelectContent>
-                  {officers.map(officer => (
-                    <SelectItem key={officer.uid} value={officer.uid}>
-                      {officer.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+               <Select 
+                 value={newTask.officerId} 
+                 onValueChange={(v) => setNewTask({...newTask, officerId: v})}
+               >
+                 <SelectTrigger id="officer">
+                   <SelectValue placeholder="Select IT Officer">
+                     {officers.find(o => (o.uid || o.userId) === newTask.officerId)?.name || <span>Select IT Officer</span>}
+                   </SelectValue>
+                 </SelectTrigger>
+                 <SelectContent>
+                   {officers.map(officer => (
+                     <SelectItem key={officer.uid || officer.userId} value={officer.uid || officer.userId}>
+                       {officer.name}
+                     </SelectItem>
+                   ))}
+                 </SelectContent>
+               </Select>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="assistant">Assistant Technician (Optional)</Label>
-              <Select 
-                value={newTask.assistantId} 
-                onValueChange={(v) => setNewTask({...newTask, assistantId: v})}
-              >
-                <SelectTrigger id="assistant">
-                  <SelectValue placeholder="Select Assistant Technician" />
-                </SelectTrigger>
-                <SelectContent>
-                  {assistants.map(assistant => (
-                    <SelectItem key={assistant.uid} value={assistant.uid}>
-                      {assistant.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+               <Select 
+                 value={newTask.assistantId} 
+                 onValueChange={(v) => setNewTask({...newTask, assistantId: v})}
+               >
+                 <SelectTrigger id="assistant">
+                   <SelectValue placeholder="Select Assistant Technician">
+                     {assistants.find(a => (a.uid || a.userId) === newTask.assistantId)?.name || <span>Select Assistant Technician</span>}
+                   </SelectValue>
+                 </SelectTrigger>
+                 <SelectContent>
+                   {assistants.map(assistant => (
+                     <SelectItem key={assistant.uid || assistant.userId} value={assistant.uid || assistant.userId}>
+                       {assistant.name}
+                     </SelectItem>
+                   ))}
+                 </SelectContent>
+               </Select>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
