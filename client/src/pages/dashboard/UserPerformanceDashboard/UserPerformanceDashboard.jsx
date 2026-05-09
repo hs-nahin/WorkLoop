@@ -24,7 +24,13 @@ import {
 } from '@/components/ui/card';
 
 // --- Constants & Helpers ---
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+const COLORS = [
+  { name: 'pending', color: '#f59e0b', dark: '#fbbf24' },    // amber-500/400
+  { name: 'in_progress', color: '#3b82f6', dark: '#60a5fa' }, // blue-500/400
+  { name: 'submitted', color: '#8b5cf6', dark: '#a78bfa' },   // violet-500/400
+  { name: 'completed', color: '#10b981', dark: '#34d399' },   // emerald-500/400
+  { name: 'rejected', color: '#ef4444', dark: '#f87171' },    // red-500/400
+];
 
 const formatDuration = (seconds) => {
   if (!seconds || seconds <= 0) return 'N/A';
@@ -260,23 +266,38 @@ const UserPerformanceDashboard = () => {
               <CardDescription>Visual breakdown of operational workload</CardDescription>
             </CardHeader>
             <CardContent className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <RechartsPieChart>
-                  <Pie
-                    data={metrics.distChartData}
-                    cx="50%" cy="50%"
-                    innerRadius={60} outerRadius={80}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {metrics.distChartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                  <Legend />
-                </RechartsPieChart>
-              </ResponsiveContainer>
+               <ResponsiveContainer width="100%" height="100%">
+                 <RechartsPieChart>
+                   <Pie
+                     data={metrics.distChartData}
+                     cx="50%" cy="50%"
+                     innerRadius={70} outerRadius={90}
+                     paddingAngle={8}
+                     stroke="none"
+                     dataKey="value"
+                   >
+                     {metrics.distChartData.map((entry, index) => (
+                       <Cell 
+                         key={`cell-${index}`} 
+                         fill={COLORS[index % COLORS.length]?.color || '#ccc'} 
+                       />
+                     ))}
+                   </Pie>
+                   <Tooltip 
+                     contentStyle={{ 
+                       backgroundColor: 'var(--background)', 
+                       borderColor: 'var(--border)',
+                       color: 'var(--foreground)',
+                       borderRadius: '8px'
+                     }} 
+                   />
+                   <Legend 
+                     verticalAlign="bottom" 
+                     height={36}
+                     formatter={(value) => <span className="text-xs font-medium text-muted-foreground capitalize">{value}</span>}
+                   />
+                 </RechartsPieChart>
+               </ResponsiveContainer>
             </CardContent>
           </Card>
         </BlurFade>
