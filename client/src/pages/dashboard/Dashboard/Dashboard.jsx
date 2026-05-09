@@ -27,16 +27,22 @@ import { useNavigate } from "react-router";
 import { toast } from "sonner";
 
 import BlurFade from "@/components/animations/BlurFade";
-
-import NumberTicker from "@/components/animations/NumberTicker.jsx";
+import NumberTicker from "@/components/animations/NumberTicker";
 import { AuthContext } from "@/context/AuthContextInstance";
 import { useRealTimeStats } from "@/hooks/useRealtime";
+
+import TaskStatusChart from "@/components/dashboard/TaskStatusChart/TaskStatusChart";
+import WeeklyTrendChart from "@/components/dashboard/WeeklyTrendChart/WeeklyTrendChart";
+import UserProductivityRanking from "@/components/dashboard/UserProductivityRanking/UserProductivityRanking";
+import PendingCompletedRatio from "@/components/dashboard/PendingCompletedRatio/PendingCompletedRatio";
+import WorkloadDistribution from "@/components/dashboard/WorkloadDistribution/WorkloadDistribution";
+import RecentActivityFeed from "@/components/dashboard/RecentActivityFeed/RecentActivityFeed";
 
 const Dashboard = () => {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   
-  // Real-time stats - auto-updates when tasks change
+  // Real-time stats
   const { stats: realtimeStats, loading: statsLoading } = useRealTimeStats(user?.uid, user?.role);
   
   const [stats, setStats] = useState({
@@ -55,6 +61,7 @@ const Dashboard = () => {
       });
     }
   }, [realtimeStats]);
+  
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [officers, setOfficers] = useState([]);
@@ -71,7 +78,7 @@ const Dashboard = () => {
     deadlineAmPm: 'AM',
     assistantId: ''
   });
-
+  
   useEffect(() => {
     const fetchStats = async () => {
       try {
@@ -91,22 +98,16 @@ const Dashboard = () => {
     };
     fetchStats();
   }, []);
-
+  
   useEffect(() => {
     const fetchUsers = async () => {
       try {
         const data = await apiRequest({ endpoint: '/users' });
-        console.log('Users fetched:', data);
-        
-        // Filter users with valid roles (don't require email for Firestore users)
         const validUsers = data.filter(u => {
           const role = u.role?.toUpperCase();
           return role && ['IT OFFICER', 'ASSISTANT'].includes(role);
         });
         
-        console.log('Valid users:', validUsers);
-        
-        // Deduplicate by uid or userId
         const seen = new Set();
         const uniqueUsers = validUsers.filter(u => {
           const key = u.uid || u.userId;
@@ -114,8 +115,6 @@ const Dashboard = () => {
           seen.add(key);
           return true;
         });
-        
-        console.log('Unique users:', uniqueUsers);
         
         const officerList = uniqueUsers.filter(user => user.role?.toUpperCase() === 'IT OFFICER');
         setOfficers(officerList);
@@ -129,7 +128,7 @@ const Dashboard = () => {
       fetchUsers();
     }
   }, [user]);
-
+  
   const handleCreateTask = async () => {
     if (!newTask.title.trim()) return toast.error('Title is required');
     if (!newTask.description.trim()) return toast.error('Description is required');
@@ -137,7 +136,7 @@ const Dashboard = () => {
     if (!newTask.officerId) return toast.error('Assign an IT Officer');
     if (!newTask.priority) return toast.error('Select priority');
     if (!newTask.deadlineDate) return toast.error('Set a deadline date');
-
+    
     let deadline = newTask.deadlineDate;
     if (newTask.deadlineHour && newTask.deadlineMinute) {
       let hour = parseInt(newTask.deadlineHour);
@@ -145,7 +144,7 @@ const Dashboard = () => {
       if (newTask.deadlineAmPm === 'AM' && hour === 12) hour = 0;
       deadline = `${newTask.deadlineDate}T${hour.toString().padStart(2, '0')}:${newTask.deadlineMinute}:00`;
     }
-
+    
     try {
       setIsCreating(true);
       const taskData = {
@@ -157,13 +156,11 @@ const Dashboard = () => {
         deadline,
         assistantId: newTask.assistantId || null
       };
-      console.log('Creating task with data:', taskData);
       const result = await apiRequest({ 
         endpoint: '/tasks', 
         method: 'POST', 
         body: taskData 
       });
-      console.log('Task created:', result);
       setIsModalOpen(false);
       setNewTask({ title: '', description: '', location: '', officerId: '', priority: 'medium', deadlineDate: '', deadlineHour: '', deadlineMinute: '', deadlineAmPm: 'AM', assistantId: '' });
       toast.success('Task deployed successfully');
@@ -175,13 +172,18 @@ const Dashboard = () => {
       setIsCreating(false);
     }
   };
-
+  
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="text-2xl font-bold tracking-tight">Dashboard</div>
+      <header>
+        <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+        <p className="text-muted-foreground mt-1">Operational intelligence & analytics</p>
+      </header>
+
+      {/* Top Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
         <BlurFade delay={100}>
-          <Card className="border-border bg-card/50 backdrop-blur-sm">
+          <Card className="border-border bg-card/50 backdrop-blur-sm hover:shadow-md transition-all">
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
               <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-widest">
                 Total Tasks
@@ -198,9 +200,9 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         </BlurFade>
-
+        
         <BlurFade delay={200}>
-          <Card className="border-border bg-card/50 backdrop-blur-sm">
+          <Card className="border-border bg-card/50 backdrop-blur-sm hover:shadow-md transition-all">
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
               <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-widest">
                 Pending Action
@@ -220,9 +222,9 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         </BlurFade>
-
+        
         <BlurFade delay={300}>
-          <Card className="border-border bg-card/50 backdrop-blur-sm">
+          <Card className="border-border bg-card/50 backdrop-blur-sm hover:shadow-md transition-all">
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
               <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-widest">
                 Completed
@@ -244,9 +246,35 @@ const Dashboard = () => {
         </BlurFade>
       </div>
 
+      {/* Visual Analytics Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <BlurFade delay={400}>
-          <Card className="border-border bg-card/50 backdrop-blur-sm overflow-hidden">
+          <TaskStatusChart />
+        </BlurFade>
+        <BlurFade delay={500}>
+          <WeeklyTrendChart />
+        </BlurFade>
+      </div>
+
+      {/* Productivity & Workload */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <BlurFade delay={600}>
+          <UserProductivityRanking />
+        </BlurFade>
+        <BlurFade delay={700}>
+          <WorkloadDistribution />
+        </BlurFade>
+      </div>
+
+      {/* Pending vs Completed Ratio */}
+      <BlurFade delay={800}>
+        <PendingCompletedRatio />
+      </BlurFade>
+
+      {/* Quick Actions & Personnel */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <BlurFade delay={900}>
+          <Card className="border-border bg-card/50 backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="text-lg font-semibold">
                 Quick Actions
@@ -255,7 +283,7 @@ const Dashboard = () => {
                 Manage your workflow effectively
               </CardDescription>
             </CardHeader>
-<CardContent className="flex flex-wrap gap-4">
+            <CardContent className="flex flex-wrap gap-4">
               {user?.role === 'ADMIN' && (
                 <Button 
                   className="flex items-center gap-2 group cursor-pointer"
@@ -265,217 +293,218 @@ const Dashboard = () => {
                   Create New Task
                 </Button>
               )}
-               
-               <Button
-                 variant="outline"
-                 className="flex items-center gap-2 group cursor-pointer"
-                 onClick={() => navigate('/tasks')}
-               >
-                 <FileText size={16} />
-                 View All Tasks
-               </Button>
-             </CardContent>
-             </Card>
-             
-             <BlurFade delay={500}>
-               <Card className="border-border bg-card/50 backdrop-blur-sm">
-                <CardHeader>
-<div>
-                      <CardTitle className="text-lg font-semibold">
-                        Personnel Overview
-                      </CardTitle>
-                      <CardDescription>
-                        IT Officers and Assistants registered in the system
-                      </CardDescription>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                   <div className="space-y-4">
-                      <div>
-                        <h4 className="text-sm font-semibold text-muted-foreground mb-3">IT Officers ({officers.length})</h4>
-                        <div className="space-y-2">
-                          {officers.length > 0 ? officers.map((officer) => (
-                            <div key={officer.uid || officer.userId} className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent/50">
-                              <div className="w-8 h-8 rounded-full bg-blue-400/20 flex items-center justify-center text-xs font-bold text-blue-400 shrink-0">
-                                {officer.name?.charAt(0) || 'U'}
-                              </div>
-                         <div className="flex-1 min-w-0">
-                                 <p className="text-sm font-medium truncate">{officer.name}</p>
-                                 <p className="text-xs text-muted-foreground truncate">{officer.email}</p>
-                               </div>
-                            </div>
-                          )) : (
-                            <p className="text-xs text-muted-foreground">No IT Officers registered</p>
-                          )}
+              <Button
+                variant="outline"
+                className="flex items-center gap-2 group cursor-pointer"
+                onClick={() => navigate('/tasks')}
+              >
+                <FileText size={16} />
+                View All Tasks
+              </Button>
+            </CardContent>
+          </Card>
+        </BlurFade>
+        
+        <BlurFade delay={1000}>
+          <Card className="border-border bg-card/50 backdrop-blur-sm overflow-hidden">
+            <CardHeader>
+              <div>
+                <CardTitle className="text-lg font-semibold">
+                  Personnel Overview
+                </CardTitle>
+                <CardDescription>
+                  IT Officers and Assistants registered in the system
+                </CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <h4 className="text-sm font-semibold text-muted-foreground mb-3">IT Officers ({officers.length})</h4>
+                  <div className="space-y-2">
+                    {officers.length > 0 ? officers.map((officer) => (
+                      <div key={officer.uid || officer.userId} className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent/50">
+                        <div className="w-8 h-8 rounded-full bg-blue-400/20 flex items-center justify-center text-xs font-bold text-blue-400 shrink-0">
+                          {officer.name?.charAt(0) || 'U'}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{officer.name}</p>
+                          <p className="text-xs text-muted-foreground truncate">{officer.email}</p>
                         </div>
                       </div>
-                      <div>
-                        <h4 className="text-sm font-semibold text-muted-foreground mb-3">Assistants ({assistants.length})</h4>
-                        <div className="space-y-2">
-                          {assistants.length > 0 ? assistants.map((assistant) => (
-                            <div key={assistant.uid || assistant.userId} className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent/50">
-                              <div className="w-8 h-8 rounded-full bg-purple-400/20 flex items-center justify-center text-xs font-bold text-purple-400 shrink-0">
-                                {assistant.name?.charAt(0) || 'U'}
-                              </div>
-                         <div className="flex-1 min-w-0">
-                                 <p className="text-sm font-medium truncate">{assistant.name}</p>
-                                 <p className="text-xs text-muted-foreground truncate">{assistant.email}</p>
-                               </div>
-                            </div>
-                          )) : (
-                            <p className="text-xs text-muted-foreground">No Assistants registered</p>
-                          )}
-                        </div>
-                      </div>
-                   </div>
-                 </CardContent>
-               </Card>
-             </BlurFade>
-             
-             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle className="text-xl font-bold">Initialize New Task</DialogTitle>
-                    <DialogDescription>Define the requirements for the IT operation.</DialogDescription>
-                  </DialogHeader>
-                  <div className="grid gap-6 py-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="title">Task Title *</Label>
-                      <Input 
-                        id="title" 
-                        placeholder="e.g. Network Migration" 
-                        value={newTask.title}
-                        onChange={(e) => setNewTask({...newTask, title: e.target.value})}
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="description">Description *</Label>
-                      <Textarea 
-                        id="description" 
-                        placeholder="Detailed requirements..." 
-                        value={newTask.description}
-                        onChange={(e) => setNewTask({...newTask, description: e.target.value})}
-                        className="min-h-24"
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="location">Location *</Label>
-                      <Input 
-                        id="location" 
-                        placeholder="Shed A / Floor 2 / Server Room" 
-                        value={newTask.location}
-                        onChange={(e) => setNewTask({...newTask, location: e.target.value})}
-                      />
-                    </div>
-<div className="grid gap-2">
-                        <Label htmlFor="officer">Assign IT Officer *</Label>
-                        <Select 
-                          value={newTask.officerId} 
-                          onValueChange={(v) => setNewTask({...newTask, officerId: v})}
-                        >
-                          <SelectTrigger id="officer">
-                            <SelectValue placeholder="Select IT Officer">
-                              {newTask.officerId ? officers.find(o => o.uid === newTask.officerId)?.name : null}
-                            </SelectValue>
-                          </SelectTrigger>
-                          <SelectContent>
-                            {officers.map(officer => (
-                               <SelectItem key={officer.uid} value={officer.uid}>
-                                 {officer.name}
-                               </SelectItem>
-                             ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-<div className="grid gap-2">
-                        <Label htmlFor="assistant">Assistant Technician (Optional)</Label>
-                        <Select 
-                          value={newTask.assistantId} 
-                          onValueChange={(v) => setNewTask({...newTask, assistantId: v})}
-                        >
-                          <SelectTrigger id="assistant">
-                            <SelectValue placeholder="Select Assistant Technician">
-                              {newTask.assistantId ? assistants.find(a => a.uid === newTask.assistantId)?.name : null}
-                            </SelectValue>
-                          </SelectTrigger>
-                          <SelectContent>
-                            {assistants.map(assistant => (
-                               <SelectItem key={assistant.uid} value={assistant.uid}>
-                                 {assistant.name}
-                               </SelectItem>
-                             ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="grid gap-2">
-                        <Label htmlFor="priority">Priority *</Label>
-                        <Select value={newTask.priority} onValueChange={(v) => setNewTask({...newTask, priority: v})}>
-                          <SelectTrigger id="priority">
-                            <SelectValue placeholder="Select Priority" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="low">Low</SelectItem>
-                            <SelectItem value="medium">Medium</SelectItem>
-                            <SelectItem value="high">High</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="deadlineDate">Deadline Date *</Label>
-                        <Input
-                          id="deadlineDate"
-                          type="date"
-                          value={newTask.deadlineDate}
-                          onChange={(e) => setNewTask({...newTask, deadlineDate: e.target.value})}
-                        />
-                      </div>
-                    </div>
-                    <div className="grid gap-2">
-                      <Label>Deadline Time</Label>
-                      <div className="grid grid-cols-3 gap-2">
-                        <Select value={newTask.deadlineHour} onValueChange={(v) => setNewTask({...newTask, deadlineHour: v})}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Hour" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Array.from({length: 12}, (_, i) => i + 1).map(h => (
-                              <SelectItem key={h} value={h.toString()}>{h}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <Select value={newTask.deadlineMinute} onValueChange={(v) => setNewTask({...newTask, deadlineMinute: v})}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Minute" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'].map(m => (
-                              <SelectItem key={m} value={m}>{m}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <Select value={newTask.deadlineAmPm} onValueChange={(v) => setNewTask({...newTask, deadlineAmPm: v})}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="AM/PM" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="AM">AM</SelectItem>
-                            <SelectItem value="PM">PM</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
+                    )) : (
+                      <p className="text-xs text-muted-foreground">No IT Officers registered</p>
+                    )}
                   </div>
-                  <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsModalOpen(false)} className="cursor-pointer">Cancel</Button>
-                    <Button onClick={handleCreateTask} disabled={isCreating} className="cursor-pointer">
-                      {isCreating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating...</> : 'Create Task'}
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-muted-foreground mb-3">Assistants ({assistants.length})</h4>
+                  <div className="space-y-2">
+                    {assistants.length > 0 ? assistants.map((assistant) => (
+                      <div key={assistant.uid || assistant.userId} className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent/50">
+                        <div className="w-8 h-8 rounded-full bg-purple-400/20 flex items-center justify-center text-xs font-bold text-purple-400 shrink-0">
+                          {assistant.name?.charAt(0) || 'U'}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{assistant.name}</p>
+                          <p className="text-xs text-muted-foreground truncate">{assistant.email}</p>
+                        </div>
+                      </div>
+                    )) : (
+                      <p className="text-xs text-muted-foreground">No Assistants registered</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </BlurFade>
       </div>
+
+      {/* Recent Activity Feed */}
+      <BlurFade delay={1100}>
+        <RecentActivityFeed />
+      </BlurFade>
+
+      {/* Create Task Dialog */}
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold">Initialize New Task</DialogTitle>
+            <DialogDescription>Define the requirements for the IT operation.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-6 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="title">Task Title *</Label>
+              <Input 
+                id="title" 
+                placeholder="e.g. Network Migration" 
+                value={newTask.title}
+                onChange={(e) => setNewTask({...newTask, title: e.target.value})}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="description">Description *</Label>
+              <Textarea 
+                id="description" 
+                placeholder="Detailed requirements..." 
+                value={newTask.description}
+                onChange={(e) => setNewTask({...newTask, description: e.target.value})}
+                className="min-h-24"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="location">Location *</Label>
+              <Input 
+                id="location" 
+                placeholder="Shed A / Floor 2 / Server Room" 
+                value={newTask.location}
+                onChange={(e) => setNewTask({...newTask, location: e.target.value})}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="officer">Assign IT Officer *</Label>
+              <Select 
+                value={newTask.officerId} 
+                onValueChange={(v) => setNewTask({...newTask, officerId: v})}
+              >
+                <SelectTrigger id="officer">
+                  <SelectValue placeholder="Select IT Officer" />
+                </SelectTrigger>
+                <SelectContent>
+                  {officers.map(officer => (
+                    <SelectItem key={officer.uid} value={officer.uid}>
+                      {officer.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="assistant">Assistant Technician (Optional)</Label>
+              <Select 
+                value={newTask.assistantId} 
+                onValueChange={(v) => setNewTask({...newTask, assistantId: v})}
+              >
+                <SelectTrigger id="assistant">
+                  <SelectValue placeholder="Select Assistant Technician" />
+                </SelectTrigger>
+                <SelectContent>
+                  {assistants.map(assistant => (
+                    <SelectItem key={assistant.uid} value={assistant.uid}>
+                      {assistant.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="priority">Priority *</Label>
+                <Select value={newTask.priority} onValueChange={(v) => setNewTask({...newTask, priority: v})}>
+                  <SelectTrigger id="priority">
+                    <SelectValue placeholder="Select Priority" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="deadlineDate">Deadline Date *</Label>
+                <Input
+                  id="deadlineDate"
+                  type="date"
+                  value={newTask.deadlineDate}
+                  onChange={(e) => setNewTask({...newTask, deadlineDate: e.target.value})}
+                />
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <Label>Deadline Time</Label>
+              <div className="grid grid-cols-3 gap-2">
+                <Select value={newTask.deadlineHour} onValueChange={(v) => setNewTask({...newTask, deadlineHour: v})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Hour" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({length: 12}, (_, i) => i + 1).map(h => (
+                      <SelectItem key={h} value={h.toString()}>{h}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={newTask.deadlineMinute} onValueChange={(v) => setNewTask({...newTask, deadlineMinute: v})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Minute" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'].map(m => (
+                      <SelectItem key={m} value={m}>{m}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={newTask.deadlineAmPm} onValueChange={(v) => setNewTask({...newTask, deadlineAmPm: v})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="AM/PM" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="AM">AM</SelectItem>
+                    <SelectItem value="PM">PM</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsModalOpen(false)} className="cursor-pointer">Cancel</Button>
+            <Button onClick={handleCreateTask} disabled={isCreating} className="cursor-pointer">
+              {isCreating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating...</> : 'Create Task'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

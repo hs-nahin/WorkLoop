@@ -90,14 +90,18 @@ export const useRealTimeTask = (taskId) => {
   return { task, loading };
 };
 
-// Real-time dashboard stats
+// Real-time dashboard stats - extended with analytics
 export const useRealTimeStats = (userId, userRole) => {
   const [stats, setStats] = useState({
     pending: 0,
     inProgress: 0,
     submitted: 0,
     completed: 0,
-    total: 0
+    total: 0,
+    rejected: 0,
+    statusCounts: { pending: 0, inProgress: 0, submitted: 0, completed: 0, rejected: 0 },
+    weeklyTrend: [],
+    tasks: []
   });
   const [loading, setLoading] = useState(true);
 
@@ -109,7 +113,7 @@ export const useRealTimeStats = (userId, userRole) => {
 
     const tasksRef = collection(db, 'tasks');
     let constraints = [];
-    
+
     if (userRole === 'IT OFFICER' || userRole === 'ASSISTANT') {
       constraints.push(where('officerId', '==', userId));
     }
@@ -118,14 +122,49 @@ export const useRealTimeStats = (userId, userRole) => {
 
     const unsubscribeFunc = onSnapshot(q,
       (snapshot) => {
-        const allTasks = snapshot.docs.map(doc => doc.data());
-        
+        const allTasks = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          createdAt: doc.data().createdAt?.toDate?.() || doc.data().createdAt,
+        }));
+
+        const pending = allTasks.filter(t => t.status === 'pending').length;
+        const inProgress = allTasks.filter(t => t.status === 'in progress').length;
+        const submitted = allTasks.filter(t => t.status === 'submitted').length;
+        const completed = allTasks.filter(t => t.status === 'completed' || t.status === 'approved').length;
+        const rejected = allTasks.filter(t => t.status === 'rejected').length;
+
+        // Weekly trend (last 7 days)
+        const now = new Date();
+        const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        const weeklyTrend = [];
+        for (let i = 6; i >= 0; i--) {
+          const day = new Date(now);
+          day.setDate(day.getDate() - i);
+          const dayStart = new Date(day.getFullYear(), day.getMonth(), day.getDate());
+          const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+          const dayTasks = allTasks.filter(t => {
+            const created = t.createdAt instanceof Date ? t.createdAt : new Date(t.createdAt);
+            return created >= dayStart && created < dayEnd;
+          });
+          weeklyTrend.push({
+            date: dayStart.toLocaleDateString('en-US', { weekday: 'short' }),
+            created: dayTasks.length,
+            completed: dayTasks.filter(t => t.status === 'completed' || t.status === 'approved').length,
+            submitted: dayTasks.filter(t => t.status === 'submitted').length,
+          });
+        }
+
         setStats({
-          pending: allTasks.filter(t => t.status === 'pending').length,
-          inProgress: allTasks.filter(t => t.status === 'in progress').length,
-          submitted: allTasks.filter(t => t.status === 'submitted').length,
-          completed: allTasks.filter(t => t.status === 'completed' || t.status === 'approved').length,
-          total: allTasks.length
+          pending,
+          inProgress,
+          submitted,
+          completed,
+          total: allTasks.length,
+          rejected,
+          statusCounts: { pending, inProgress, submitted, completed, rejected },
+          weeklyTrend,
+          tasks: allTasks,
         });
         setLoading(false);
       },
