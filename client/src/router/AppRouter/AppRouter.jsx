@@ -10,7 +10,7 @@ import TaskDetail from "@/pages/tasks/TaskDetail/TaskDetail";
 import TaskList from "@/pages/tasks/TaskList/TaskList";
 import CompletedTasks from "@/pages/tasks/CompletedTasks/CompletedTasks";
 import { createBrowserRouter, RouterProvider } from "react-router";
-import ProtectedRoute from "../ProtectedRoute/ProtectedRoute";
+import ProtectedRoute from "@/router/ProtectedRoute/ProtectedRoute";
 
 
 const router = createBrowserRouter([

@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext, useMemo, useRef, useCallback } from 'react';
-import { collection, query, orderBy, onSnapshot, limit, startAfter } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '@/firebase/firebaseConfig';
 import { AuthContext } from '@/context/AuthContext';
 import { apiRequest } from '@/api/apiClient';
@@ -19,7 +19,6 @@ import {
   PlusCircle,
   Trash2,
   History,
-  MessageSquare,
   Filter,
   RotateCcw,
   ChevronLeft,
@@ -120,8 +119,7 @@ const AuditLogs = () => {
   useEffect(() => {
     const q = query(
       collection(db, 'auditLogs'),
-      orderBy('timestamp', 'desc'),
-      limit(PAGE_SIZE)
+      orderBy('timestamp', 'desc')
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {

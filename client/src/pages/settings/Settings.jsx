@@ -25,11 +25,11 @@ import {
 import { useContext, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router';
-import { apiRequest } from '../../api/apiClient';
-import BlurFade from '../../components/animations/BlurFade';
-import GradientText from '../../components/animations/GradientText';
-import TextHighlighter from '../../components/animations/TextHighlighter';
-import { AuthContext } from '../../context/AuthContextInstance.js';
+import { apiRequest } from '@/api/apiClient';
+import BlurFade from '@/components/animations/BlurFade';
+import GradientText from '@/components/animations/GradientText';
+import TextHighlighter from '@/components/animations/TextHighlighter';
+import { AuthContext } from '@/context/AuthContextInstance.js';
 
 const Settings = () => {
   const { user } = useContext(AuthContext);

@@ -1,8 +1,7 @@
-
 import { useContext } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router';
-import { AuthContext } from '../../context/AuthContext';
-import { hasPermission } from '../../lib/permissions';
+import { AuthContext } from '@/context/AuthContext';
+import { hasPermission } from '@/lib/permissions';
 
 const ProtectedRoute = ({ allowedPermissions }) => {
   const { user, token, loading } = useContext(AuthContext);

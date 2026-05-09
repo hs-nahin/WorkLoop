@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '@/firebase/firebaseConfig';
 import {
   CheckCircle2,
@@ -106,6 +106,7 @@ const ActivityTimeline = ({ taskId }) => {
     const loadEvents = () => {
       const auditQuery = query(
         collection(db, 'auditLogs'),
+        where('targetId', '==', taskId),
         orderBy('timestamp', 'desc')
       );
 
@@ -129,8 +130,7 @@ const ActivityTimeline = ({ taskId }) => {
             senderName: doc.data().performedByName,
             senderRole: '',
             targetId: doc.data().targetId,
-          }))
-          .filter(e => e.targetId === taskId);
+          }));
 
         setEvents(prev => {
           const messageEvents = prev.filter(e => e.source === 'message');

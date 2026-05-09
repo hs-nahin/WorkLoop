@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { apiRequest } from '../../../api/apiClient';
-import BlurFade from '../../../components/animations/BlurFade';
-import MagicCard from '../../../components/animations/MagicCard';
+import { apiRequest } from '@/api/apiClient';
+import BlurFade from '@/components/animations/BlurFade';
+import MagicCard from '@/components/animations/MagicCard';
 import { toast } from 'sonner';
 import { CheckCircle2, XCircle, Clock } from 'lucide-react';
 

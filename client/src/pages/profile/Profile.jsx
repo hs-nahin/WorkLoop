@@ -19,10 +19,10 @@ import {
   Briefcase
 } from 'lucide-react';
 import { useContext } from 'react';
-import { AuthContext } from '../../context/AuthContextInstance.js';
-import BlurFade from '../../components/animations/BlurFade';
-import GradientText from '../../components/animations/GradientText';
-import TextHighlighter from '../../components/animations/TextHighlighter';
+import { AuthContext } from '@/context/AuthContextInstance.js';
+import BlurFade from '@/components/animations/BlurFade';
+import GradientText from '@/components/animations/GradientText';
+import TextHighlighter from '@/components/animations/TextHighlighter';
 
 const Profile = () => {
   const { user } = useContext(AuthContext);

@@ -1,34 +1,25 @@
-import { useContext, useMemo, useEffect, useState } from 'react';
+import { useContext, useMemo, useEffect, useState, useCallback } from 'react';
 import { AuthContext } from '@/context/AuthContext';
-import { hasPermission, loadPermissions } from '@/lib/permissions';
+import { hasPermission, onPermissionsReady } from '@/lib/permissions';
 
 const usePermissions = () => {
   const { user } = useContext(AuthContext);
-  const [loading, setLoading] = useState(true);
+  const [ready, setReady] = useState(false);
   const role = user?.role || '';
 
   useEffect(() => {
-    const init = async () => {
-      await loadPermissions();
-      setLoading(false);
-    };
-    init();
+    onPermissionsReady(() => setReady(true));
   }, []);
 
-  const can = useMemo(() => {
-    return (permission) => hasPermission(role, permission);
-  }, [role, loading]);
+  const can = useCallback((permission) => {
+    return hasPermission(role, permission);
+  }, [role, ready]);
 
-  const permissions = useMemo(() => ({
-    can,
-    role,
-    loading,
-    isAdmin: hasPermission(role, 'TASK_APPROVE'),
-    isOfficer: hasPermission(role, 'TASK_ACCEPT'),
-    isAssistant: hasPermission(role, 'COMMENT_CREATE') && !hasPermission(role, 'TASK_ACCEPT'),
-  }), [can, role, loading]);
+  const isAdmin = useMemo(() => hasPermission(role, 'TASK_APPROVE'), [role, ready]);
+  const isOfficer = useMemo(() => hasPermission(role, 'TASK_ACCEPT'), [role, ready]);
+  const isAssistant = useMemo(() => hasPermission(role, 'COMMENT_CREATE') && !hasPermission(role, 'TASK_ACCEPT'), [role, ready]);
 
-  return permissions;
+  return { can, role, loading: !ready, isAdmin, isOfficer, isAssistant };
 };
 
 export default usePermissions;

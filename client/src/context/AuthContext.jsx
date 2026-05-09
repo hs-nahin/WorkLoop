@@ -2,6 +2,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
+import {
+  subscribeUserPermissions,
+  unsubscribeUserPermissions,
+  subscribeRolePermissions,
+  unsubscribeRolePermissions,
+  onPermissionsChange,
+  getPermissionsVersion,
+} from '../lib/permissions';
 import { AuthContext } from './AuthContextInstance';
 
 export { AuthContext };
@@ -11,6 +19,7 @@ export const AuthProvider = ({ children }) => {
   const [firestoreProfile, setFirestoreProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(null);
+  const [permissionsVersion, setPermissionsVersion] = useState(0);
 
   const fetchFirestoreProfile = useCallback(async (uid) => {
     try {
@@ -49,6 +58,21 @@ export const AuthProvider = ({ children }) => {
 
     return () => unsubscribe();
   }, [fetchFirestoreProfile]);
+
+  useEffect(() => {
+    const uid = firestoreProfile?.uid || firebaseUser?.uid;
+    const role = firestoreProfile?.role;
+    if (uid) subscribeUserPermissions(uid);
+    if (role) subscribeRolePermissions(role);
+    const unsubChange = onPermissionsChange(() => {
+      setPermissionsVersion(getPermissionsVersion());
+    });
+    return () => {
+      if (uid) unsubscribeUserPermissions(uid);
+      if (role) unsubscribeRolePermissions(role);
+      unsubChange();
+    };
+  }, [firestoreProfile?.uid, firestoreProfile?.role, firebaseUser?.uid]);
 
   const login = async ({ email, password }) => {
     try {
@@ -94,7 +118,7 @@ export const AuthProvider = ({ children }) => {
   }, [firebaseUser, fetchFirestoreProfile]);
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, logout, fetchMe }}>
+    <AuthContext.Provider value={{ user, token, loading, login, logout, fetchMe, permissionsVersion }}>
       {children}
     </AuthContext.Provider>
   );

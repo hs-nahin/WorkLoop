@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { apiRequest } from '../../../api/apiClient';
-import BlurFade from '../../../components/animations/BlurFade';
-import MagicCard from '../../../components/animations/MagicCard';
+import { apiRequest } from '@/api/apiClient';
+import BlurFade from '@/components/animations/BlurFade';
+import MagicCard from '@/components/animations/MagicCard';
 import { AlertCircle, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router';
 

@@ -1,12 +1,12 @@
 import { useContext, useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router';
-import { AuthContext } from '../../../context/AuthContext';
-import { hasPermission } from '../../../lib/permissions';
-import { db } from '../../../lib/firebase';
+import { AuthContext } from '@/context/AuthContext';
+import { hasPermission } from '@/lib/permissions';
+import { db } from '@/lib/firebase';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { BarChart3, Users, TrendingUp, AlertTriangle, CheckCircle2, Search, ArrowUpDown } from 'lucide-react';
 import { toast } from 'sonner';
-import BlurFade from '../../../components/animations/BlurFade';
+import BlurFade from '@/components/animations/BlurFade';
 
 // Helper to format seconds into readable duration
 const formatDuration = (seconds) => {
