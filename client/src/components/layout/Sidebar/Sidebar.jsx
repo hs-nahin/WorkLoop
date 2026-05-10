@@ -28,6 +28,7 @@ const Sidebar = () => {
   const { user, logout } = useContext(AuthContext);
   const location = useLocation();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
 
 const menuItems = [
   { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard, roles: ["PROFILE_VIEW"] },
@@ -41,11 +42,11 @@ const menuItems = [
 
   const filteredItems = menuItems.filter(item => item.roles.some(r => hasPermission(user?.role, r)));
 
-  const content = (
+  const renderContent = (onNavClick) => (
     <div className="flex flex-col h-full py-6">
       <div className="px-6 mb-8 flex items-center justify-between">
         {/* WorkLoop Brand Logo and Name */}
-        <Link to="/dashboard" className="flex items-center gap-2 group">
+        <Link to="/dashboard" onClick={onNavClick} className="flex items-center gap-2 group">
           <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm group-hover:scale-110 transition-transform shadow-sm">
             WL
           </div>
@@ -62,6 +63,7 @@ const menuItems = [
           <Link 
             key={item.path} 
             to={item.path} 
+            onClick={onNavClick}
             className={cn(
               "flex items-center gap-4 px-3 py-2 rounded-lg transition-all duration-200 group relative outline-none",
               location.pathname === item.path 
@@ -86,7 +88,7 @@ const menuItems = [
             "w-full justify-start gap-4 text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer transition-colors outline-none",
             !sidebarOpen && "justify-center px-0"
           )} 
-          onClick={logout}
+          onClick={() => { onNavClick?.(); logout(); }}
         >
           <LogOut size={20} className="shrink-0" />
           {sidebarOpen && <span className="text-sm">Logout</span>}
@@ -103,7 +105,7 @@ const menuItems = [
             sidebarOpen ? "w-64" : "w-20"
           )}
         >
-          {content}
+          {renderContent()}
           <div 
             className={cn(
               "absolute -right-2 top-1/2 -translate-y-1/2 flex items-center justify-center z-50 transition-all duration-300",
@@ -122,18 +124,18 @@ const menuItems = [
           </div>
         </aside>
 
-         <Sheet>
-          <SheetTrigger asChild={false}>
+        <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+          <SheetTrigger asChild>
             <Button 
               variant="ghost" 
               size="icon" 
-              className="lg:hidden fixed top-3 left-3 z-50"
+              className={cn("lg:hidden fixed top-3 left-3 z-50", sheetOpen && "hidden")}
             >
               <Menu size={20} />
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="w-64 p-0 bg-card">
-            {content}
+            {renderContent(() => setSheetOpen(false))}
           </SheetContent>
         </Sheet>
       </>

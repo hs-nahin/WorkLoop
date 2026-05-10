@@ -177,7 +177,7 @@ const Dashboard = () => {
     <div className="space-y-6 animate-in fade-in duration-500">
       <AnnouncementBanner />
       <header>
-        <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Dashboard</h1>
         <p className="text-muted-foreground mt-1">Operational intelligence & analytics</p>
       </header>
 
@@ -259,10 +259,10 @@ const Dashboard = () => {
                   Manage your workflow effectively
                 </CardDescription>
               </CardHeader>
-              <CardContent className="flex flex-wrap gap-4">
+              <CardContent className="flex flex-col sm:flex-row sm:flex-wrap gap-3">
                 {user?.role === 'ADMIN' && (
                   <Button 
-                    className="flex items-center gap-2 group cursor-pointer"
+                    className="flex items-center gap-2 group cursor-pointer w-full sm:w-auto"
                     onClick={() => setIsModalOpen(true)}
                   >
                     <Plus size={16} />
@@ -271,7 +271,7 @@ const Dashboard = () => {
                 )}
                 <Button
                   variant="outline"
-                  className="flex items-center gap-2 group cursor-pointer"
+                  className="flex items-center gap-2 group cursor-pointer w-full sm:w-auto"
                   onClick={() => navigate('/tasks')}
                 >
                   <FileText size={16} />
