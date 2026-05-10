@@ -140,7 +140,7 @@ const menuItems = [
               <Menu size={20} />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className={cn("p-0 bg-card/95 backdrop-blur-xl", mobileCollapsed ? "w-20" : "w-64")} showCloseButton={false}>
+          <SheetContent side="left" className="p-0 bg-card/95 backdrop-blur-xl transition-all duration-300" showCloseButton={false} style={{ width: mobileCollapsed ? '5rem' : '16rem' }}>
             <div className="relative h-full">
               {renderContent({ onNavClick: () => setSheetOpen(false), collapsed: mobileCollapsed })}
               <ToggleButton collapsed={mobileCollapsed} onToggle={() => setMobileCollapsed(!mobileCollapsed)} />
