@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Bell, LogOut, Settings, User, Trash2 } from "lucide-react";
+import { Bell, LogOut, Settings, User, Trash2, Megaphone } from "lucide-react";
 import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { apiRequest } from "../../../api/apiClient";
@@ -171,11 +171,20 @@ const TopBar = () => {
                       className={`p-4 border-b cursor-pointer hover:bg-accent transition-colors ${!notification.read ? 'bg-accent/50' : ''}`}
                     >
                       <div className="flex justify-between items-start gap-2">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium">{notification.message}</p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {formatTime(notification.createdAt)}
-                          </p>
+                        <div className="flex-1 min-w-0 flex gap-3">
+                          <div className="mt-1">
+                            {notification.type === 'announcement' ? (
+                              <Megaphone size={14} className="text-primary" />
+                            ) : (
+                              <Bell size={14} className="text-muted-foreground" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium">{notification.message}</p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {formatTime(notification.createdAt)}
+                            </p>
+                          </div>
                         </div>
                         <button
                           onClick={(e) => handleDeleteNotification(e, notification.id)}

@@ -1,5 +1,6 @@
 import { apiRequest } from "@/api/apiClient";
 import { Button } from "@/components/ui/button";
+import AnnouncementBanner from "@/components/announcements/AnnouncementBanner";
 import {
   Card,
   CardContent,
@@ -115,7 +116,7 @@ const Dashboard = () => {
           return true;
         });
         
-        const officerList = uniqueUsers.filter(user => user.role?.toUpperCase() === 'IT OFFICER');
+        const officerList = uniqueUsers.filter(user => user.role?.toUpperCase() === 'IT OFFICER' || user.role?.toUpperCase() === 'IT_OFFICER');
         setOfficers(officerList);
         const assistantList = uniqueUsers.filter(user => user.role?.toUpperCase() === 'ASSISTANT');
         setAssistants(assistantList);
@@ -174,6 +175,7 @@ const Dashboard = () => {
   
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
+      <AnnouncementBanner />
       <header>
         <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
         <p className="text-muted-foreground mt-1">Operational intelligence & analytics</p>

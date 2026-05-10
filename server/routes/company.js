@@ -63,6 +63,9 @@ router.post('/logo', verifyToken, checkPermission('COMPANY_SETTINGS'), async (re
       return res.status(400).json({ message: 'File size must be less than 5MB' });
     }
 
+    if (!adminStorage) {
+      return res.status(500).json({ message: 'Storage not configured' });
+    }
     const bucket = adminStorage;
     const fileName = `logos/company-logo`;
     

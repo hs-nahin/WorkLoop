@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const { verifyToken } = require('../utils/token');
-const admin = require('../firebase-admin');
+const { admin, adminAuth, adminDb } = require('../firebase-admin');
 
 const protect = async (req, res, next) => {
     let token;
@@ -15,7 +15,7 @@ const protect = async (req, res, next) => {
     try {
         let decoded;
         try {
-            const decodedFirebase = await admin.auth().verifyIdToken(token);
+            const decodedFirebase = await adminAuth.verifyIdToken(token);
             decoded = {
                 userId: decodedFirebase.uid,
                 email: decodedFirebase.email,
@@ -30,7 +30,7 @@ const protect = async (req, res, next) => {
         }
         
         // IMPORTANT: Fetch current role from Firestore to prevent stale token roles
-        const userDoc = await admin.firestore().collection('users').doc(decoded.userId).get();
+        const userDoc = await adminDb.collection('users').doc(decoded.userId).get();
         if (userDoc.exists) {
             decoded.role = userDoc.data().role || 'USER';
             decoded.name = userDoc.data().name;

@@ -9,6 +9,8 @@ import Profile from "@/pages/profile/Profile";
 import TaskDetail from "@/pages/tasks/TaskDetail/TaskDetail";
 import TaskList from "@/pages/tasks/TaskList/TaskList";
 import CompletedTasks from "@/pages/tasks/CompletedTasks/CompletedTasks";
+import AnnouncementsPage from "@/pages/announcements/AnnouncementsPage";
+import AnnouncementHistory from "@/pages/announcements/AnnouncementHistory";
 import { createBrowserRouter, RouterProvider } from "react-router";
 import ProtectedRoute from "@/router/ProtectedRoute/ProtectedRoute";
 
@@ -53,14 +55,23 @@ const router = createBrowserRouter([
               path: 'performance',
               element: <UserPerformanceDashboard />,
             },
-            {
-              path: 'audit-logs',
-              element: <AuditLogs />,
-            },
-            {
-              path: 'permissions',
-              element: <PermissionsEditor />,
-            },
+             {
+               path: 'audit-logs',
+               element: <AuditLogs />,
+             },
+             {
+               path: 'announcements',
+               element: <AnnouncementsPage />,
+             },
+             {
+               path: 'announcements/history',
+               element: <AnnouncementHistory />,
+             },
+             {
+               path: 'permissions',
+               element: <PermissionsEditor />,
+             },
+
 
           {
             index: true,

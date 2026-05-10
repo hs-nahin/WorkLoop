@@ -11,8 +11,17 @@ import {
   getPermissionsVersion,
 } from '../lib/permissions';
 import { AuthContext } from './AuthContextInstance';
+import { useContext } from 'react';
 
 export { AuthContext };
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
 
 export const AuthProvider = ({ children }) => {
   const [firebaseUser, setFirebaseUser] = useState(null);

@@ -6,6 +6,23 @@ const { verifyToken, selfOrAdmin } = require('../middleware/auth');
 router.get('/', verifyToken, async (req, res) => {
   try {
     const snapshot = await adminDb.collection('users').get();
+    
+    if (snapshot.empty) {
+      // Fallback: If no users in Firestore, try to get them from Firebase Auth as a last resort
+      const { adminAuth } = require('../firebase-admin');
+      const authUsers = await adminAuth.listUsers();
+      const fallbackUsers = authUsers.users.map(user => ({
+        uid: user.uid,
+        userId: user.uid,
+        id: user.uid,
+        email: user.email,
+        name: user.displayName || user.email?.split('@')[0] || 'Unknown',
+        role: 'IT OFFICER', // Default role for fallback
+        isActive: true
+      }));
+      return res.json(fallbackUsers);
+    }
+
     const users = snapshot.docs.map(doc => {
       const data = doc.data();
       return { 
@@ -14,7 +31,7 @@ router.get('/', verifyToken, async (req, res) => {
         id: doc.id, 
         ...data 
       };
-    }).filter(u => u.role && u.isActive !== false); // Must have role and not be deactivated
+    }).filter(u => u.role && (u.isActive === true || u.isActive === undefined)); 
     res.json(users);
   } catch (error) {
     console.error('Get users error:', error);
@@ -55,6 +72,9 @@ router.put('/:uid/avatar', verifyToken, selfOrAdmin, async (req, res) => {
     }
 
     const { adminStorage } = require('../firebase-admin');
+    if (!adminStorage) {
+      return res.status(500).json({ message: 'Storage not configured' });
+    }
     const bucket = adminStorage;
     const fileName = `avatars/${uid}/${Date.now()}_${req.file.originalname}`;
     

@@ -23,8 +23,16 @@ if (!admin.apps.length) {
   admin.initializeApp(config);
 }
 
+let adminStorage = null;
+try {
+  adminStorage = admin.storage().bucket();
+} catch (e) {
+  console.warn('Firebase Storage not configured. File upload features will be unavailable.');
+}
+
 module.exports = {
   admin,
   adminAuth: admin.auth(),
-  adminDb: admin.firestore()
+  adminDb: admin.firestore(),
+  adminStorage
 };

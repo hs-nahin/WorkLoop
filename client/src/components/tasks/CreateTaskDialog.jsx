@@ -41,12 +41,11 @@ export function CreateTaskDialog({ open, onOpenChange }) {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const [officersData, assistantsData] = await Promise.all([
-          apiRequest({ endpoint: "/users?role=IT_OFFICER" }),
-          apiRequest({ endpoint: "/users?role=ASSISTANT" }),
-        ]);
-        setOfficers(officersData);
-        setAssistants(assistantsData);
+        const usersData = await apiRequest({ endpoint: "/users" });
+        const officerList = usersData.filter(u => u.role?.toUpperCase() === 'IT OFFICER' || u.role?.toUpperCase() === 'IT_OFFICER');
+        const assistantList = usersData.filter(u => u.role?.toUpperCase() === 'ASSISTANT');
+        setOfficers(officerList);
+        setAssistants(assistantList);
       } catch (error) {
         toast.error("Failed to fetch users");
       }
