@@ -114,8 +114,8 @@ const TopBar = () => {
   };
 
   return (
-    <header className="h-16 border-b bg-card/80 backdrop-blur-md px-4 md:px-6 flex items-center justify-between sticky top-0 z-40">
-      <div className="flex items-center gap-4">
+    <header className="h-16 border-b bg-card/80 backdrop-blur-md px-2 sm:px-4 md:px-6 flex items-center justify-between sticky top-0 z-40">
+      <div className="flex items-center gap-2 sm:gap-4">
         <div className="hidden md:block">
           <Badge
             variant="outline"
@@ -128,7 +128,7 @@ const TopBar = () => {
           <div className="flex items-center gap-1">
             <Badge
               variant="solid"
-              className="bg-sky-50 text-sky-600 dark:bg-sky-950 dark:text-sky-50 font-bold"
+              className="bg-sky-50 text-sky-600 dark:bg-sky-950 dark:text-sky-50 font-bold text-[10px] sm:text-xs px-1.5 sm:px-2.5"
             >
               Verified
             </Badge>
@@ -136,29 +136,29 @@ const TopBar = () => {
         )}
       </div>
 
-      <div className="flex items-center gap-2 md:gap-4">
+      <div className="flex items-center gap-1 sm:gap-2 md:gap-4">
         <LiveClock />
 
         {user && (
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative text-muted-foreground cursor-pointer">
-                <Bell size={20} />
+              <Button variant="ghost" size="icon" className="relative text-muted-foreground cursor-pointer h-9 w-9 sm:h-10 sm:w-10">
+                <Bell size={18} className="sm:size-[20px]" />
                 {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground text-xs font-bold rounded-full flex items-center justify-center border-2 border-card">
-                    {unreadCount}
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 sm:w-5 sm:h-5 bg-destructive text-destructive-foreground text-[10px] sm:text-xs font-bold rounded-full flex items-center justify-center border-2 border-card">
+                    {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-80 p-0" align="end">
-              <div className="p-4 border-b flex justify-between items-center">
-                <h3 className="font-semibold">Notifications</h3>
-                <span className="text-xs text-muted-foreground">
+            <PopoverContent className="w-[calc(100vw-1rem)] sm:w-80 p-0 mr-2 sm:mr-0" align="end" sideOffset={8}>
+              <div className="p-3 sm:p-4 border-b flex justify-between items-center">
+                <h3 className="text-sm sm:text-base font-semibold">Notifications</h3>
+                <span className="text-[10px] sm:text-xs text-muted-foreground">
                   {unreadCount} unread
                 </span>
               </div>
-              <div className="max-h-80 overflow-y-auto">
+              <div className="max-h-72 sm:max-h-80 overflow-y-auto">
                 {notifications.length === 0 ? (
                   <div className="p-4 text-center text-sm text-muted-foreground">
                     No notifications
@@ -168,29 +168,29 @@ const TopBar = () => {
                     <div
                       key={notification.id}
                       onClick={() => handleNotificationClick(notification)}
-                      className={`p-4 border-b cursor-pointer hover:bg-accent transition-colors ${!notification.read ? 'bg-accent/50' : ''}`}
+                      className={`p-3 sm:p-4 border-b cursor-pointer hover:bg-accent transition-colors ${!notification.read ? 'bg-accent/50' : ''}`}
                     >
                       <div className="flex justify-between items-start gap-2">
-                        <div className="flex-1 min-w-0 flex gap-3">
-                          <div className="mt-1">
+                        <div className="flex-1 min-w-0 flex gap-2 sm:gap-3">
+                          <div className="mt-0.5 shrink-0">
                             {notification.type === 'announcement' ? (
-                              <Megaphone size={14} className="text-primary" />
+                              <Megaphone size={12} className="sm:size-[14px] text-primary" />
                             ) : (
-                              <Bell size={14} className="text-muted-foreground" />
+                              <Bell size={12} className="sm:size-[14px] text-muted-foreground" />
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium">{notification.message}</p>
-                            <p className="text-xs text-muted-foreground mt-1">
+                            <p className="text-xs sm:text-sm font-medium leading-snug">{notification.message}</p>
+                            <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
                               {formatTime(notification.createdAt)}
                             </p>
                           </div>
                         </div>
                         <button
                           onClick={(e) => handleDeleteNotification(e, notification.id)}
-                          className="text-muted-foreground hover:text-destructive transition-colors p-1"
+                          className="text-muted-foreground hover:text-destructive transition-colors p-1 shrink-0"
                         >
-                          <Trash2 size={14} />
+                          <Trash2 size={12} className="sm:size-[14px]" />
                         </button>
                       </div>
                     </div>
@@ -205,26 +205,26 @@ const TopBar = () => {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <div className="flex items-center gap-3 p-1 pl-2 rounded-full border hover:bg-accent transition-colors cursor-pointer">
+            <div className="flex items-center gap-1 sm:gap-3 p-0.5 sm:p-1 sm:pl-2 rounded-full border hover:bg-accent transition-colors cursor-pointer">
               <div className="text-right hidden sm:block">
                 <p className="text-xs font-semibold text-foreground leading-none">{user?.name || "User"}</p>
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">{user?.role || "Role"}</p>
               </div>
-              <Avatar className="h-8 w-8 border-2 border-primary/20">
+              <Avatar className="h-7 w-7 sm:h-8 sm:w-8 border-2 border-primary/20">
                 <AvatarImage src={user?.profileImage} alt={user?.name} />
-                <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">
+                <AvatarFallback className="bg-primary text-primary-foreground text-[10px] sm:text-xs font-bold">
                   {user?.name?.charAt(0) || "U"}
                 </AvatarFallback>
               </Avatar>
             </div>
           </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuContent align="end" className="w-48 sm:w-56">
               <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => navigate('/profile')}>
-                <User size={16} />
+                <User size={15} className="sm:size-[16px]" />
                 <span>Profile</span>
               </DropdownMenuItem>
               <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => navigate('/settings')}>
-                <Settings size={16} />
+                <Settings size={15} className="sm:size-[16px]" />
                 <span>Settings</span>
               </DropdownMenuItem>
               <div className="h-px bg-border my-1" />
@@ -232,7 +232,7 @@ const TopBar = () => {
                 className="gap-2 text-destructive focus:text-destructive cursor-pointer"
                 onClick={logout}
               >
-                <LogOut size={16} />
+                <LogOut size={15} className="sm:size-[16px]" />
                 <span>Log out</span>
               </DropdownMenuItem>
             </DropdownMenuContent>

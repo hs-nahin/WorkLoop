@@ -4,8 +4,6 @@ import {
   BarChart3,
   CheckCircle2,
   CheckSquare,
-  ChevronLeft,
-  ChevronRight,
   History,
   LayoutDashboard,
   LogOut,
@@ -13,7 +11,6 @@ import {
   Megaphone,
   PanelLeftClose,
   PanelLeftOpen,
-  Shield,
 } from "lucide-react";
 import { useContext, useState } from "react";
 import { Link, useLocation } from "react-router";
@@ -29,6 +26,7 @@ const Sidebar = () => {
   const location = useLocation();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [mobileCollapsed, setMobileCollapsed] = useState(false);
 
 const menuItems = [
   { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard, roles: ["PROFILE_VIEW"] },
@@ -42,58 +40,78 @@ const menuItems = [
 
   const filteredItems = menuItems.filter(item => item.roles.some(r => hasPermission(user?.role, r)));
 
-  const renderContent = (onNavClick) => (
-    <div className="flex flex-col h-full py-6">
-      <div className="px-6 mb-8 flex items-center justify-between">
-        {/* WorkLoop Brand Logo and Name */}
-        <Link to="/dashboard" onClick={onNavClick} className="flex items-center gap-2 group">
-          <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm group-hover:scale-110 transition-transform shadow-sm">
-            WL
-          </div>
-          {sidebarOpen && (
-            <span className="font-bold text-base text-darkGray group-hover:text-black transition-colors tracking-tight">
-              <span className="text-gray-500">Work</span><span className="text-sky-600">Loop</span>
-            </span>
-          )}
-        </Link>
-      </div>
+  const renderContent = (options = {}) => {
+    const { onNavClick, collapsed } = options;
+    const isCollapsed = collapsed !== undefined ? collapsed : !sidebarOpen;
 
-      <nav className="flex-1 px-3 space-y-1">
-        {filteredItems.map((item) => (
-          <Link 
-            key={item.path} 
-            to={item.path} 
-            onClick={onNavClick}
-            className={cn(
-              "flex items-center gap-4 px-3 py-2 rounded-lg transition-all duration-200 group relative outline-none",
-              location.pathname === item.path 
-                ? "bg-primary/10 text-primary font-semibold shadow-sm" 
-                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-            )}
-          >
-            <item.icon size={20} className={cn("shrink-0 transition-colors", location.pathname === item.path ? "text-primary" : "group-hover:text-foreground")} />
-            {sidebarOpen && <span className="text-sm transition-opacity duration-200">{item.name}</span>}
-            {location.pathname === item.path && (
-              <div className="absolute left-0 w-1 h-6 bg-primary rounded-r-full" />
+    return (
+      <div className="flex flex-col h-full py-6">
+        <div className="px-6 mb-8 flex items-center justify-between">
+          {/* WorkLoop Brand Logo and Name */}
+          <Link to="/dashboard" onClick={onNavClick} className="flex items-center gap-2 group">
+            <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm group-hover:scale-110 transition-transform shadow-sm">
+              WL
+            </div>
+            {!isCollapsed && (
+              <span className="font-bold text-base text-darkGray group-hover:text-black transition-colors tracking-tight">
+                <span className="text-gray-500">Work</span><span className="text-sky-600">Loop</span>
+              </span>
             )}
           </Link>
-        ))}
-      </nav>
+        </div>
 
-      <div className="p-3 mt-auto">
-        <CreateTaskDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
-        <Button 
-          variant="ghost" 
-          className={cn(
-            "w-full justify-start gap-4 text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer transition-colors outline-none",
-            !sidebarOpen && "justify-center px-0"
-          )} 
-          onClick={() => { onNavClick?.(); logout(); }}
-        >
-          <LogOut size={20} className="shrink-0" />
-          {sidebarOpen && <span className="text-sm">Logout</span>}
-        </Button>
+        <nav className="flex-1 px-3 space-y-1">
+          {filteredItems.map((item) => (
+            <Link 
+              key={item.path} 
+              to={item.path} 
+              onClick={onNavClick}
+              className={cn(
+                "flex items-center gap-4 px-3 py-2 rounded-lg transition-all duration-200 group relative outline-none",
+                location.pathname === item.path 
+                  ? "bg-primary/10 text-primary font-semibold shadow-sm" 
+                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                isCollapsed && "justify-center px-0"
+              )}
+            >
+              <item.icon size={20} className={cn("shrink-0 transition-colors", location.pathname === item.path ? "text-primary" : "group-hover:text-foreground")} />
+              {!isCollapsed && <span className="text-sm transition-opacity duration-200">{item.name}</span>}
+              {location.pathname === item.path && (
+                <div className="absolute left-0 w-1 h-6 bg-primary rounded-r-full" />
+              )}
+            </Link>
+          ))}
+        </nav>
+
+        <div className={cn("p-3 mt-auto", isCollapsed && "px-0")}>
+          <CreateTaskDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
+          <Button 
+            variant="ghost" 
+            className={cn(
+              "w-full justify-start gap-4 text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer transition-colors outline-none",
+              isCollapsed && "justify-center px-0"
+            )} 
+            onClick={() => { onNavClick?.(); logout(); }}
+          >
+            <LogOut size={20} className="shrink-0" />
+            {!isCollapsed && <span className="text-sm">Logout</span>}
+          </Button>
+        </div>
       </div>
+    );
+  };
+
+  const ToggleButton = ({ collapsed, onToggle, className: extraCls }) => (
+    <div className={cn("absolute -right-2 top-1/2 -translate-y-1/2 flex items-center justify-center z-50 transition-all duration-300", extraCls)}>
+      <Button 
+        variant="ghost" 
+        size="icon" 
+        className="h-7 w-7 rounded-full p-0 bg-card border shadow-sm hover:bg-accent cursor-pointer transition-transform hover:scale-110 flex items-center justify-center" 
+        onClick={onToggle}
+        aria-label={collapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+      >
+        {collapsed ? <PanelLeftOpen size={14} /> : <PanelLeftClose size={14} />}
+      </Button>
     </div>
   );
 
@@ -106,25 +124,14 @@ const menuItems = [
           )}
         >
           {renderContent()}
-          <div 
-            className={cn(
-              "absolute -right-2 top-1/2 -translate-y-1/2 flex items-center justify-center z-50 transition-all duration-300",
-              sidebarOpen ? "translate-x-0" : "-translate-x-1"
-            )}
-          >
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-7 w-7 rounded-full p-0 bg-card border shadow-sm hover:bg-accent cursor-pointer transition-transform hover:scale-110 flex items-center justify-center" 
-              onClick={toggleSidebar}
-              aria-label="Toggle Sidebar"
-            >
-              {sidebarOpen ? <PanelLeftClose size={14} /> : <PanelLeftOpen size={14} />}
-            </Button>
-          </div>
+          <ToggleButton 
+            collapsed={!sidebarOpen} 
+            onToggle={toggleSidebar}
+            className={sidebarOpen ? "translate-x-0" : "-translate-x-1"}
+          />
         </aside>
 
-        <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+        <Sheet open={sheetOpen} onOpenChange={(open) => { setSheetOpen(open); if (!open) setMobileCollapsed(false); }}>
           <SheetTrigger asChild>
             <Button 
               variant="ghost" 
@@ -134,8 +141,17 @@ const menuItems = [
               <Menu size={20} />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-64 p-0 bg-card">
-            {renderContent(() => setSheetOpen(false))}
+          <SheetContent 
+            side="left" 
+            className={cn("p-0 bg-card/95 backdrop-blur-xl transition-all duration-300", mobileCollapsed ? "w-20" : "w-64")}
+          >
+            <div className="relative h-full">
+              {renderContent({ onNavClick: () => setSheetOpen(false), collapsed: mobileCollapsed })}
+              <ToggleButton 
+                collapsed={mobileCollapsed} 
+                onToggle={(e) => { e.stopPropagation(); setMobileCollapsed(!mobileCollapsed); }}
+              />
+            </div>
           </SheetContent>
         </Sheet>
       </>
