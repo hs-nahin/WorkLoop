@@ -45,54 +45,51 @@ const menuItems = [
     const isCollapsed = collapsed !== undefined ? collapsed : !sidebarOpen;
 
     return (
-      <div className="flex flex-col h-full py-6 overflow-hidden">
-        <div className={cn("mb-8 flex", isCollapsed ? "justify-center px-0" : "px-6")}>
+      <div className="flex flex-col h-full py-6">
+        <div className="px-6 mb-8 flex items-center justify-between">
+          {/* WorkLoop Brand Logo and Name */}
           <Link to="/dashboard" onClick={onNavClick} className="flex items-center gap-2 group">
-            <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm group-hover:scale-110 transition-transform shadow-sm shrink-0">
+            <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm group-hover:scale-110 transition-transform shadow-sm">
               WL
             </div>
             {!isCollapsed && (
-              <span className="font-bold text-base text-darkGray group-hover:text-black transition-colors tracking-tight whitespace-nowrap overflow-hidden">
+              <span className="font-bold text-base text-darkGray group-hover:text-black transition-colors tracking-tight">
                 <span className="text-gray-500">Work</span><span className="text-sky-600">Loop</span>
               </span>
             )}
           </Link>
         </div>
 
-        <nav className="flex-1 space-y-1 overflow-y-auto overflow-x-hidden">
+        <nav className="flex-1 px-3 space-y-1">
           {filteredItems.map((item) => (
             <Link 
               key={item.path} 
               to={item.path} 
               onClick={onNavClick}
               className={cn(
-                "flex items-center rounded-lg transition-all duration-200 group relative outline-none",
-                isCollapsed
-                  ? "justify-center mx-2 h-10 w-[calc(100%-1rem)]"
-                  : "gap-4 px-3 py-2 mx-2",
+                "flex items-center gap-4 px-3 py-2 rounded-lg transition-all duration-200 group relative outline-none",
                 location.pathname === item.path 
                   ? "bg-primary/10 text-primary font-semibold shadow-sm" 
-                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                isCollapsed && "justify-center px-0"
               )}
             >
               <item.icon size={20} className={cn("shrink-0 transition-colors", location.pathname === item.path ? "text-primary" : "group-hover:text-foreground")} />
-              {!isCollapsed && <span className="text-sm transition-opacity duration-200 whitespace-nowrap overflow-hidden">{item.name}</span>}
+              {!isCollapsed && <span className="text-sm transition-opacity duration-200">{item.name}</span>}
               {location.pathname === item.path && (
-                <div className={cn("absolute w-1 h-6 bg-primary rounded-r-full", isCollapsed ? "left-0 top-1/2 -translate-y-1/2" : "left-0")} />
+                <div className="absolute left-0 w-1 h-6 bg-primary rounded-r-full" />
               )}
             </Link>
           ))}
         </nav>
 
-        <div className={cn("mt-auto", isCollapsed ? "flex justify-center p-2" : "p-3")}>
+        <div className={cn("p-3 mt-auto", isCollapsed && "px-0")}>
           <CreateTaskDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
           <Button 
             variant="ghost" 
             className={cn(
-              "text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors outline-none shrink-0",
-              isCollapsed
-                ? "h-10 w-10 p-0 flex items-center justify-center"
-                : "w-full justify-start gap-4 px-3 py-2"
+              "w-full justify-start gap-4 text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer transition-colors outline-none",
+              isCollapsed && "justify-center px-0"
             )} 
             onClick={() => { onNavClick?.(); logout(); }}
           >
@@ -104,14 +101,14 @@ const menuItems = [
     );
   };
 
-  const ToggleButton = ({ collapsed, onToggle }) => (
-    <div className="absolute -right-2 top-1/2 -translate-y-1/2 z-50 flex items-center justify-center">
+  const ToggleButton = ({ collapsed, onToggle, className: extraCls }) => (
+    <div className={cn("absolute -right-2 top-1/2 -translate-y-1/2 flex items-center justify-center z-50 transition-all duration-300", extraCls)}>
       <Button 
         variant="ghost" 
         size="icon" 
-        className="h-7 w-7 rounded-full bg-card border shadow-sm hover:bg-accent transition-transform hover:scale-110 flex items-center justify-center" 
+        className="h-7 w-7 rounded-full p-0 bg-card border shadow-sm hover:bg-accent cursor-pointer transition-transform hover:scale-110 flex items-center justify-center" 
         onClick={onToggle}
-        aria-label={collapsed ? "Expand" : "Collapse"}
+        aria-label={collapsed ? "Expand Sidebar" : "Collapse Sidebar"}
       >
         {collapsed ? <PanelLeftOpen size={14} /> : <PanelLeftClose size={14} />}
       </Button>
@@ -130,10 +127,11 @@ const menuItems = [
           <ToggleButton 
             collapsed={!sidebarOpen} 
             onToggle={toggleSidebar}
+            className={sidebarOpen ? "translate-x-0" : "-translate-x-1"}
           />
         </aside>
 
-        <Sheet open={sheetOpen} onOpenChange={(open) => { setSheetOpen(open); if (open) setMobileCollapsed(false); }}>
+        <Sheet open={sheetOpen} onOpenChange={(open) => { setSheetOpen(open); if (!open) setMobileCollapsed(false); }}>
           <SheetTrigger asChild>
             <Button 
               variant="ghost" 
@@ -143,12 +141,15 @@ const menuItems = [
               <Menu size={20} />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-64 p-0 bg-card/95 backdrop-blur-xl" showCloseButton={false}>
-            <div className="relative h-full overflow-visible">
+          <SheetContent 
+            side="left" 
+            className={cn("p-0 bg-card/95 backdrop-blur-xl transition-all duration-300", mobileCollapsed ? "w-20" : "w-64")}
+          >
+            <div className="relative h-full">
               {renderContent({ onNavClick: () => setSheetOpen(false), collapsed: mobileCollapsed })}
               <ToggleButton 
                 collapsed={mobileCollapsed} 
-                onToggle={() => setMobileCollapsed(!mobileCollapsed)}
+                onToggle={(e) => { e.stopPropagation(); setMobileCollapsed(!mobileCollapsed); }}
               />
             </div>
           </SheetContent>
