@@ -51,16 +51,17 @@ const menuItems = [
             <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm group-hover:scale-110 transition-transform shadow-sm shrink-0">
               WL
             </div>
-            {!isCollapsed && (
-              <span className="font-bold text-base text-darkGray group-hover:text-black transition-colors tracking-tight whitespace-nowrap">
-                <span className="text-gray-500">Work</span><span className="text-sky-600">Loop</span>
-              </span>
-            )}
+            <span className={cn(
+              "font-bold text-base text-darkGray group-hover:text-black tracking-tight whitespace-nowrap overflow-hidden transition-all duration-300 ease-out",
+              isCollapsed ? "max-w-0 opacity-0 -translate-x-3" : "max-w-40 opacity-100 translate-x-0"
+            )}>
+              <span className="text-gray-500">Work</span><span className="text-sky-600">Loop</span>
+            </span>
           </Link>
         </div>
 
         <nav className="flex-1 space-y-1">
-          {filteredItems.map((item) => (
+          {filteredItems.map((item, index) => (
             <Link 
               key={item.path} 
               to={item.path} 
@@ -76,7 +77,15 @@ const menuItems = [
               )}
             >
               <item.icon size={20} className={cn("shrink-0 transition-colors", location.pathname === item.path ? "text-primary" : "group-hover:text-foreground")} />
-              {!isCollapsed && <span className="text-sm transition-opacity duration-200 whitespace-nowrap">{item.name}</span>}
+              <span
+                className={cn(
+                  "text-sm whitespace-nowrap overflow-hidden transition-all duration-300 ease-out",
+                  isCollapsed ? "max-w-0 opacity-0 -translate-x-2" : "max-w-40 opacity-100 translate-x-0"
+                )}
+                style={{ transitionDelay: isCollapsed ? '0ms' : `${40 + index * 30}ms` }}
+              >
+                {item.name}
+              </span>
               {location.pathname === item.path && (
                 <div className={cn("absolute w-1 h-6 bg-primary rounded-r-full", isCollapsed ? "left-0 top-1/2 -translate-y-1/2" : "left-0")} />
               )}
@@ -97,7 +106,12 @@ const menuItems = [
             onClick={() => { onNavClick?.(); logout(); }}
           >
             <LogOut size={20} className="shrink-0" />
-            {!isCollapsed && <span className="text-sm">Logout</span>}
+            <span className={cn(
+              "text-sm whitespace-nowrap overflow-hidden transition-all duration-300 ease-out",
+              isCollapsed ? "max-w-0 opacity-0 -translate-x-2" : "max-w-16 opacity-100 translate-x-0"
+            )}>
+              Logout
+            </span>
           </Button>
         </div>
       </div>
