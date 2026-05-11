@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '@/firebase/firebaseConfig';
+import { motion } from 'framer-motion';
 import {
   CheckCircle2,
   Clock,
@@ -10,26 +11,58 @@ import {
   PlusCircle,
   Trash2,
   UserCheck,
-  UserX,
   MessageSquare,
   XCircle,
   History,
+  GitBranch,
 } from 'lucide-react';
 
+const twColorMap = {
+   'blue-500': '#3b82f6',
+   'cyan-400': '#22d3ee',
+   'indigo-400': '#818cf8',
+   'purple-500': '#a855f7',
+   'pink-400': '#f472b6',
+   'green-500': '#22c55e',
+   'emerald-400': '#34d399',
+   'red-500': '#ef4444',
+   'rose-400': '#fb7185',
+   'orange-500': '#f97316',
+   'amber-400': '#fbbf24',
+   'violet-500': '#8b5cf6',
+   'teal-400': '#2dd4bf',
+   'yellow-500': '#eab308',
+   'orange-400': '#fb923c',
+   'gray-400': '#9ca3af',
+   'slate-400': '#94a3b8',
+   'muted-foreground': '#6b7280',
+   'muted': '#a1a1aa',
+};
+
+const getGradientColors = (gradientStr) => {
+   const parts = gradientStr.split(' ');
+   const from = parts[0].replace('from-', '');
+   const to = parts[1].replace('to-', '');
+   return {
+     from: twColorMap[from] || '#6b7280',
+     to: twColorMap[to] || '#9ca3af',
+   };
+};
+
 const actionConfig = {
-  task_created: { icon: PlusCircle, color: 'text-blue-500', bg: 'bg-blue-500/10', label: 'Task Created' },
-  task_accepted: { icon: UserCheck, color: 'text-blue-500', bg: 'bg-blue-500/10', label: 'Task Accepted' },
-  task_submitted: { icon: Loader2, color: 'text-purple-500', bg: 'bg-purple-500/10', label: 'Task Submitted' },
-  task_approved: { icon: CheckCircle2, color: 'text-green-500', bg: 'bg-green-500/10', label: 'Task Approved' },
-  task_rejected: { icon: XCircle, color: 'text-red-500', bg: 'bg-red-500/10', label: 'Task Rejected' },
-  task_incomplete: { icon: History, color: 'text-orange-500', bg: 'bg-orange-500/10', label: 'Marked Incomplete' },
-  attachment_uploaded: { icon: FileUp, color: 'text-purple-500', bg: 'bg-purple-500/10', label: 'File Uploaded' },
-  attachment_deleted: { icon: FileX, color: 'text-red-500', bg: 'bg-red-500/10', label: 'File Deleted' },
-  subtask_created: { icon: PlusCircle, color: 'text-cyan-500', bg: 'bg-cyan-500/10', label: 'Subtask Created' },
-  subtask_updated: { icon: Loader2, color: 'text-yellow-500', bg: 'bg-yellow-500/10', label: 'Subtask Updated' },
-  subtask_deleted: { icon: Trash2, color: 'text-red-500', bg: 'bg-red-500/10', label: 'Subtask Deleted' },
-  comment_added: { icon: MessageSquare, color: 'text-gray-400', bg: 'bg-gray-500/10', label: 'Comment Added' },
-  default: { icon: Clock, color: 'text-muted-foreground', bg: 'bg-muted', label: 'Activity' },
+  task_created: { icon: PlusCircle, gradient: 'from-blue-500 to-cyan-400', iconColor: 'text-blue-500', label: 'Task Created', anim: 'animate-pulse-soft' },
+  task_accepted: { icon: UserCheck, gradient: 'from-blue-500 to-indigo-400', iconColor: 'text-blue-500', label: 'Task Accepted', anim: 'animate-bounce-check' },
+  task_submitted: { icon: Loader2, gradient: 'from-purple-500 to-pink-400', iconColor: 'text-purple-500', label: 'Task Submitted', anim: 'animate-spin' },
+  task_approved: { icon: CheckCircle2, gradient: 'from-green-500 to-emerald-400', iconColor: 'text-green-500', label: 'Task Approved', anim: 'animate-pulse-soft' },
+  task_rejected: { icon: XCircle, gradient: 'from-red-500 to-rose-400', iconColor: 'text-red-500', label: 'Task Rejected', anim: 'animate-shake' },
+  task_incomplete: { icon: History, gradient: 'from-orange-500 to-amber-400', iconColor: 'text-orange-500', label: 'Marked Incomplete', anim: 'animate-float' },
+  attachment_uploaded: { icon: FileUp, gradient: 'from-violet-500 to-purple-400', iconColor: 'text-violet-500', label: 'File Uploaded', anim: 'animate-float' },
+  attachment_deleted: { icon: FileX, gradient: 'from-red-500 to-orange-400', iconColor: 'text-red-500', label: 'File Deleted', anim: 'animate-shake' },
+  subtask_created: { icon: GitBranch, gradient: 'from-cyan-500 to-teal-400', iconColor: 'text-cyan-500', label: 'Subtask Created', anim: 'animate-pulse-soft' },
+  subtask_updated: { icon: Loader2, gradient: 'from-yellow-500 to-amber-400', iconColor: 'text-yellow-500', label: 'Subtask Updated', anim: 'animate-spin' },
+  subtask_deleted: { icon: Trash2, gradient: 'from-red-500 to-rose-400', iconColor: 'text-red-500', label: 'Subtask Deleted', anim: 'animate-shake' },
+  comment_added: { icon: MessageSquare, gradient: 'from-gray-400 to-slate-400', iconColor: 'text-gray-400', label: 'Comment Added', anim: 'animate-pulse-soft' },
+  default: { icon: Clock, gradient: 'from-muted-foreground to-muted', iconColor: 'text-muted-foreground', label: 'Activity', anim: 'animate-float' },
 };
 
 const classifyAction = (event) => {
@@ -59,23 +92,18 @@ const extractActor = (event) => {
 };
 
 const extractActorRole = (event) => {
-  return event.userRole || event.senderRole || '';
-};
-
-const getActorInitial = (name) => {
-  if (!name) return 'S';
-  return name.charAt(0).toUpperCase();
+   return event.userRole || event.senderRole || '';
 };
 
 const getRoleColor = (role) => {
-  if (!role) return '';
-  switch (role) {
-    case 'ADMIN': return 'bg-red-500/20 text-red-500';
-    case 'IT_OFFICER':
-    case 'IT OFFICER': return 'bg-blue-500/20 text-blue-500';
-    case 'ASSISTANT': return 'bg-purple-500/20 text-purple-500';
-    default: return 'bg-gray-500/20 text-gray-500';
-  }
+   if (!role) return '';
+   switch (role) {
+     case 'ADMIN': return 'bg-red-500/20 text-red-500';
+     case 'IT_OFFICER':
+     case 'IT OFFICER': return 'bg-blue-500/20 text-blue-500';
+     case 'ASSISTANT': return 'bg-purple-500/20 text-purple-500';
+     default: return 'bg-gray-500/20 text-gray-500';
+   }
 };
 
 const formatEventTime = (timestamp) => {
@@ -193,30 +221,40 @@ const ActivityTimeline = ({ taskId }) => {
 
   if (loading) {
     return (
-      <div className="space-y-4">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-full bg-muted animate-pulse" />
-          <div className="space-y-2 flex-1">
-            <div className="h-3 w-1/3 bg-muted rounded animate-pulse" />
-            <div className="h-2 w-1/4 bg-muted rounded animate-pulse" />
+      <div className="space-y-2 sm:space-y-4">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="flex items-center gap-2.5 sm:gap-4 animate-pulse">
+            <div className="h-8 w-8 sm:h-11 sm:w-11 rounded-full bg-muted" />
+            <div className="space-y-2 flex-1">
+              <div className="h-2 sm:h-3 w-2/5 bg-muted rounded" />
+              <div className="h-1.5 sm:h-2.5 w-1/3 bg-muted rounded" />
+            </div>
           </div>
-        </div>
+        ))}
       </div>
     );
   }
 
   if (events.length === 0) {
     return (
-      <div className="text-center py-8 text-muted-foreground text-sm">
-        No activity recorded for this task yet.
-      </div>
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-center py-6 sm:py-10 px-2"
+      >
+        <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-muted-foreground/30 to-muted-foreground/10 p-[1px] mx-auto mb-3 sm:mb-4">
+          <div className="w-full h-full rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center">
+            <Clock size={16} className="sm:size-[22px] text-muted-foreground/50" />
+          </div>
+        </div>
+        <p className="text-xs sm:text-sm text-muted-foreground">No activity recorded for this task yet.</p>
+      </motion.div>
     );
   }
 
   return (
     <div className="relative">
-      <div className="absolute left-[19px] top-3 bottom-3 w-px bg-border" />
-      <div className="space-y-0">
+      <div className={events.length > 1 ? '' : 'space-y-2 sm:space-y-3'}>
         {events.map((event, index) => {
           const type = classifyAction(event);
           const config = actionConfig[type] || actionConfig.default;
@@ -226,34 +264,70 @@ const ActivityTimeline = ({ taskId }) => {
           const timeStr = formatEventTime(event.timestamp);
           const isLast = index === events.length - 1;
 
+          const nextConfig = !isLast
+            ? (actionConfig[classifyAction(events[index + 1])] || actionConfig.default)
+            : null;
+
+          const segFrom = nextConfig ? getGradientColors(config.gradient).to : null;
+          const segTo = nextConfig ? getGradientColors(nextConfig.gradient).from : null;
+
           return (
-            <div key={event.id} className="relative flex gap-4 pb-6 group">
+            <motion.div
+              key={event.id}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.35, delay: index * 0.05, ease: 'easeOut' }}
+              className={`relative flex gap-2.5 sm:gap-4 group ${!isLast ? 'pb-2 sm:pb-3' : ''}`}
+            >
+              {/* Icon container */}
               <div className="relative z-10 flex-shrink-0 mt-0.5">
-                <div className={`w-10 h-10 rounded-full ${config.bg} border border-border flex items-center justify-center transition-transform group-hover:scale-110 group-hover:shadow-md`}>
-                  <Icon size={16} className={config.color} />
+                <div className={`w-8 h-8 sm:w-11 sm:h-11 rounded-full bg-gradient-to-br ${config.gradient} p-[1px] shadow-sm`}>
+                  <div className="w-full h-full rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center">
+                    <Icon size={11} className={`sm:size-[15px] ${config.iconColor} ${config.anim}`} />
+                  </div>
                 </div>
+
                 {isLast && (
-                  <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-px h-6 bg-gradient-to-b from-border to-transparent" />
+                  <div className="absolute -bottom-3 sm:-bottom-4 left-1/2 -translate-x-1/2 w-0.5 h-3 sm:h-4 bg-gradient-to-b from-border/50 to-transparent" />
                 )}
               </div>
-              <div className="flex-1 min-w-0 pt-1.5">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-semibold text-foreground">{actorName}</span>
-                  {actorRole && (
-                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${getRoleColor(actorRole)}`}>
-                      {actorRole}
+
+              {/* Per-segment connector line */}
+              {!isLast && segFrom && segTo && (
+                <div
+                  className="absolute left-[16px] sm:left-[22px] top-8 sm:top-11 bottom-0 w-0.5 rounded-full z-0 opacity-40"
+                  style={{
+                    background: `linear-gradient(to bottom, ${segFrom}, ${segTo})`,
+                  }}
+                />
+              )}
+
+              {/* Content card */}
+              <div className="flex-1 min-w-0 pb-1.5 sm:pb-3">
+                <div className="rounded-lg sm:rounded-xl border border-border/50 bg-card/30 p-2 sm:p-3.5 transition-all duration-300 group-hover:bg-card/60 group-hover:border-border group-hover:shadow-md group-hover:shadow-black/5">
+                  <div className="flex items-center gap-1 sm:gap-2 flex-wrap mb-0.5 sm:mb-1">
+                    <span className="text-[11px] sm:text-sm font-semibold text-foreground">{actorName}</span>
+                    {actorRole && (
+                      <span className={`text-[8px] sm:text-[11px] font-bold px-1 sm:px-2 py-0.5 rounded-md ${getRoleColor(actorRole)}`}>
+                        {actorRole}
+                      </span>
+                    )}
+                    <span className="text-[8px] sm:text-[11px] font-medium px-1 sm:px-2 py-0.5 rounded-md bg-muted/80 text-muted-foreground/80 border border-border/30">
+                      {config.label}
                     </span>
+                  </div>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground/80 leading-relaxed line-clamp-2 break-words">
+                    {event.details || event.text}
+                  </p>
+                  {timeStr && (
+                    <div className="flex items-center gap-1 mt-1 sm:mt-1.5">
+                      <div className="w-0.5 h-0.5 sm:w-1 sm:h-1 rounded-full bg-muted-foreground/20" />
+                      <p className="text-[9px] sm:text-[11px] text-muted-foreground/40 font-mono tracking-tight">{timeStr}</p>
+                    </div>
                   )}
-                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
-                    {config.label}
-                  </span>
                 </div>
-                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{event.details || event.text}</p>
-                {timeStr && (
-                  <p className="text-[11px] text-muted-foreground/60 mt-1 font-mono">{timeStr}</p>
-                )}
               </div>
-            </div>
+            </motion.div>
           );
         })}
       </div>
