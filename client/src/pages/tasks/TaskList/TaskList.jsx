@@ -1,7 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { InputGroupAddon } from '@/components/ui/input-group-addon';
 import { cn } from '@/lib/utils';
 import {
   AlertCircle,
@@ -9,15 +8,14 @@ import {
   Calendar,
   CheckCircle2,
   Clock,
-  Loader2,
   Search,
-  Trash2
+  Trash2,
+  ChevronRight
 } from 'lucide-react';
 import { Fragment, useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { apiRequest } from '@/api/apiClient';
-import BlurFade from '@/components/animations/BlurFade';
 import GradientText from '@/components/animations/GradientText';
 import TextHighlighter from '@/components/animations/TextHighlighter';
 import { AuthContext } from '@/context/AuthContextInstance.js';
@@ -154,32 +152,32 @@ const TaskList = () => {
   );
 
 return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="space-y-4 sm:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 px-2 sm:px-0">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => navigate('/dashboard')}
-            className="hover:bg-accent cursor-pointer"
+            className="hover:bg-accent cursor-pointer shrink-0"
           >
             <ArrowLeft size={20} />
           </Button>
-          <div className="space-y-1">
-            <TextHighlighter text="Task Repository" className="text-3xl font-bold tracking-tight" />
-            <GradientText text="Track, assign and monitor internal IT operations" className="text-sm opacity-70 block" />
+          <div className="space-y-1 min-w-0">
+            <TextHighlighter text="Task Repository" className="text-2xl sm:text-3xl font-bold tracking-tight" />
+            <GradientText text="Track, assign and monitor internal IT operations" className="text-xs sm:text-sm opacity-70 block truncate" />
           </div>
-        </div>        
-        <div className="flex items-center gap-3">
+        </div>
+        <div className="flex items-center gap-3 w-full md:w-auto">
           <div className="flex items-center gap-0 overflow-hidden rounded-lg border border-input focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 transition-all bg-background shadow-sm w-full md:w-[450px]">
-            <div className="flex items-center justify-center pl-3 text-muted-foreground transition-colors group-focus-within:text-primary">
+            <div className="flex items-center justify-center pl-3 text-muted-foreground shrink-0">
               <Search size={16} />
             </div>
-            <div className="relative flex-1">
-              <Input 
+            <div className="relative flex-1 min-w-0">
+              <Input
                 id="search-input"
-                placeholder="Search by task title or description..." 
-                className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 px-3 h-9 w-full"
+                placeholder="Search tasks..."
+                className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 px-3 h-9 w-full text-sm"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -196,101 +194,158 @@ return (
           <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
           <p className="text-sm text-muted-foreground animate-pulse">Fetching repository data...</p>
         </div>
-) : (
-        <div className="rounded-xl border bg-card/50 overflow-hidden">
-          {/* Table Header */}
-          <div className={`grid w-full ${isAdmin ? 'grid-cols-[25%_10%_10%_15%_15%_20%_5%]' : 'grid-cols-[28%_12%_12%_15%_15%_30%]'}`}>
-            <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b">Task Information</div>
-            <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l">Status</div>
-            <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l">Priority</div>
-            <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l">Officer</div>
-            <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l">Assistant</div>
-            <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l">Deadline</div>
-            {isAdmin && (
-              <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l flex items-center justify-center">Action</div>
+      ) : (
+        <>
+          {/* Desktop Table */}
+          <div className="hidden md:block rounded-xl border bg-card/50 overflow-hidden">
+            <div className={`grid w-full ${isAdmin ? 'grid-cols-[25%_10%_10%_15%_15%_20%_5%]' : 'grid-cols-[28%_12%_12%_15%_15%_30%]'}`}>
+              <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b">Task Information</div>
+              <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l">Status</div>
+              <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l">Priority</div>
+              <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l">Officer</div>
+              <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l">Assistant</div>
+              <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l">Deadline</div>
+              {isAdmin && (
+                <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l flex items-center justify-center">Action</div>
+              )}
+            </div>
+            {filteredTasks.length > 0 ? (
+              <div className={`grid w-full ${isAdmin ? 'grid-cols-[25%_10%_10%_15%_15%_20%_5%]' : 'grid-cols-[28%_12%_12%_15%_15%_30%]'}`}>
+                {filteredTasks.map((task) => (
+                  <Fragment key={task.id}>
+                    <div className="px-4 py-3 border-b border-border/50 hover:bg-accent/50 cursor-pointer" onClick={() => navigate(`/tasks/${task.id}`)}>
+                      <div className="flex flex-col gap-1">
+                        <span className="font-semibold text-foreground hover:text-primary text-sm truncate">{task.title}</span>
+                        <span className="text-xs text-muted-foreground truncate">{task.description}</span>
+                      </div>
+                    </div>
+                    <div className="px-4 py-3 border-b border-border/50 hover:bg-accent/50 cursor-pointer flex items-center" onClick={() => navigate(`/tasks/${task.id}`)}>
+                      {getStatusBadge(task.status)}
+                    </div>
+                    <div className="px-4 py-3 border-b border-border/50 hover:bg-accent/50 cursor-pointer flex items-center" onClick={() => navigate(`/tasks/${task.id}`)}>
+                      <Badge className={cn(
+                        task.priority === 'high' && "bg-red-500/10 text-red-500 border-red-500/20",
+                        task.priority === 'medium' && "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
+                        task.priority === 'low' && "bg-green-500/10 text-green-500 border-green-500/20",
+                      )}>{task.priority}</Badge>
+                    </div>
+                    <div className="px-4 py-3 border-b border-border/50 hover:bg-accent/50 cursor-pointer flex items-center gap-2" onClick={() => navigate(`/tasks/${task.id}`)}>
+                      <div className="w-6 h-6 rounded-full bg-blue-400/20 flex items-center justify-center text-[10px] font-bold text-blue-400 shrink-0">
+                        {(task.officerName || task.officerId)?.charAt(0) || 'U'}
+                      </div>
+                      <span className="text-sm truncate">{task.officerName || task.officerId || 'Unassigned'}</span>
+                    </div>
+                    <div className="px-4 py-3 border-b border-border/50 hover:bg-accent/50 cursor-pointer flex items-center gap-2" onClick={() => navigate(`/tasks/${task.id}`)}>
+                      {task.assistantName ? (
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-6 h-6 rounded-full bg-purple-400/20 flex items-center justify-center text-[10px] font-bold text-purple-400 shrink-0">
+                            {task.assistantName?.charAt(0) || 'U'}
+                          </div>
+                          <span className="text-sm truncate">{task.assistantName}</span>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">No assistant</span>
+                      )}
+                    </div>
+                    <div className="px-4 py-3 border-b border-border/50 hover:bg-accent/50 cursor-pointer flex items-center gap-2 text-sm text-muted-foreground" onClick={() => navigate(`/tasks/${task.id}`)}>
+                      <Calendar size={14} className="shrink-0" />
+                      {task.deadline ? (
+                        <span className="text-sm text-muted-foreground truncate">{formatDate(task.deadline)}</span>
+                      ) : <span className="text-sm text-muted-foreground">No deadline</span>}
+                    </div>
+                    {isAdmin && (
+                      <div className="px-4 py-3 border-b border-border/50 flex items-center justify-center">
+                        <AlertDialog open={alertOpen && taskToDelete === task.id} onOpenChange={(open) => { setAlertOpen(open); if (!open) setTaskToDelete(null); }}>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); confirmDelete(task.id); }} className="text-red-500 hover:text-red-700 hover:bg-red-500/10 cursor-pointer">
+                              <Trash2 size={14} />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent className="w-[90vw] max-w-md">
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Task</AlertDialogTitle>
+                              <AlertDialogDescription>Are you sure you want to delete this task? This action cannot be undone.</AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDeleteTask()}>Delete</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    )}
+                  </Fragment>
+                ))}
+              </div>
+            ) : (
+              <div className="px-4 py-16 flex items-center justify-center text-muted-foreground italic">
+                No tasks matching your search criteria.
+              </div>
             )}
           </div>
-          {/* Table Body */}
-          {filteredTasks.length > 0 ? (
-            <div className={`grid w-full ${isAdmin ? 'grid-cols-[25%_10%_10%_15%_15%_20%_5%]' : 'grid-cols-[28%_12%_12%_15%_15%_30%]'}`}>
-              {filteredTasks.map((task) => {
-                  return (
-                  <Fragment key={task.id}>
-                  <div 
-                    className="px-4 py-3 border-b border-border/50 hover:bg-accent/50 cursor-pointer"
-                    onClick={() => navigate(`/tasks/${task.id}`)}
-                  >
-                    <div className="flex flex-col gap-1">
-                      <span className="font-semibold text-foreground hover:text-primary text-sm truncate">
-                        {task.title}
-                      </span>
-                      <span className="text-xs text-muted-foreground truncate">
-                        {task.description}
-                      </span>
+
+          {/* Mobile Cards */}
+          <div className="md:hidden space-y-3">
+            {filteredTasks.length > 0 ? (
+              filteredTasks.map((task) => (
+                <div
+                  key={task.id}
+                  onClick={() => navigate(`/tasks/${task.id}`)}
+                  className="rounded-xl border bg-card/50 p-4 hover:bg-accent/50 cursor-pointer active:scale-[0.98] transition-all"
+                >
+                  <div className="flex items-start justify-between gap-2 mb-3">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-semibold text-sm text-foreground truncate">{task.title}</h3>
+                      {task.description && (
+                        <p className="text-xs text-muted-foreground truncate mt-0.5">{task.description}</p>
+                      )}
                     </div>
+                    <ChevronRight size={16} className="shrink-0 text-muted-foreground mt-0.5" />
                   </div>
-                  <div 
-                    className="px-4 py-3 border-b border-border/50 hover:bg-accent/50 cursor-pointer flex items-center"
-                    onClick={() => navigate(`/tasks/${task.id}`)}
-                  >
+
+                  <div className="flex flex-wrap items-center gap-2 mb-3">
                     {getStatusBadge(task.status)}
-                  </div>
-                  <div 
-                    className="px-4 py-3 border-b border-border/50 hover:bg-accent/50 cursor-pointer flex items-center"
-                    onClick={() => navigate(`/tasks/${task.id}`)}
-                  >
                     <Badge className={cn(
                       task.priority === 'high' && "bg-red-500/10 text-red-500 border-red-500/20",
                       task.priority === 'medium' && "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
                       task.priority === 'low' && "bg-green-500/10 text-green-500 border-green-500/20",
-                    )}>
-                      {task.priority}
-                    </Badge>
+                    )}>{task.priority}</Badge>
                   </div>
-                  <div 
-                    className="px-4 py-3 border-b border-border/50 hover:bg-accent/50 cursor-pointer flex items-center gap-2"
-                    onClick={() => navigate(`/tasks/${task.id}`)}
-                  >
-                    <div className="w-6 h-6 rounded-full bg-blue-400/20 flex items-center justify-center text-[10px] font-bold text-blue-400 shrink-0">
-                      {(task.officerName || task.officerId)?.charAt(0) || 'U'}
+
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-5 h-5 rounded-full bg-blue-400/20 flex items-center justify-center text-[8px] font-bold text-blue-400 shrink-0">
+                        {(task.officerName || task.officerId)?.charAt(0) || 'U'}
+                      </div>
+                      <span className="truncate">{task.officerName || task.officerId || 'Unassigned'}</span>
                     </div>
-                    <span className="text-sm truncate">{task.officerName || task.officerId || 'Unassigned'}</span>
-                  </div>
-                  <div 
-                    className="px-4 py-3 border-b border-border/50 hover:bg-accent/50 cursor-pointer flex items-center gap-2"
-                    onClick={() => navigate(`/tasks/${task.id}`)}
-                  >
                     {task.assistantName ? (
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-purple-400/20 flex items-center justify-center text-[10px] font-bold text-purple-400 shrink-0">
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-5 h-5 rounded-full bg-purple-400/20 flex items-center justify-center text-[8px] font-bold text-purple-400 shrink-0">
                           {task.assistantName?.charAt(0) || 'U'}
                         </div>
-                        <span className="text-sm truncate">{task.assistantName}</span>
+                        <span className="truncate">{task.assistantName}</span>
                       </div>
                     ) : (
-                      <span className="text-xs text-muted-foreground">No assistant</span>
+                      <span className="text-muted-foreground">No assistant</span>
                     )}
+                    <div className="flex items-center gap-1.5">
+                      <Calendar size={12} className="shrink-0" />
+                      {task.deadline ? (
+                        <span className="truncate">{formatDate(task.deadline)}</span>
+                      ) : <span>No deadline</span>}
+                    </div>
                   </div>
-                  <div 
-                    className="px-4 py-3 border-b border-border/50 hover:bg-accent/50 cursor-pointer flex items-center gap-2 text-sm text-muted-foreground"
-                    onClick={() => navigate(`/tasks/${task.id}`)}
-                  >
-                    <Calendar size={14} className="shrink-0" />
-                    {task.deadline ? (
-                      <span className="text-sm text-muted-foreground">
-                        {formatDate(task.deadline)}
-                      </span>
-                    ) : <span className="text-sm text-muted-foreground">No deadline</span>}
-                  </div>
+
                   {isAdmin && (
-                    <div className="px-4 py-3 border-b border-border/50 flex items-center justify-center">
+                    <div className="mt-3 pt-3 border-t border-border/50 flex justify-end">
                       <AlertDialog open={alertOpen && taskToDelete === task.id} onOpenChange={(open) => { setAlertOpen(open); if (!open) setTaskToDelete(null); }}>
                         <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); confirmDelete(task.id); }} className="text-red-500 hover:text-red-700 hover:bg-red-500/10 cursor-pointer">
-                            <Trash2 size={14} />
+                          <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); confirmDelete(task.id); }} className="text-red-500 hover:text-red-700 hover:bg-red-500/10 cursor-pointer h-8">
+                            <Trash2 size={14} className="mr-1" /> Delete
                           </Button>
                         </AlertDialogTrigger>
-                        <AlertDialogContent>
+                        <AlertDialogContent className="w-[90vw] max-w-md">
                           <AlertDialogHeader>
                             <AlertDialogTitle>Delete Task</AlertDialogTitle>
                             <AlertDialogDescription>Are you sure you want to delete this task? This action cannot be undone.</AlertDialogDescription>
@@ -303,15 +358,15 @@ return (
                       </AlertDialog>
                     </div>
                   )}
-                  </Fragment>);
-                })}
-            </div>
-          ) : (
-            <div className="px-4 py-16 flex items-center justify-center text-muted-foreground italic">
-              No tasks matching your search criteria.
-            </div>
-          )}
-        </div>
+                </div>
+              ))
+            ) : (
+              <div className="rounded-xl border bg-card/50 px-4 py-16 flex items-center justify-center text-muted-foreground italic">
+                No tasks matching your search criteria.
+              </div>
+            )}
+          </div>
+        </>
       )}
     </div>
   );
