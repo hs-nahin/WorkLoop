@@ -1,7 +1,7 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { DialogTrigger } from "@/components/ui/dialog"
 
 const AlertDialog = Dialog
@@ -36,11 +36,15 @@ const AlertDialogAction = React.forwardRef(({ className, ...props }, ref) => (
 AlertDialogAction.displayName = "AlertDialogAction"
 
 const AlertDialogCancel = React.forwardRef(({ className, ...props }, ref) => (
-  <Button
-    ref={ref}
-    variant="outline"
-    className={cn("cursor-pointer", className)}
-    {...props}
+  <DialogClose
+    render={
+      <Button
+        ref={ref}
+        variant="outline"
+        className={cn("cursor-pointer", className)}
+        {...props}
+      />
+    }
   />
 ))
 AlertDialogCancel.displayName = "AlertDialogCancel"

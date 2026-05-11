@@ -290,50 +290,54 @@ return (
               filteredTasks.map((task) => (
                 <div
                   key={task.id}
-                  onClick={() => navigate(`/tasks/${task.id}`)}
-                  className="rounded-xl border bg-card/50 p-4 hover:bg-accent/50 cursor-pointer active:scale-[0.98] transition-all"
+                  className="rounded-xl border bg-card/50 p-4 active:scale-[0.98] transition-all"
                 >
-                  <div className="flex items-start justify-between gap-2 mb-3">
-                    <div className="min-w-0 flex-1">
-                      <h3 className="font-semibold text-sm text-foreground truncate">{task.title}</h3>
-                      {task.description && (
-                        <p className="text-xs text-muted-foreground truncate mt-0.5">{task.description}</p>
-                      )}
-                    </div>
-                    <ChevronRight size={16} className="shrink-0 text-muted-foreground mt-0.5" />
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-2 mb-3">
-                    {getStatusBadge(task.status)}
-                    <Badge className={cn(
-                      task.priority === 'high' && "bg-red-500/10 text-red-500 border-red-500/20",
-                      task.priority === 'medium' && "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
-                      task.priority === 'low' && "bg-green-500/10 text-green-500 border-green-500/20",
-                    )}>{task.priority}</Badge>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-5 h-5 rounded-full bg-blue-400/20 flex items-center justify-center text-[8px] font-bold text-blue-400 shrink-0">
-                        {(task.officerName || task.officerId)?.charAt(0) || 'U'}
+                  <div
+                    onClick={() => navigate(`/tasks/${task.id}`)}
+                    className="cursor-pointer"
+                  >
+                    <div className="flex items-start justify-between gap-2 mb-3">
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-semibold text-sm text-foreground truncate">{task.title}</h3>
+                        {task.description && (
+                          <p className="text-xs text-muted-foreground truncate mt-0.5">{task.description}</p>
+                        )}
                       </div>
-                      <span className="truncate">{task.officerName || task.officerId || 'Unassigned'}</span>
+                      <ChevronRight size={16} className="shrink-0 text-muted-foreground mt-0.5" />
                     </div>
-                    {task.assistantName ? (
+
+                    <div className="flex flex-wrap items-center gap-2 mb-3">
+                      {getStatusBadge(task.status)}
+                      <Badge className={cn(
+                        task.priority === 'high' && "bg-red-500/10 text-red-500 border-red-500/20",
+                        task.priority === 'medium' && "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
+                        task.priority === 'low' && "bg-green-500/10 text-green-500 border-green-500/20",
+                      )}>{task.priority}</Badge>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
                       <div className="flex items-center gap-1.5">
-                        <div className="w-5 h-5 rounded-full bg-purple-400/20 flex items-center justify-center text-[8px] font-bold text-purple-400 shrink-0">
-                          {task.assistantName?.charAt(0) || 'U'}
+                        <div className="w-5 h-5 rounded-full bg-blue-400/20 flex items-center justify-center text-[8px] font-bold text-blue-400 shrink-0">
+                          {(task.officerName || task.officerId)?.charAt(0) || 'U'}
                         </div>
-                        <span className="truncate">{task.assistantName}</span>
+                        <span className="truncate">{task.officerName || task.officerId || 'Unassigned'}</span>
                       </div>
-                    ) : (
-                      <span className="text-muted-foreground">No assistant</span>
-                    )}
-                    <div className="flex items-center gap-1.5">
-                      <Calendar size={12} className="shrink-0" />
-                      {task.deadline ? (
-                        <span className="truncate">{formatDate(task.deadline)}</span>
-                      ) : <span>No deadline</span>}
+                      {task.assistantName ? (
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-5 h-5 rounded-full bg-purple-400/20 flex items-center justify-center text-[8px] font-bold text-purple-400 shrink-0">
+                            {task.assistantName?.charAt(0) || 'U'}
+                          </div>
+                          <span className="truncate">{task.assistantName}</span>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">No assistant</span>
+                      )}
+                      <div className="flex items-center gap-1.5">
+                        <Calendar size={12} className="shrink-0" />
+                        {task.deadline ? (
+                          <span className="truncate">{formatDate(task.deadline)}</span>
+                        ) : <span>No deadline</span>}
+                      </div>
                     </div>
                   </div>
 
