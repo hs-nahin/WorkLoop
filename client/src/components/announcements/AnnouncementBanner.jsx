@@ -10,7 +10,7 @@ const ANNOUNCEMENT_TYPES = {
   maintenance: { label: 'Maintenance', color: 'from-blue-500/20 to-blue-600/20', text: 'text-blue-400', border: 'border-blue-500/30', icon: <Info size={16} /> },
   office: { label: 'Office', color: 'from-green-500/20 to-green-600/20', text: 'text-green-400', border: 'border-green-500/30', icon: <Megaphone size={16} /> },
   emergency: { label: 'Emergency', color: 'from-red-500/20 to-red-600/20', text: 'text-red-400', border: 'border-red-500/30', icon: <AlertTriangle size={16} /> },
-  general: { label: 'Notice', color: 'from-gray-500/20 to-gray-600/20', text: 'text-gray-400', border: 'border-gray-500/30', icon: <Bell size={16} /> },
+  general: { label: 'Notice', color: 'from-sky-50 to-sky-100', text: 'text-sky-600', border: 'border-sky-300', icon: <Bell size={16} /> },
   policy: { label: 'Policy', color: 'from-purple-500/20 to-purple-600/20', text: 'text-purple-400', border: 'border-purple-500/30', icon: <Info size={16} /> },
   system: { label: 'System', color: 'from-indigo-500/20 to-indigo-600/20', text: 'text-indigo-400', border: 'border-indigo-500/30', icon: <Bell size={16} /> },
 };
