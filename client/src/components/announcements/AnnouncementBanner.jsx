@@ -7,12 +7,48 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
 const ANNOUNCEMENT_TYPES = {
-  maintenance: { label: 'Maintenance', color: 'from-blue-500/20 to-blue-600/20', text: 'text-blue-400', border: 'border-blue-500/30', icon: <Info size={16} /> },
-  office: { label: 'Office', color: 'from-green-500/20 to-green-600/20', text: 'text-green-400', border: 'border-green-500/30', icon: <Megaphone size={16} /> },
-  emergency: { label: 'Emergency', color: 'from-red-500/20 to-red-600/20', text: 'text-red-400', border: 'border-red-500/30', icon: <AlertTriangle size={16} /> },
-  general: { label: 'Notice', color: 'from-sky-50 to-sky-100', text: 'text-sky-600', border: 'border-sky-300', icon: <Bell size={16} /> },
-  policy: { label: 'Policy', color: 'from-purple-500/20 to-purple-600/20', text: 'text-purple-400', border: 'border-purple-500/30', icon: <Info size={16} /> },
-  system: { label: 'System', color: 'from-indigo-500/20 to-indigo-600/20', text: 'text-indigo-400', border: 'border-indigo-500/30', icon: <Bell size={16} /> },
+  maintenance: { 
+    label: 'Maintenance', 
+    color: 'from-blue-500/20 to-blue-600/20', 
+    text: 'text-blue-400', 
+    border: 'border-blue-500/30', 
+    icon: <Info size={16} /> 
+  },
+  office: { 
+    label: 'Office', 
+    color: 'from-green-500/20 to-green-600/20', 
+    text: 'text-green-400', 
+    border: 'border-green-500/30', 
+    icon: <Megaphone size={16} /> 
+  },
+  emergency: { 
+    label: 'Emergency', 
+    color: 'from-red-500/20 to-red-600/20', 
+    text: 'text-red-400', 
+    border: 'border-red-500/30', 
+    icon: <AlertTriangle size={16} /> 
+  },
+  general: { 
+    label: 'Notice', 
+    color: 'from-sky-50 to-sky-100', 
+    text: 'text-sky-600', 
+    border: 'border-sky-300', 
+    icon: <Bell size={16} /> 
+  },
+  policy: { 
+    label: 'Policy', 
+    color: 'from-purple-500/20 to-purple-600/20', 
+    text: 'text-purple-400', 
+    border: 'border-purple-500/30', 
+    icon: <Info size={16} /> 
+  },
+  system: { 
+    label: 'System', 
+    color: 'from-indigo-500/20 to-indigo-600/20', 
+    text: 'text-indigo-400', 
+    border: 'border-indigo-500/30', 
+    icon: <Bell size={16} /> 
+  },
 };
 
 const getPriorityBeamColor = (priority) => {
@@ -83,29 +119,44 @@ const AnnouncementBanner = () => {
      }
    };
 
-   return (
-     <BlurFade delay={0.2}>
-       <div className={`relative overflow-hidden rounded-xl border ${style.border} bg-gradient-to-r ${style.color} backdrop-blur-md p-3 mb-6 transition-all duration-300`}>
-         <div className="absolute left-0 top-0 bottom-0 w-1 overflow-hidden">
-           <div className="absolute inset-0 w-full blur-[2px] animate-beam-vertical" style={{ background: getBeamGradient(beamColor) }} />
-         </div>
-         <div className="absolute right-0 top-0 bottom-0 w-1 overflow-hidden">
-           <div className="absolute inset-0 w-full blur-[2px] animate-beam-vertical" style={{ background: getBeamGradient(beamColor) }} />
-         </div>
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className={`p-2 rounded-lg bg-background/50 ${style.text}`}>
-              {style.icon}
-            </div>
-            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
-              <Badge variant="outline" className={`text-[10px] uppercase tracking-wider ${style.text} border-current`}>
-                {style.label}
-              </Badge>
-              <p className="text-sm font-medium text-foreground/90">
-                {mainAnnouncement.title}: <span className="font-normal opacity-80">{mainAnnouncement.message}</span>
-              </p>
-            </div>
+    return (
+      <BlurFade delay={0.2}>
+        <div className={`relative overflow-hidden rounded-xl border ${style.border} bg-gradient-to-r ${style.color} backdrop-blur-md p-3 mb-6 transition-all duration-300`}>
+          <div className="absolute left-0 top-0 bottom-0 w-1 overflow-hidden">
+            <div className="absolute inset-0 w-full blur-[2px] animate-beam-vertical" style={{ background: getBeamGradient(beamColor) }} />
           </div>
+          <div className="absolute right-0 top-0 bottom-0 w-1 overflow-hidden">
+            <div className="absolute inset-0 w-full blur-[2px] animate-beam-vertical" style={{ background: getBeamGradient(beamColor) }} />
+          </div>
+          <div className="absolute right-0 top-0 bottom-0 w-1 overflow-hidden">
+            <div className="absolute inset-0 w-full blur-[2px] animate-beam-vertical" style={{ background: getBeamGradient(beamColor) }} />
+          </div>
+          <div className="absolute right-0 top-0 bottom-0 w-1 overflow-hidden">
+            <div className="absolute inset-0 w-full blur-[2px] animate-beam-vertical" style={{ background: getBeamGradient(beamColor) }} />
+          </div>
+        <div className="flex items-center justify-between gap-4">
+             <div className="flex items-center gap-3">
+               <div className={`p-2 rounded-lg bg-background/50 ${style.text} dark:bg-${style.color.replace('from-', '').replace('50', '950')/20}`}>
+                 {style.icon}
+               </div>
+               <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+                 <Badge variant="outline" className={`text-[10px] uppercase tracking-wider ${style.text} dark:text-${style.color.replace('from-', '').replace('50', '400')} border-current dark:border-${style.color.replace('from-', '').replace('50', '600')}`}>
+                   {style.label}
+                 </Badge>
+                 <p className="text-sm font-medium text-foreground/90 dark:text-foreground/70">
+                   {mainAnnouncement.title}: <span className="font-normal opacity-80">{mainAnnouncement.message}</span>
+                 </p>
+               </div>
+             </div>
+               <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+                 <Badge variant="outline" className={`text-[10px] uppercase tracking-wider ${style.text} dark:text-${style.color.replace('from-', '').replace('50', '800')} border-current dark:border-${style.color.replace('from-', '').replace('50', '700')}`}>
+                   {style.label}
+                 </Badge>
+                 <p className="text-sm font-medium text-foreground/90 dark:text-foreground">
+                   {mainAnnouncement.title}: <span className="font-normal opacity-80">{mainAnnouncement.message}</span>
+                 </p>
+               </div>
+             </div>
           <div className="flex items-center gap-2">
             {mainAnnouncement.priority === 'critical' && (
               <span className="hidden sm:inline-block text-[10px] font-bold text-red-500 uppercase animate-pulse">Critical</span>
