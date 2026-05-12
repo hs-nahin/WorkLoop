@@ -25,9 +25,9 @@ const LiveClock = () => {
    const year = time.getFullYear();
 
    return (
-     <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-full bg-card/60 backdrop-blur-sm border border-border/50 shadow-sm">
-       <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-muted-foreground shrink-0" />
-       <span className="text-xs sm:text-sm font-mono font-medium text-foreground tabular-nums leading-none">
+     <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-full bg-sky-50 dark:bg-sky-950/60 backdrop-blur-sm border border-sky-500/20 dark:border-sky-500/30 shadow-sm">
+       <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-sky-600 dark:text-sky-400 shrink-0" />
+       <span className="text-xs sm:text-sm font-mono font-medium tabular-nums leading-none text-sky-700 dark:text-sky-50">
          <span className="hidden sm:inline">{dayName}, </span>
          {day}/{month}/{year}
          <span className="hidden sm:inline"> • </span>
