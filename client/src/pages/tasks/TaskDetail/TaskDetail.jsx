@@ -411,32 +411,34 @@ const TaskDetail = () => {
                         width: task.status === 'pending' ? '0px' :
                                task.status === 'in progress'
                                  ? `calc(50% - ${window.innerWidth < 640 ? '12px' : '14px'})`
-                                 : `calc(100% - ${window.innerWidth < 640 ? '24px' : '28px'})`
+                                 : task.status === 'submitted'
+                                   ? `calc(100% - ${window.innerWidth < 640 ? '44px' : '52px'})`
+                                   : `calc(100% - ${window.innerWidth < 640 ? '24px' : '28px'})`
                       }}
                     >
                       <div className="absolute inset-0 bg-gradient-to-r from-sky-400 via-sky-500 to-sky-600 rounded-full" />
-                      {task.status !== 'pending' && (
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent rounded-full animate-beam" />
-                      )}
-                    </div>
+                        {task.status !== 'pending' && (
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 via-white/40 via-white/25 to-transparent rounded-full animate-beam" />
+                        )}
+                      </div>
 
-                    {[
-                      {
-                        key: 'pending', label: 'Pending',
-                        activeList: ['pending', 'in progress', 'submitted', 'approved', 'completed', 'rejected', 'incomplete'],
-                        doneList: ['in progress', 'submitted', 'approved', 'completed', 'rejected', 'incomplete']
-                      },
-                      {
-                        key: 'in progress', label: 'In Progress',
-                        activeList: ['in progress', 'submitted', 'approved', 'completed', 'rejected', 'incomplete'],
-                        doneList: ['submitted', 'approved', 'completed', 'rejected', 'incomplete']
-                      },
-                      {
-                        key: 'submitted', label: 'Submitted',
-                        activeList: ['submitted', 'approved', 'completed', 'rejected', 'incomplete'],
-                        doneList: ['approved', 'completed']
-                      },
-                    ].map((step) => {
+                      {[
+                        {
+                          key: 'pending', label: 'Pending',
+                          activeList: ['pending', 'in progress', 'submitted', 'approved', 'completed', 'rejected', 'incomplete'],
+                          doneList: ['in progress', 'submitted', 'approved', 'completed', 'rejected', 'incomplete']
+                        },
+                        {
+                          key: 'in progress', label: 'In Progress',
+                          activeList: ['in progress', 'submitted', 'approved', 'completed', 'rejected', 'incomplete'],
+                          doneList: ['submitted', 'approved', 'completed', 'rejected', 'incomplete']
+                        },
+                        {
+                          key: 'submitted', label: 'Submitted',
+                          activeList: ['submitted', 'approved', 'completed', 'rejected', 'incomplete'],
+                          doneList: ['approved', 'completed']
+                        },
+                      ].map((step) => {
                       const isDone = step.doneList.includes(task.status);
                       const isCurrent = task.status === step.key;
                       const isActive = step.activeList.includes(task.status);
@@ -651,18 +653,20 @@ const TaskDetail = () => {
                    <div className="relative flex items-center justify-between">
                      <div className="absolute top-[13px] sm:top-[15px] left-[12px] sm:left-[14px] right-[12px] sm:right-[14px] h-[3px] bg-muted rounded-full -z-10"></div>
 
-                     <div
-                       className="absolute top-[13px] sm:top-[15px] left-[12px] sm:left-[14px] h-[3px] rounded-full -z-10 overflow-hidden origin-left transition-all duration-500"
-                       style={{
-                         width: task.status === 'pending' ? '0px' :
-                                task.status === 'in progress'
-                                  ? `calc(50% - ${window.innerWidth < 640 ? '12px' : '14px'})`
-                                  : `calc(100% - ${window.innerWidth < 640 ? '24px' : '28px'})`
-                       }}
-                     >
+                      <div
+                        className="absolute top-[13px] sm:top-[15px] left-[12px] sm:left-[14px] h-[3px] rounded-full -z-10 overflow-hidden origin-left transition-all duration-500"
+                        style={{
+                          width: task.status === 'pending' ? '0px' :
+                                 task.status === 'in progress'
+                                   ? `calc(50% - ${window.innerWidth < 640 ? '12px' : '14px'})`
+                                   : task.status === 'submitted'
+                                     ? `calc(100% - ${window.innerWidth < 640 ? '44px' : '52px'})`
+                                     : `calc(100% - ${window.innerWidth < 640 ? '24px' : '28px'})`
+                        }}
+                      >
                        <div className="absolute inset-0 bg-gradient-to-r from-sky-400 via-sky-500 to-sky-600 rounded-full" />
                        {task.status !== 'pending' && (
-                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent rounded-full animate-beam" />
+                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 via-white/40 via-white/25 to-transparent rounded-full animate-beam" />
                        )}
                      </div>
 
