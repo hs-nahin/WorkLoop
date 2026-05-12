@@ -7,10 +7,10 @@ import {
   History,
   LayoutDashboard,
   LogOut,
-  Menu,
   Megaphone,
   PanelLeftClose,
   PanelLeftOpen,
+  X,
 } from "lucide-react";
 import { useContext, useState } from "react";
 import { Link, useLocation } from "react-router";
@@ -43,10 +43,11 @@ const menuItems = [
   const renderContent = (options = {}) => {
     const { onNavClick, collapsed } = options;
     const isCollapsed = collapsed !== undefined ? collapsed : !sidebarOpen;
+    const isMobile = !!onNavClick;
 
     return (
       <div className="flex flex-col h-full py-6">
-        <div className={cn("mb-8 flex", isCollapsed ? "justify-center" : "px-6")}>
+        <div className={cn("mb-8 flex animate-slide-in-left", isCollapsed ? "justify-center" : "px-6")} style={{ animationDelay: isMobile ? '20ms' : undefined }}>
           <Link to="/dashboard" onClick={onNavClick} className="flex items-center gap-2 group">
             <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm group-hover:scale-110 transition-transform shadow-sm shrink-0">
               WL
@@ -73,8 +74,10 @@ const menuItems = [
                   : "gap-4 px-3 py-2",
                 location.pathname === item.path 
                   ? "bg-primary/10 text-primary font-semibold shadow-sm" 
-                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                isMobile && "animate-slide-in-left"
               )}
+              style={{ animationDelay: isMobile ? `${80 + index * 60}ms` : undefined }}
             >
               <item.icon size={20} className={cn("shrink-0 transition-colors", location.pathname === item.path ? "text-primary" : "group-hover:text-foreground")} />
               <span
@@ -93,7 +96,7 @@ const menuItems = [
           ))}
         </nav>
 
-        <div className={cn("mt-auto", isCollapsed ? "flex justify-center p-2" : "p-3")}>
+        <div className={cn("mt-auto animate-slide-in-left", isCollapsed ? "flex justify-center p-2" : "p-3")} style={{ animationDelay: isMobile ? `${80 + filteredItems.length * 60}ms` : undefined }}>
           <CreateTaskDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
           <Button 
             variant="ghost" 
@@ -151,11 +154,24 @@ const menuItems = [
               size="icon" 
               className={cn("lg:hidden fixed top-3 left-3 z-50", sheetOpen && "hidden")}
             >
-              <Menu size={20} />
+              <div className="relative w-5 h-5 flex flex-col items-center justify-center gap-[4.5px]">
+                <span className="block w-full h-[2px] bg-current rounded-full transition-all duration-300 origin-center" />
+                <span className="block w-full h-[2px] bg-current rounded-full transition-all duration-300" />
+                <span className="block w-full h-[2px] bg-current rounded-full transition-all duration-300 origin-center" />
+              </div>
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="p-0 bg-card/95 backdrop-blur-xl transition-all duration-300" showCloseButton={false} style={{ width: mobileCollapsed ? '5rem' : '16rem' }}>
+          <SheetContent side="left" className="p-0 bg-card/95 backdrop-blur-xl transition-all duration-300 data-starting-style:scale-95 data-ending-style:scale-95" showCloseButton={false} style={{ width: mobileCollapsed ? '5rem' : '16rem' }}>
             <div className="relative h-full">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="absolute top-3 right-3 z-50 text-muted-foreground hover:text-foreground transition-colors"
+                onClick={() => setSheetOpen(false)}
+                aria-label="Close sidebar"
+              >
+                <X size={18} />
+              </Button>
               {renderContent({ onNavClick: () => setSheetOpen(false), collapsed: mobileCollapsed })}
               <ToggleButton collapsed={mobileCollapsed} onToggle={() => setMobileCollapsed(!mobileCollapsed)} />
             </div>

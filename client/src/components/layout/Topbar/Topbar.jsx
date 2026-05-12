@@ -114,7 +114,7 @@ const TopBar = () => {
   };
 
   return (
-    <header className="h-16 border-b bg-card/80 backdrop-blur-md px-2 sm:px-4 md:px-6 flex items-center justify-between sticky top-0 z-40">
+    <header className="h-16 border-b bg-card/80 backdrop-blur-md px-2 sm:px-4 md:px-6 pl-14 flex items-center justify-between sticky top-0 z-40">
       <div className="flex items-center gap-2 sm:gap-4">
         <div className="hidden md:block">
           <Badge
@@ -151,7 +151,7 @@ const TopBar = () => {
                 )}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[calc(100vw-1rem)] sm:w-80 p-0 mr-2 sm:mr-0" align="end" sideOffset={8}>
+            <PopoverContent className="w-[calc(100vw-1.5rem)] sm:w-80 p-0 mr-4 sm:mr-0" align="end" sideOffset={8}>
               <div className="p-3 sm:p-4 border-b flex justify-between items-center">
                 <h3 className="text-sm sm:text-base font-semibold">Notifications</h3>
                 <span className="text-[10px] sm:text-xs text-muted-foreground">
@@ -160,7 +160,7 @@ const TopBar = () => {
               </div>
               <div className="max-h-72 sm:max-h-80 overflow-y-auto">
                 {notifications.length === 0 ? (
-                  <div className="p-4 text-center text-sm text-muted-foreground">
+                  <div className="p-6 sm:p-8 text-center text-xs sm:text-sm text-muted-foreground">
                     No notifications
                   </div>
                 ) : (
@@ -180,7 +180,7 @@ const TopBar = () => {
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-xs sm:text-sm font-medium leading-snug">{notification.message}</p>
+                            <p className="text-xs sm:text-sm font-medium leading-snug break-words">{notification.message}</p>
                             <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
                               {formatTime(notification.createdAt)}
                             </p>

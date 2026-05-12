@@ -21,32 +21,32 @@ const TaskDiscussion = ({ taskId, task }) => {
   if (!isAuthorized()) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MessageSquare size={18} />
+        <CardHeader className="p-3 sm:p-6">
+          <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+            <MessageSquare size={14} className="sm:size-[18px]" />
             Task Discussion
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground text-sm">You are not authorized to view this discussion.</p>
+        <CardContent className="p-3 sm:p-6 pt-0">
+          <p className="text-muted-foreground text-xs sm:text-sm">You are not authorized to view this discussion.</p>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <MessageSquare size={18} />
-          Task Discussion
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-0">
-        <MessageThread taskId={taskId} />
-        <MessageInput taskId={taskId} />
-      </CardContent>
-    </Card>
+      <Card>
+        <CardHeader className="p-3 sm:p-6">
+          <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+            <MessageSquare size={14} className="sm:size-[18px] shrink-0" />
+            Task Discussion
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <MessageThread taskId={taskId} />
+          <MessageInput taskId={taskId} />
+        </CardContent>
+      </Card>
   );
 };
 

@@ -252,30 +252,30 @@ const TaskDetail = () => {
   };
 
   return (
-    <div className="space-y-8">
-      <header className="flex items-end justify-between">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/tasks')} className="hover:bg-accent cursor-pointer">
+    <div className="space-y-4 sm:space-y-8 px-2 sm:px-0">
+      <header className="flex items-start sm:items-end justify-between">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <Button variant="ghost" size="icon" onClick={() => navigate('/tasks')} className="hover:bg-accent cursor-pointer shrink-0">
             <ArrowLeft size={20} />
           </Button>
-          <div className="flex flex-col gap-2">
-            <TextHighlighter text="Task Specifications" className="text-3xl font-bold tracking-tight" />
-            <GradientText text={`Reference ID: ${id.slice(-8).toUpperCase()}`} className="text-sm opacity-70" />
+          <div className="flex flex-col gap-1 sm:gap-2 min-w-0">
+            <TextHighlighter text="Task Specifications" className="text-xl sm:text-3xl font-bold tracking-tight" />
+            <GradientText text={`Reference ID: ${id.slice(-8).toUpperCase()}`} className="text-xs sm:text-sm opacity-70 truncate" />
           </div>
         </div>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8">
         <div className="lg:col-span-2 space-y-6">
           <BlurFade>
             <MagicCard>
               <div className="space-y-6">
-                <div className="flex justify-between items-start">
-                  <h2 className="text-2xl font-bold">{task.title}</h2>
-                  <span className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusColor(task.status)}`}>
-                    {task.status?.toUpperCase()}
-                  </span>
-                </div>
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
+                    <h2 className="text-lg sm:text-2xl font-bold break-words">{task.title}</h2>
+                    <span className={`self-start sm:self-auto px-3 py-1 rounded-full text-xs font-bold border shrink-0 ${getStatusColor(task.status)}`}>
+                      {task.status?.toUpperCase()}
+                    </span>
+                  </div>
                 
                 <div className="space-y-2">
                   <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Requirement</span>
@@ -330,7 +330,7 @@ const TaskDetail = () => {
                     </div>
                   )}
 
-                <div className="pt-6 border-t border-border grid grid-cols-2 gap-4">
+                <div className="pt-6 border-t border-border grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div className="text-xs text-muted-foreground">
                     Assigned To: <span className="text-foreground font-medium">{officers.find(o => o.userId === task.officerId)?.name || task.officerId}</span>
                   </div>
@@ -346,23 +346,23 @@ const TaskDetail = () => {
                     }`}>{task.priority?.toUpperCase()}</span>
                   </div>
                    {isEditingDeadline ? (
-                     <div className="text-xs text-muted-foreground col-span-2">
-                       <label className="block mb-1">Deadline:</label>
-                       <div className="flex gap-2">
-                         <input
-                           type="datetime-local"
-                           value={editDeadlineValue}
-                           onChange={(e) => setEditDeadlineValue(e.target.value)}
-                           className="flex-1 rounded-lg border border-input bg-transparent px-2 py-1 text-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                         />
-                         <Button size="sm" onClick={handleUpdateDeadline} className="cursor-pointer h-7 text-xs px-2">
-                           Save
-                         </Button>
-                         <Button size="sm" variant="ghost" onClick={() => setIsEditingDeadline(false)} className="cursor-pointer h-7 text-xs px-2">
-                           Cancel
-                         </Button>
-                       </div>
-                     </div>
+                      <div className="text-xs text-muted-foreground sm:col-span-2">
+                        <label className="block mb-1">Deadline:</label>
+                        <div className="flex gap-2">
+                          <input
+                            type="datetime-local"
+                            value={editDeadlineValue}
+                            onChange={(e) => setEditDeadlineValue(e.target.value)}
+                            className="min-w-0 flex-1 rounded-lg border border-input bg-transparent px-2 py-1 text-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                          />
+                          <Button size="sm" onClick={handleUpdateDeadline} className="cursor-pointer h-7 text-xs px-2 shrink-0">
+                            Save
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => setIsEditingDeadline(false)} className="cursor-pointer h-7 text-xs px-2 shrink-0">
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
                    ) : (
                      <div className="text-xs text-muted-foreground">
                        Deadline:{' '}
@@ -432,21 +432,21 @@ const TaskDetail = () => {
                      />
                    </div>
                    
-                   <div className="flex gap-3">
-                     <Button 
-                       onClick={handleCompleteTask}
-                       className="flex-1 cursor-pointer"
-                     >
-                       Submit for Review
-                     </Button>
-                     <Button 
-                       onClick={handleIncompleteTask}
-                       variant="destructive"
-                       className="flex-1 cursor-pointer"
-                     >
-                       Mark Incomplete
-                     </Button>
-                   </div>
+                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                      <Button
+                        onClick={handleCompleteTask}
+                        className="w-full sm:flex-1 cursor-pointer"
+                      >
+                        Submit for Review
+                      </Button>
+                      <Button
+                        onClick={handleIncompleteTask}
+                        variant="destructive"
+                        className="w-full sm:flex-1 cursor-pointer"
+                      >
+                        Mark Incomplete
+                      </Button>
+                    </div>
                    
                    {/* Show existing progress reports */}
                    {task.progressReports && task.progressReports.length > 0 && (
@@ -519,9 +519,9 @@ const TaskDetail = () => {
             <MagicCard>
               <div className="space-y-4">
                 <h3 className="text-lg font-bold text-foreground">Task Workflow</h3>
-                <div className="relative flex items-center justify-between">
+                <div className="relative flex items-center justify-between gap-1 sm:gap-0">
                   {/* Progress Bar Background */}
-                  <div className="absolute top-5 left-0 right-0 h-1 bg-muted rounded-full -z-0"></div>
+                  <div className="absolute top-3 sm:top-5 left-0 right-0 h-1 bg-muted rounded-full -z-0"></div>
                   
                   {/* Dynamic Progress Bar Fill */}
                   <div 
@@ -534,19 +534,19 @@ const TaskDetail = () => {
                   ></div>
 
                   {/* Step1: Pending */}
-                  <div className="flex flex-col items-center gap-2 z-10">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
+                  <div className="flex flex-col items-center gap-1 sm:gap-2 z-10">
+                    <div className={`w-7 h-7 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-[9px] sm:text-xs font-bold transition-all duration-300 ${
                       ['pending', 'in progress', 'submitted', 'approved', 'completed', 'rejected', 'incomplete'].includes(task.status)
                         ? 'bg-sky-600 text-white shadow-lg shadow-sky-600/25'
                         : 'bg-muted text-muted-foreground'
                     }`}>
                       {['in progress', 'submitted', 'approved', 'completed', 'rejected', 'incomplete'].includes(task.status) ? (
-                        <CheckCircle2 size={18} />
+                        <CheckCircle2 size={14} className="sm:size-[18px]" />
                       ) : (
-                        <Clock size={18} />
+                        <Clock size={14} className="sm:size-[18px]" />
                       )}
                     </div>
-                    <span className={`text-xs font-medium ${
+                    <span className={`text-[10px] sm:text-xs font-medium whitespace-nowrap ${
                       ['pending', 'in progress', 'submitted', 'approved', 'completed', 'rejected', 'incomplete'].includes(task.status)
                         ? 'text-foreground'
                         : 'text-muted-foreground'
@@ -554,21 +554,21 @@ const TaskDetail = () => {
                   </div>
 
                   {/* Step 2: In Progress */}
-                  <div className="flex flex-col items-center gap-2 z-10">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
+                  <div className="flex flex-col items-center gap-1 sm:gap-2 z-10">
+                    <div className={`w-7 h-7 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-[9px] sm:text-xs font-bold transition-all duration-300 ${
                       ['in progress', 'submitted', 'approved', 'completed', 'rejected', 'incomplete'].includes(task.status)
                         ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/25'
                         : 'bg-muted text-muted-foreground'
                     }`}>
                       {['submitted', 'approved', 'completed', 'rejected', 'incomplete'].includes(task.status) ? (
-                        <CheckCircle2 size={18} />
+                        <CheckCircle2 size={14} className="sm:size-[18px]" />
                       ) : task.status === 'in progress' ? (
-                        <Loader2 size={18} className="animate-spin" />
+                        <Loader2 size={14} className="sm:size-[18px] animate-spin" />
                       ) : (
-                        <Circle size={18} />
+                        <Circle size={14} className="sm:size-[18px]" />
                       )}
                     </div>
-                    <span className={`text-xs font-medium ${
+                    <span className={`text-[10px] sm:text-xs font-medium whitespace-nowrap ${
                       ['in progress', 'submitted', 'approved', 'completed', 'rejected', 'incomplete'].includes(task.status)
                         ? 'text-foreground'
                         : 'text-muted-foreground'
@@ -576,23 +576,23 @@ const TaskDetail = () => {
                   </div>
 
                   {/* Step 3: Submitted */}
-                  <div className="flex flex-col items-center gap-2 z-10">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
+                  <div className="flex flex-col items-center gap-1 sm:gap-2 z-10">
+                    <div className={`w-7 h-7 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-[9px] sm:text-xs font-bold transition-all duration-300 ${
                       ['submitted', 'approved', 'completed', 'rejected', 'incomplete'].includes(task.status)
                         ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/25'
                         : 'bg-muted text-muted-foreground'
                     }`}>
                       {['approved', 'completed'].includes(task.status) ? (
-                        <CheckCircle2 size={18} />
+                        <CheckCircle2 size={14} className="sm:size-[18px]" />
                       ) : task.status === 'submitted' ? (
-                        <CheckCircle2 size={18} className="animate-pulse" />
+                        <CheckCircle2 size={14} className="sm:size-[18px] animate-pulse" />
                       ) : ['rejected', 'incomplete'].includes(task.status) ? (
-                        <CheckCircle2 size={18} />
+                        <CheckCircle2 size={14} className="sm:size-[18px]" />
                       ) : (
-                        <Circle size={18} />
+                        <Circle size={14} className="sm:size-[18px]" />
                       )}
                     </div>
-                    <span className={`text-xs font-medium ${
+                    <span className={`text-[10px] sm:text-xs font-medium whitespace-nowrap ${
                       ['submitted', 'approved', 'completed', 'rejected', 'incomplete'].includes(task.status)
                         ? 'text-foreground'
                         : 'text-muted-foreground'
@@ -683,18 +683,18 @@ const TaskDetail = () => {
                     placeholder="Provide feedback (required for rejection)..."
                     className="w-full h-24"
                   />
-                  <div className="flex gap-3">
-                    <Button 
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                    <Button
                       onClick={handleApprove}
                       variant="secondary"
-                      className="flex-1 cursor-pointer text-green-600 dark:text-green-400 border-green-600/30 dark:border-green-400/30 hover:bg-green-600/10 dark:hover:bg-green-400/10"
+                      className="w-full sm:flex-1 cursor-pointer text-green-600 dark:text-green-400 border-green-600/30 dark:border-green-400/30 hover:bg-green-600/10 dark:hover:bg-green-400/10"
                     >
                       Accept & Approve
                     </Button>
-                    <Button 
+                    <Button
                       onClick={handleReject}
                       variant="secondary"
-                      className="flex-1 cursor-pointer text-red-600 dark:text-red-400 border-red-600/30 dark:border-red-400/30 hover:bg-red-600/10 dark:hover:bg-red-400/10"
+                      className="w-full sm:flex-1 cursor-pointer text-red-600 dark:text-red-400 border-red-600/30 dark:border-red-400/30 hover:bg-red-600/10 dark:hover:bg-red-400/10"
                     >
                       Reject with Feedback
                     </Button>

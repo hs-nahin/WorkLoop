@@ -205,21 +205,21 @@ const SubtaskWorkflow = ({ taskId, task }) => {
   return (
     <Card>
       <CardHeader>
-        <div className="flex justify-between items-center">
-          <CardTitle className="flex items-center gap-2">
-            <Users size={16} />
-            Subtasks
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+          <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+            <Users size={14} className="sm:size-[16px] shrink-0" />
+            <span>Subtasks</span>
             <span className="text-xs bg-muted px-2 py-1 rounded">
               {subtasks.length} {subtasks.length === 1 ? 'task' : 'tasks'}
             </span>
           </CardTitle>
           {canManageSubtasks() && (
-            <Button 
+            <Button
               onClick={() => { setShowForm(true); setEditingSubtask(null); }}
               size="sm"
-              className="cursor-pointer"
+              className="cursor-pointer w-full sm:w-auto"
             >
-              <Plus size={16} className="mr-1" />
+              <Plus size={14} className="sm:size-[16px] mr-1.5" />
               Add Subtask
             </Button>
           )}

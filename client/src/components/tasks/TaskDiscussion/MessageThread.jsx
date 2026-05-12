@@ -40,18 +40,18 @@ const MessageThread = ({ taskId }) => {
     return () => unsubscribe();
   }, [taskId]);
 
-  if (loading) return <div className="text-center py-4 text-muted-foreground">Loading messages...</div>;
-  if (messages.length === 0) return <div className="text-center py-4 text-muted-foreground">No messages yet. Start the discussion!</div>;
+  if (loading) return <div className="text-center py-6 sm:py-8 text-xs sm:text-sm text-muted-foreground">Loading messages...</div>;
+  if (messages.length === 0) return <div className="text-center py-6 sm:py-8 text-xs sm:text-sm text-muted-foreground px-4">No messages yet. Start the discussion!</div>;
 
   return (
-    <div className="space-y-4 max-h-96 overflow-y-auto p-4">
+    <div className="space-y-3 sm:space-y-4 max-h-80 sm:max-h-96 overflow-y-auto p-3 sm:p-4">
       {messages.map((msg) => (
         <div
           key={msg.id}
           className={`flex ${msg.senderRole === 'ADMIN' ? 'justify-start' : msg.senderId === user?.uid ? 'justify-end' : 'justify-start'}`}
         >
           <div
-            className={`max-w-[80%] rounded-lg p-3 ${
+            className={`max-w-[85%] sm:max-w-[75%] rounded-lg p-2 sm:p-3 ${
               msg.senderRole === 'SYSTEM' 
                 ? 'bg-muted/50 border border-border text-center w-full max-w-full'
                 : msg.senderRole === 'ADMIN'
@@ -62,9 +62,9 @@ const MessageThread = ({ taskId }) => {
             }`}
           >
             {msg.senderRole !== 'SYSTEM' && (
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs font-bold">{msg.senderName || 'Unknown'}</span>
-                <span className={`text-xs px-1.5 py-0.5 rounded ${
+              <div className="flex items-center gap-1.5 sm:gap-2 mb-1 flex-wrap">
+                <span className="text-[11px] sm:text-xs font-bold">{msg.senderName || 'Unknown'}</span>
+                <span className={`text-[9px] sm:text-xs px-1 sm:px-1.5 py-0.5 rounded ${
                   msg.senderRole === 'ADMIN' 
                     ? 'bg-red-600/20 text-red-600'
                     : msg.senderRole === 'IT OFFICER'
@@ -75,19 +75,19 @@ const MessageThread = ({ taskId }) => {
                 </span>
               </div>
             )}
-            <p className="text-sm">{msg.text}</p>
+            <p className="text-xs sm:text-sm break-words">{msg.text}</p>
             {msg.attachmentUrl && (
               <a 
                 href={msg.attachmentUrl} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-xs text-blue-600 hover:underline mt-1 block"
+                className="text-[11px] sm:text-xs text-blue-600 hover:underline mt-1 block break-words"
               >
-                📎 View Attachment
+                View Attachment
               </a>
             )}
             {msg.senderRole !== 'SYSTEM' && (
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
                 {msg.createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </p>
             )}

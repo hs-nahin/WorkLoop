@@ -45,11 +45,11 @@ const SubtaskList = ({ subtasks, task, user, canEdit, onEdit, onUpdateStatus, on
   };
 
   if (subtasks.length === 0) {
-    return <p className="text-muted-foreground text-sm py-4 text-center">No subtasks yet.</p>;
+    return <p className="text-muted-foreground text-xs sm:text-sm py-6 sm:py-8 text-center px-2">No subtasks yet.</p>;
   }
 
     return (
-      <div className="space-y-3">
+      <div className="space-y-2 sm:space-y-3">
         {subtasks.map((subtask) => {
           const status = statusConfig[subtask.status] || statusConfig.pending;
           const StatusIcon = status.icon;
@@ -58,74 +58,76 @@ const SubtaskList = ({ subtasks, task, user, canEdit, onEdit, onUpdateStatus, on
 
           return (
             <div key={subtask.id} className={`group border rounded-xl ${status.bg} border-border/50 transition-all hover:shadow-md hover:border-current/30`}>
-              <div className="p-3 flex items-center justify-between">
-                <div className="flex items-center gap-3 flex-1">
-                  <div className={`w-9 h-9 rounded-full flex items-center justify-center ${status.bg} border border-current/20 transition-transform group-hover:scale-110`}>
-                    <StatusIcon size={18} className={`${status.color} ${status.animate ? 'animate-spin' : ''}`} />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="text-sm font-semibold text-foreground leading-none mb-1">{subtask.title}</h4>
-                    <div className="flex items-center gap-2 mt-1">
-                      {subtask.assignedUserName ? (
-                        <>
-                          <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${getUserAvatarColor(subtask.assignedUserRole)}`}>
-                            {subtask.assignedUserName.charAt(0)}
-                          </div>
-                          <p className="text-xs text-muted-foreground font-medium">
-                            {subtask.assignedUserName}
-                          </p>
-                        </>
-                      ) : (
-                        <p className="text-xs text-muted-foreground font-medium italic">Unassigned</p>
-                      )}
+              <div className="p-2 sm:p-3">
+                <div className="flex items-start sm:items-center justify-between gap-2">
+                  <div className="flex items-start sm:items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                    <div className={`w-7 h-7 sm:w-9 sm:h-9 rounded-full flex items-center justify-center ${status.bg} border border-current/20 transition-transform group-hover:scale-110 shrink-0 mt-0.5 sm:mt-0`}>
+                      <StatusIcon size={14} className={`sm:size-[18px] ${status.color} ${status.animate ? 'animate-spin' : ''}`} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h4 className="text-xs sm:text-sm font-semibold text-foreground leading-none mb-0.5 sm:mb-1 break-words">{subtask.title}</h4>
+                      <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5 sm:mt-1 flex-wrap">
+                        {subtask.assignedUserName ? (
+                          <>
+                            <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center text-[8px] sm:text-[10px] font-bold ${getUserAvatarColor(subtask.assignedUserRole)} shrink-0`}>
+                              {subtask.assignedUserName.charAt(0)}
+                            </div>
+                            <p className="text-[10px] sm:text-xs text-muted-foreground font-medium truncate">
+                              {subtask.assignedUserName}
+                            </p>
+                          </>
+                        ) : (
+                          <p className="text-[10px] sm:text-xs text-muted-foreground font-medium italic">Unassigned</p>
+                        )}
+                        <span className={`text-[8px] sm:text-[10px] uppercase tracking-wider font-bold px-1.5 sm:px-2 py-0.5 rounded-full ${status.bg} ${status.color} border border-current/30 shrink-0`}>
+                          {status.label}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                  <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full ${status.bg} ${status.color} border border-current/30`}>
-                    {status.label}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1 ml-2">
-                  {canUpdateStatus(subtask) && subtask.status !== 'completed' && (
+                  <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
+                    {canUpdateStatus(subtask) && subtask.status !== 'completed' && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleStatusChange(
+                          subtask.id,
+                          subtask.status === 'pending' ? 'in_progress' : 'completed'
+                        )}
+                        className="cursor-pointer text-[10px] sm:text-xs h-7 sm:h-8 px-1.5 sm:px-3 hover:bg-background/50 transition-colors"
+                      >
+                        {subtask.status === 'pending' ? 'Start' : 'Complete'}
+                      </Button>
+                    )}
+                    {canEdit && (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => onEdit(subtask)}
+                          className="cursor-pointer text-[10px] sm:text-xs h-7 sm:h-8 px-1.5 sm:px-3 hover:bg-background/50 transition-colors"
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleDelete(subtask.id)}
+                          className={`cursor-pointer text-[10px] sm:text-xs h-7 sm:h-8 px-1.5 sm:px-3 transition-colors ${isDeleteConfirm ? 'text-red-500 bg-red-100' : 'text-muted-foreground hover:text-red-500 hover:bg-red-50'}`}
+                        >
+                          {isDeleteConfirm ? 'Confirm?' : <Trash2 size={12} className="sm:size-[14px]" />}
+                        </Button>
+                      </>
+                    )}
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => handleStatusChange(
-                        subtask.id,
-                        subtask.status === 'pending' ? 'in_progress' : 'completed'
-                      )}
-                      className="cursor-pointer text-xs h-8 px-3 hover:bg-background/50 transition-colors"
+                      onClick={() => setExpandedId(isExpanded ? null : subtask.id)}
+                      className="cursor-pointer h-7 w-7 sm:h-8 sm:w-8 p-0 rounded-full hover:bg-background/50"
                     >
-                      {subtask.status === 'pending' ? 'Start' : 'Complete'}
+                      {isExpanded ? <ChevronUp size={12} className="sm:size-[16px]" /> : <ChevronDown size={12} className="sm:size-[16px]" />}
                     </Button>
-                  )}
-                  {canEdit && (
-                    <>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => onEdit(subtask)}
-                        className="cursor-pointer text-xs h-8 px-3 hover:bg-background/50 transition-colors"
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleDelete(subtask.id)}
-                        className={`cursor-pointer text-xs h-8 px-3 transition-colors ${isDeleteConfirm ? 'text-red-500 bg-red-100' : 'text-muted-foreground hover:text-red-500 hover:bg-red-50'}`}
-                      >
-                        {isDeleteConfirm ? 'Confirm?' : <Trash2 size={14} />}
-                      </Button>
-                    </>
-                  )}
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setExpandedId(isExpanded ? null : subtask.id)}
-                    className="cursor-pointer h-8 w-8 p-0 rounded-full hover:bg-background/50"
-                  >
-                    {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                  </Button>
+                  </div>
                 </div>
               </div>
               {isExpanded && (

@@ -63,28 +63,28 @@ const MessageInput = ({ taskId }) => {
   };
 
   return (
-    <div className="p-4 border-t border-border space-y-3">
+    <div className="p-3 sm:p-4 border-t border-border space-y-3">
       {file && (
-        <div className="flex items-center justify-between bg-muted/50 p-2 rounded">
-          <span className="text-xs truncate">{file.name}</span>
-          <button 
+        <div className="flex items-center justify-between bg-muted/50 p-2 rounded gap-2">
+          <span className="text-[10px] sm:text-xs truncate min-w-0">{file.name}</span>
+          <button
             onClick={() => setFile(null)}
-            className="text-xs text-red-600 hover:text-red-700"
+            className="text-[10px] sm:text-xs text-red-600 hover:text-red-700 shrink-0"
           >
             Remove
           </button>
         </div>
       )}
-      <div className="flex gap-2">
+      <div className="flex gap-1.5 sm:gap-2">
         <Textarea
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          placeholder="Type your message..."
-          className="flex-1 h-10"
+          placeholder="Type a message..."
+          className="flex-1 min-h-[36px] sm:min-h-[40px] h-9 sm:h-10 text-xs sm:text-sm"
           onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
         />
-        <label className="cursor-pointer">
-          <Paperclip size={18} className="text-muted-foreground hover:text-foreground" />
+        <label className="cursor-pointer flex items-center justify-center h-9 sm:h-10 w-8 sm:w-10 rounded-md hover:bg-accent transition-colors">
+          <Paperclip size={16} className="sm:size-[18px] text-muted-foreground hover:text-foreground" />
           <input
             type="file"
             className="hidden"
@@ -92,13 +92,13 @@ const MessageInput = ({ taskId }) => {
             accept="image/*,.pdf,.txt,.log"
           />
         </label>
-        <Button 
+        <Button
           onClick={handleSend}
           disabled={uploading || (!message.trim() && !file)}
           size="sm"
-          className="cursor-pointer"
+          className="cursor-pointer h-9 sm:h-10 px-2 sm:px-3"
         >
-          {uploading ? 'Sending...' : <Send size={16} />}
+          {uploading ? '...' : <Send size={14} className="sm:size-[16px]" />}
         </Button>
       </div>
     </div>
