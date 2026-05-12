@@ -229,7 +229,8 @@ const TopBar = () => {
               </DropdownMenuItem>
               <div className="h-px bg-border my-1" />
               <DropdownMenuItem
-                className="gap-2 text-destructive focus:text-destructive cursor-pointer"
+                variant="destructive"
+                className="gap-2 cursor-pointer"
                 onClick={logout}
               >
                 <LogOut size={15} className="sm:size-[16px]" />

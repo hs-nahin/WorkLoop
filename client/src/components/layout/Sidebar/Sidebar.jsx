@@ -31,19 +31,7 @@ const menuItems = [
 ];
 
 const WorkLoopLogo = () => (
-  <svg viewBox="0 0 32 32" className="w-full h-full">
-    <defs>
-      <linearGradient id="wl-logo" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
-        <stop offset="0%" stopColor="#38bdf8" />
-        <stop offset="100%" stopColor="#818cf8" />
-      </linearGradient>
-    </defs>
-    <rect width="32" height="32" rx="8" fill="url(#wl-logo)" />
-    <path d="M9 22 L12 10 L16 16 L20 10 L23 22"
-      stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-    <path d="M11.5 20 L16 15.5 L20.5 20"
-      stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.4" />
-  </svg>
+  <img src="/logo-v2.png" alt="WorkLoop" className="w-full h-full object-contain" />
 );
 
 const Sidebar = () => {
@@ -77,7 +65,7 @@ const Sidebar = () => {
               "font-bold text-base tracking-tight whitespace-nowrap overflow-hidden transition-all duration-300 ease-out",
               isCollapsed ? "max-w-0 opacity-0 -translate-x-2" : "max-w-40 opacity-100 translate-x-0"
             )}>
-              <span className="text-gray-400">Work</span><span className="text-sky-500">Loop</span>
+              <span className="text-gray-500">Work</span><span className="text-sky-600">Loop</span>
             </span>
           </Link>
         </div>
@@ -181,7 +169,7 @@ const Sidebar = () => {
     <>
       <aside
         className={cn(
-          "hidden lg:flex flex-col h-screen transition-all duration-300 z-50 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 relative",
+          "hidden lg:flex flex-col h-screen transition-all duration-300 z-50 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-background relative",
           sidebarOpen ? "w-64" : "w-[68px]"
         )}
       >
@@ -203,7 +191,7 @@ const Sidebar = () => {
             </div>
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="p-0 bg-white/95 dark:bg-gray-950/95 backdrop-blur-xl transition-all duration-300 data-starting-style:scale-95 data-ending-style:scale-95" showCloseButton={false} style={{ width: mobileCollapsed ? '5rem' : '16rem' }}>
+        <SheetContent side="left" className="p-0 bg-white/95 dark:bg-background/95 backdrop-blur-xl transition-all duration-300 data-starting-style:scale-95 data-ending-style:scale-95" showCloseButton={false} style={{ width: mobileCollapsed ? '5rem' : '16rem' }}>
           <div className="relative h-full">
             <Button
               variant="ghost"
