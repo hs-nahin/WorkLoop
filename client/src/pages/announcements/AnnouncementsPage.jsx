@@ -395,9 +395,10 @@ const AnnouncementsPage = () => {
                   }} className="p-2 h-8 w-8">
                     <Edit3 size={14} />
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={() => confirmDelete(ann.id)} className="p-2 h-8 w-8 text-destructive">
-                    <Trash2 size={14} />
-                  </Button>
+                   <Button variant="ghost" size="sm" onClick={() => confirmDelete(ann.id)} className="p-2 h-8 w-8 text-destructive hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400 transition-colors">
+                     <Trash2 size={14} />
+                   </Button>
+
                 </div>
               </div>
             </MagicCard>
