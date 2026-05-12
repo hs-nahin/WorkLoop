@@ -30,8 +30,8 @@ const menuItems = [
   { name: "Audit Logs", path: "/audit-logs", icon: History, roles: ["AUDIT_LOG_VIEW"] },
 ];
 
-const WorkLoopLogo = ({ collapsed }) => (
-  <svg viewBox="0 0 32 32" className="size-8">
+const WorkLoopLogo = () => (
+  <svg viewBox="0 0 32 32" className="w-full h-full">
     <defs>
       <linearGradient id="wl-logo" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
         <stop offset="0%" stopColor="#38bdf8" />
@@ -69,8 +69,8 @@ const Sidebar = () => {
         {/* Logo section */}
         <div className={cn("mb-7 flex animate-slide-in-left", isCollapsed ? "justify-center" : "px-5")}
           style={{ animationDelay: isMobile ? '20ms' : undefined }}>
-          <Link to="/dashboard" onClick={onNavClick} className="flex items-center gap-2.5 group">
-            <div className="size-8 shrink-0 group-hover:scale-105 transition-transform duration-300">
+          <Link to="/dashboard" onClick={onNavClick} className={cn("flex items-center group", isCollapsed ? "justify-center" : "gap-2.5")}>
+            <div className={cn("shrink-0 group-hover:scale-105 transition-transform duration-300", isCollapsed ? "size-9" : "size-8")}>
               <WorkLoopLogo />
             </div>
             <span className={cn(
