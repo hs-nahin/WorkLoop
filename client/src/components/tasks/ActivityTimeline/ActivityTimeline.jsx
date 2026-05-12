@@ -296,14 +296,17 @@ const ActivityTimeline = ({ taskId }) => {
                 )}
               </div>
 
-              {/* Per-segment connector line */}
+              {/* Per-segment connector line with animated beam */}
               {!isLast && segFrom && segTo && (
-                <div
-                  className="absolute left-[16px] sm:left-[22px] top-8 sm:top-11 bottom-0 w-0.5 rounded-full z-0 opacity-40"
-                  style={{
-                    background: `linear-gradient(to bottom, ${segFrom}, ${segTo})`,
-                  }}
-                />
+                <div className="absolute left-[16px] sm:left-[22px] top-8 sm:top-11 bottom-0 w-0.5 rounded-full z-0 overflow-hidden">
+                  <div
+                    className="absolute inset-0 rounded-full opacity-40"
+                    style={{
+                      background: `linear-gradient(to bottom, ${segFrom}, ${segTo})`,
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/25 via-white/40 via-white/25 to-transparent rounded-full animate-beam-vertical" />
+                </div>
               )}
 
               {/* Content card */}
