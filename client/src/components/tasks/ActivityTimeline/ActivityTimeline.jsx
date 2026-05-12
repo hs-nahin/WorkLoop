@@ -52,14 +52,14 @@ const getGradientColors = (gradientStr) => {
 const actionConfig = {
   task_created: { icon: PlusCircle, gradient: 'from-blue-500 to-cyan-400', iconColor: 'text-blue-500', label: 'Task Created', anim: 'animate-pulse-soft' },
   task_accepted: { icon: UserCheck, gradient: 'from-blue-500 to-indigo-400', iconColor: 'text-blue-500', label: 'Task Accepted', anim: 'animate-bounce-check' },
-  task_submitted: { icon: Loader2, gradient: 'from-purple-500 to-pink-400', iconColor: 'text-purple-500', label: 'Task Submitted', anim: 'animate-spin' },
+  task_submitted: { icon: Loader2, gradient: 'from-purple-500 to-pink-400', iconColor: 'text-purple-500', label: 'Task Submitted', anim: 'animate-premium-spin', spinner: true },
   task_approved: { icon: CheckCircle2, gradient: 'from-green-500 to-emerald-400', iconColor: 'text-green-500', label: 'Task Approved', anim: 'animate-pulse-soft' },
   task_rejected: { icon: XCircle, gradient: 'from-red-500 to-rose-400', iconColor: 'text-red-500', label: 'Task Rejected', anim: 'animate-shake' },
   task_incomplete: { icon: History, gradient: 'from-orange-500 to-amber-400', iconColor: 'text-orange-500', label: 'Marked Incomplete', anim: 'animate-float' },
   attachment_uploaded: { icon: FileUp, gradient: 'from-violet-500 to-purple-400', iconColor: 'text-violet-500', label: 'File Uploaded', anim: 'animate-float' },
   attachment_deleted: { icon: FileX, gradient: 'from-red-500 to-orange-400', iconColor: 'text-red-500', label: 'File Deleted', anim: 'animate-shake' },
   subtask_created: { icon: GitBranch, gradient: 'from-cyan-500 to-teal-400', iconColor: 'text-cyan-500', label: 'Subtask Created', anim: 'animate-pulse-soft' },
-  subtask_updated: { icon: Loader2, gradient: 'from-yellow-500 to-amber-400', iconColor: 'text-yellow-500', label: 'Subtask Updated', anim: 'animate-spin' },
+  subtask_updated: { icon: Loader2, gradient: 'from-yellow-500 to-amber-400', iconColor: 'text-yellow-500', label: 'Subtask Updated', anim: 'animate-premium-spin', spinner: true },
   subtask_deleted: { icon: Trash2, gradient: 'from-red-500 to-rose-400', iconColor: 'text-red-500', label: 'Subtask Deleted', anim: 'animate-shake' },
   comment_added: { icon: MessageSquare, gradient: 'from-gray-400 to-slate-400', iconColor: 'text-gray-400', label: 'Comment Added', anim: 'animate-pulse-soft' },
   default: { icon: Clock, gradient: 'from-muted-foreground to-muted', iconColor: 'text-muted-foreground', label: 'Activity', anim: 'animate-float' },
@@ -283,7 +283,11 @@ const ActivityTimeline = ({ taskId }) => {
               <div className="relative z-10 flex-shrink-0 mt-0.5">
                 <div className={`w-8 h-8 sm:w-11 sm:h-11 rounded-full bg-gradient-to-br ${config.gradient} p-[1px] shadow-sm`}>
                   <div className="w-full h-full rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center">
-                    <Icon size={11} className={`sm:size-[15px] ${config.iconColor} ${config.anim}`} />
+                    {config.spinner ? (
+                      <div className={`w-3.5 h-3.5 sm:w-[18px] sm:h-[18px] rounded-full border-2 border-purple-500/20 border-t-purple-500 ${config.anim}`} />
+                    ) : (
+                      <Icon size={11} className={`sm:size-[15px] ${config.iconColor} ${config.anim}`} />
+                    )}
                   </div>
                 </div>
 

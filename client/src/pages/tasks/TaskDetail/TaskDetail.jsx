@@ -3,7 +3,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useContext, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
-import { ArrowLeft, Calendar, CheckCircle2, Circle, Clock, Loader2, Pencil } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Circle, Clock, Pencil } from 'lucide-react';
 import { apiRequest } from '@/api/apiClient';
 import { hasPermission } from '@/lib/permissions';
 import BlurFade from '@/components/animations/BlurFade';
@@ -519,104 +519,89 @@ const TaskDetail = () => {
             <MagicCard>
               <div className="space-y-4">
                 <h3 className="text-lg font-bold text-foreground">Task Workflow</h3>
-                <div className="relative flex items-center justify-between gap-1 sm:gap-0">
-                  {/* Progress Bar Background */}
-                  <div className="absolute top-3 sm:top-5 left-0 right-0 h-1 bg-muted rounded-full -z-0"></div>
-                  
-                  {/* Dynamic Progress Bar Fill */}
-                  <div 
-                    className="absolute top-5 left-0 h-1 bg-gradient-to-r from-sky-600 via-blue-500 to-purple-500 rounded-full -z-0 transition-all duration-500"
-                    style={{
-                      width: task.status === 'pending' ? '0%' :
-                             task.status === 'in progress' ? '50%' :
-                             ['submitted', 'approved', 'completed', 'rejected', 'incomplete'].includes(task.status) ? '100%' : '0%'
-                    }}
-                  ></div>
+                <div className="relative pt-2 pb-1">
+                  <div className="relative flex flex-row items-center justify-between">
+                    <div className="absolute top-[11px] sm:top-[13px] left-0 right-0 h-[3px] bg-muted rounded-full -z-10"></div>
 
-                  {/* Step1: Pending */}
-                  <div className="flex flex-col items-center gap-1 sm:gap-2 z-10">
-                    <div className={`w-7 h-7 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-[9px] sm:text-xs font-bold transition-all duration-300 ${
-                      ['pending', 'in progress', 'submitted', 'approved', 'completed', 'rejected', 'incomplete'].includes(task.status)
-                        ? 'bg-sky-600 text-white shadow-lg shadow-sky-600/25'
-                        : 'bg-muted text-muted-foreground'
-                    }`}>
-                      {['in progress', 'submitted', 'approved', 'completed', 'rejected', 'incomplete'].includes(task.status) ? (
-                        <CheckCircle2 size={14} className="sm:size-[18px]" />
-                      ) : (
-                        <Clock size={14} className="sm:size-[18px]" />
-                      )}
-                    </div>
-                    <span className={`text-[10px] sm:text-xs font-medium whitespace-nowrap ${
-                      ['pending', 'in progress', 'submitted', 'approved', 'completed', 'rejected', 'incomplete'].includes(task.status)
-                        ? 'text-foreground'
-                        : 'text-muted-foreground'
-                    }`}>Pending</span>
+                    <div
+                      className="absolute top-[11px] sm:top-[13px] left-0 h-[3px] bg-gradient-to-r from-sky-400 via-sky-500 to-sky-600 rounded-full -z-10 transition-all duration-500"
+                      style={{
+                        width: task.status === 'pending' ? '0%' :
+                               task.status === 'in progress' ? '50%' :
+                               ['submitted', 'approved', 'completed', 'rejected', 'incomplete'].includes(task.status) ? '100%' : '0%'
+                      }}
+                    ></div>
+
+                    {[
+                      {
+                        key: 'pending', label: 'Pending',
+                        activeStatuses: ['pending', 'in progress', 'submitted', 'approved', 'completed', 'rejected', 'incomplete'],
+                        doneStatuses: ['in progress', 'submitted', 'approved', 'completed', 'rejected', 'incomplete']
+                      },
+                      {
+                        key: 'in progress', label: 'In Progress',
+                        activeStatuses: ['in progress', 'submitted', 'approved', 'completed', 'rejected', 'incomplete'],
+                        doneStatuses: ['submitted', 'approved', 'completed', 'rejected', 'incomplete']
+                      },
+                      {
+                        key: 'submitted', label: 'Submitted',
+                        activeStatuses: ['submitted', 'approved', 'completed', 'rejected', 'incomplete'],
+                        doneStatuses: ['approved', 'completed']
+                      },
+                    ].map((step) => {
+                      const isDone = step.doneStatuses.includes(task.status);
+                      const isCurrent = task.status === step.key;
+                      const isActive = step.activeStatuses.includes(task.status);
+                      return (
+                        <div key={step.key} className="flex flex-col items-center gap-2 sm:gap-2.5 z-10">
+                          <div className={`relative flex items-center justify-center transition-all duration-300 ${
+                            isCurrent ? 'w-[26px] h-[26px] sm:w-[30px] sm:h-[30px]' : 'w-[22px] h-[22px] sm:w-[26px] sm:h-[26px]'
+                          }`}>
+                            <div className={`absolute inset-0 rounded-full transition-all duration-300 ${
+                              isDone ? 'bg-sky-600 scale-100' :
+                              isCurrent ? 'bg-sky-600 scale-100' :
+                              'bg-border scale-100'
+                            }`} />
+                            {isCurrent && (
+                              <div className={`absolute inset-[-5px] rounded-full ${task.status === 'in progress' ? 'border-[2.5px] border-sky-600/30 border-t-sky-600 animate-premium-spin' : 'border-2 border-sky-600/20'}`} />
+                            )}
+                            <div className="relative flex items-center justify-center text-white">
+                              {isDone ? (
+                                <CheckCircle2 size={isCurrent ? 16 : 14} className="sm:size-[18px]" strokeWidth={2} />
+                              ) : isCurrent ? (
+                                <Circle size={12} className="sm:size-[14px]" fill="white" stroke="none" />
+                              ) : (
+                                <Circle size={12} className="sm:size-[14px]" strokeWidth={1.5} />
+                              )}
+                            </div>
+                          </div>
+                          <span className={`text-[11px] sm:text-xs tracking-wide whitespace-nowrap transition-colors duration-200 ${
+                            isCurrent ? 'text-sky-600 font-semibold' : isActive ? 'text-foreground/70 font-medium' : 'text-muted-foreground'
+                          }`}>
+                            {step.label}
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
 
-                  {/* Step 2: In Progress */}
-                  <div className="flex flex-col items-center gap-1 sm:gap-2 z-10">
-                    <div className={`w-7 h-7 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-[9px] sm:text-xs font-bold transition-all duration-300 ${
-                      ['in progress', 'submitted', 'approved', 'completed', 'rejected', 'incomplete'].includes(task.status)
-                        ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/25'
-                        : 'bg-muted text-muted-foreground'
-                    }`}>
-                      {['submitted', 'approved', 'completed', 'rejected', 'incomplete'].includes(task.status) ? (
-                        <CheckCircle2 size={14} className="sm:size-[18px]" />
-                      ) : task.status === 'in progress' ? (
-                        <Loader2 size={14} className="sm:size-[18px] animate-spin" />
-                      ) : (
-                        <Circle size={14} className="sm:size-[18px]" />
-                      )}
-                    </div>
-                    <span className={`text-[10px] sm:text-xs font-medium whitespace-nowrap ${
-                      ['in progress', 'submitted', 'approved', 'completed', 'rejected', 'incomplete'].includes(task.status)
-                        ? 'text-foreground'
-                        : 'text-muted-foreground'
-                    }`}>In Progress</span>
-                  </div>
-
-                  {/* Step 3: Submitted */}
-                  <div className="flex flex-col items-center gap-1 sm:gap-2 z-10">
-                    <div className={`w-7 h-7 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-[9px] sm:text-xs font-bold transition-all duration-300 ${
-                      ['submitted', 'approved', 'completed', 'rejected', 'incomplete'].includes(task.status)
-                        ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/25'
-                        : 'bg-muted text-muted-foreground'
-                    }`}>
-                      {['approved', 'completed'].includes(task.status) ? (
-                        <CheckCircle2 size={14} className="sm:size-[18px]" />
-                      ) : task.status === 'submitted' ? (
-                        <CheckCircle2 size={14} className="sm:size-[18px] animate-pulse" />
-                      ) : ['rejected', 'incomplete'].includes(task.status) ? (
-                        <CheckCircle2 size={14} className="sm:size-[18px]" />
-                      ) : (
-                        <Circle size={14} className="sm:size-[18px]" />
-                      )}
-                    </div>
-                    <span className={`text-[10px] sm:text-xs font-medium whitespace-nowrap ${
-                      ['submitted', 'approved', 'completed', 'rejected', 'incomplete'].includes(task.status)
-                        ? 'text-foreground'
-                        : 'text-muted-foreground'
-                    }`}>Submitted</span>
+                  <div className={`mt-4 text-[11px] sm:text-xs text-center font-medium px-3 py-1.5 rounded-full w-fit mx-auto ${
+                    task.status === 'pending' ? 'text-sky-600 bg-sky-600/10' :
+                    task.status === 'in progress' ? 'text-sky-600 bg-sky-600/10' :
+                    task.status === 'submitted' ? 'text-sky-600 bg-sky-600/10' :
+                    task.status === 'approved' || task.status === 'completed' ? 'text-green-600 bg-green-600/10' :
+                    task.status === 'rejected' || task.status === 'incomplete' ? 'text-red-600 bg-red-600/10' :
+                    'text-muted-foreground bg-muted'
+                  }`}>
+                    {task.status === 'pending' && 'Awaiting assignment'}
+                    {task.status === 'in progress' && 'Work in progress'}
+                    {task.status === 'submitted' && 'Pending admin review'}
+                    {task.status === 'approved' && 'Task completed successfully'}
+                    {task.status === 'completed' && 'Task finished'}
+                    {task.status === 'rejected' && 'Changes requested'}
+                    {task.status === 'incomplete' && 'Work could not be completed'}
                   </div>
                 </div>
-
-                {/* Status Message */}
-                 <div className={`text-center text-xs font-medium p-2 rounded-lg ${
-                   task.status === 'pending' ? 'text-sky-600 bg-sky-600/10' :
-                   task.status === 'in progress' ? 'text-blue-600 bg-blue-500/10' :
-                   task.status === 'submitted' ? 'text-purple-600 bg-purple-500/10' :
-                   task.status === 'approved' || task.status === 'completed' ? 'text-green-600 bg-green-500/10' :
-                   task.status === 'rejected' || task.status === 'incomplete' ? 'text-red-600 bg-red-500/10' :
-                   'text-muted-foreground bg-muted/50'
-                 }`}>
-                   {task.status === 'pending' && '⏳ Task is pending assignment'}
-                   {task.status === 'in progress' && '🔄 Task is in progress'}
-                   {task.status === 'submitted' && '⏳ Waiting for admin approval'}
-                   {task.status === 'approved' && '✅ Task has been approved'}
-                   {task.status === 'completed' && '✅ Task completed'}
-                   {task.status === 'rejected' && '❌ Task was rejected'}
-                   {task.status === 'incomplete' && '⚠️ Task marked as incomplete'}
-                 </div>
 
                  {/* Time Tracking Section */}
                  {(task.workStartedAt || task.totalDurationSeconds) && (
