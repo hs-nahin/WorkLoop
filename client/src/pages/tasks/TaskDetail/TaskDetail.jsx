@@ -403,13 +403,15 @@ const TaskDetail = () => {
 
                 <div className="relative pt-2 pb-1">
                   <div className="relative flex items-center justify-between">
-                    <div className="absolute top-[13px] sm:top-[15px] left-0 right-0 h-[3px] bg-muted rounded-full -z-10"></div>
+                    <div className="absolute top-[13px] sm:top-[15px] left-[12px] sm:left-[14px] right-[12px] sm:right-[14px] h-[3px] bg-muted rounded-full -z-10"></div>
 
                     <div
-                      className="absolute top-[13px] sm:top-[15px] left-0 h-[3px] rounded-full -z-10 overflow-hidden origin-left transition-all duration-500"
+                      className="absolute top-[13px] sm:top-[15px] left-[12px] sm:left-[14px] h-[3px] rounded-full -z-10 overflow-hidden origin-left transition-all duration-500"
                       style={{
-                        width: task.status === 'pending' ? '0%' :
-                               task.status === 'in progress' ? '50%' : '100%'
+                        width: task.status === 'pending' ? '0px' :
+                               task.status === 'in progress'
+                                 ? `calc(50% - ${window.innerWidth < 640 ? '12px' : '14px'})`
+                                 : `calc(100% - ${window.innerWidth < 640 ? '24px' : '28px'})`
                       }}
                     >
                       <div className="absolute inset-0 bg-gradient-to-r from-sky-400 via-sky-500 to-sky-600 rounded-full" />
@@ -647,13 +649,15 @@ const TaskDetail = () => {
 
                  <div className="relative pt-2 pb-1">
                    <div className="relative flex items-center justify-between">
-                     <div className="absolute top-[13px] sm:top-[15px] left-0 right-0 h-[3px] bg-muted rounded-full -z-10"></div>
+                     <div className="absolute top-[13px] sm:top-[15px] left-[12px] sm:left-[14px] right-[12px] sm:right-[14px] h-[3px] bg-muted rounded-full -z-10"></div>
 
                      <div
-                       className="absolute top-[13px] sm:top-[15px] left-0 h-[3px] rounded-full -z-10 overflow-hidden origin-left transition-all duration-500"
+                       className="absolute top-[13px] sm:top-[15px] left-[12px] sm:left-[14px] h-[3px] rounded-full -z-10 overflow-hidden origin-left transition-all duration-500"
                        style={{
-                         width: task.status === 'pending' ? '0%' :
-                                task.status === 'in progress' ? '50%' : '100%'
+                         width: task.status === 'pending' ? '0px' :
+                                task.status === 'in progress'
+                                  ? `calc(50% - ${window.innerWidth < 640 ? '12px' : '14px'})`
+                                  : `calc(100% - ${window.innerWidth < 640 ? '24px' : '28px'})`
                        }}
                      >
                        <div className="absolute inset-0 bg-gradient-to-r from-sky-400 via-sky-500 to-sky-600 rounded-full" />
