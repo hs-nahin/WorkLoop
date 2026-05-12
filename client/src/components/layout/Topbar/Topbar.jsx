@@ -74,15 +74,28 @@ const TopBar = () => {
     }
   };
 
-  const handleDeleteNotification = async (e, notificationId) => {
-    e.stopPropagation();
-    try {
-      const notificationRef = doc(db, 'notifications', notificationId);
-      await deleteDoc(notificationRef);
-    } catch (error) {
-      console.error('Error deleting notification:', error);
-    }
-  };
+   const handleDeleteNotification = async (e, notificationId) => {
+     e.stopPropagation();
+     try {
+       const notificationRef = doc(db, 'notifications', notificationId);
+       await deleteDoc(notificationRef);
+     } catch (error) {
+       console.error('Error deleting notification:', error);
+     }
+   };
+
+   const handleMarkAllRead = async (e) => {
+     e.stopPropagation();
+     try {
+       const unreadNotifications = notifications.filter(n => !n.read);
+       for (const notification of unreadNotifications) {
+         const notificationRef = doc(db, 'notifications', notification.id);
+         await updateDoc(notificationRef, { read: true });
+       }
+     } catch (error) {
+       console.error('Error marking all notifications as read:', error);
+     }
+   };
 
   const formatTime = (timestamp) => {
     if (!timestamp) return 'Just now';
@@ -151,13 +164,23 @@ const TopBar = () => {
                 )}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[calc(100vw-1.5rem)] sm:w-80 p-0 mr-4 sm:mr-0" align="end" sideOffset={8}>
-              <div className="p-3 sm:p-4 border-b flex justify-between items-center">
-                <h3 className="text-sm sm:text-base font-semibold">Notifications</h3>
-                <span className="text-[10px] sm:text-xs text-muted-foreground">
-                  {unreadCount} unread
-                </span>
-              </div>
+             <PopoverContent className="w-[calc(100vw-1.5rem)] sm:w-80 p-0 mr-4 sm:mr-0" align="end" sideOffset={8}>
+               <div className="p-3 sm:p-4 border-b flex justify-between items-center">
+                 <h3 className="text-sm sm:text-base font-semibold">Notifications</h3>
+                 <div className="flex items-center gap-2">
+                   <span className="text-[10px] sm:text-xs text-muted-foreground">
+                     {unreadCount} unread
+                   </span>
+                   {unreadCount > 0 && (
+                     <button
+                       onClick={handleMarkAllRead}
+                       className="text-[10px] sm:text-xs text-primary hover:text-primary/80 font-medium transition-colors"
+                     >
+                       Mark all read
+                     </button>
+                   )}
+                 </div>
+               </div>
               <div className="max-h-72 sm:max-h-80 overflow-y-auto">
                 {notifications.length === 0 ? (
                   <div className="p-6 sm:p-8 text-center text-xs sm:text-sm text-muted-foreground">
