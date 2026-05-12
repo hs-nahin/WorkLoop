@@ -15,6 +15,15 @@ const ANNOUNCEMENT_TYPES = {
   system: { label: 'System', color: 'from-indigo-500/20 to-indigo-600/20', text: 'text-indigo-400', border: 'border-indigo-500/30', icon: <Bell size={16} /> },
 };
 
+const getPriorityBeamColor = (priority) => {
+  switch (priority) {
+    case 'critical': return 'red-500/40';
+    case 'high': return 'orange-500/40';
+    case 'medium': return 'yellow-500/40';
+    default: return 'gray-500/40';
+  }
+};
+
 const AnnouncementBanner = () => {
   const { user } = useAuth();
   const [announcements, setAnnouncements] = useState([]);
@@ -60,13 +69,29 @@ const AnnouncementBanner = () => {
   if (announcements.length === 0) return null;
 
   // We only show the top most critical/pinned announcement in the banner
-  const mainAnnouncement = announcements[0]; 
+   const mainAnnouncement = announcements[0]; 
 
-  const style = ANNOUNCEMENT_TYPES[mainAnnouncement.type] || ANNOUNCEMENT_TYPES.general;
+   const style = ANNOUNCEMENT_TYPES[mainAnnouncement.type] || ANNOUNCEMENT_TYPES.general;
+   const beamColor = getPriorityBeamColor(mainAnnouncement.priority);
 
-  return (
-    <BlurFade delay={0.2}>
-      <div className={`relative overflow-hidden rounded-xl border ${style.border} bg-gradient-to-r ${style.color} backdrop-blur-md p-3 mb-6 transition-all duration-300`}>
+   const getBeamGradient = (color) => {
+     switch (color) {
+       case 'red-500/40': return 'linear-gradient(to bottom, transparent, rgba(239, 68, 68, 0.4), transparent)';
+       case 'orange-500/40': return 'linear-gradient(to bottom, transparent, rgba(249, 115, 22, 0.4), transparent)';
+       case 'yellow-500/40': return 'linear-gradient(to bottom, transparent, rgba(234, 179, 8, 0.4), transparent)';
+       default: return 'linear-gradient(to bottom, transparent, rgba(107, 114, 128, 0.4), transparent)';
+     }
+   };
+
+   return (
+     <BlurFade delay={0.2}>
+       <div className={`relative overflow-hidden rounded-xl border ${style.border} bg-gradient-to-r ${style.color} backdrop-blur-md p-3 mb-6 transition-all duration-300`}>
+         <div className="absolute left-0 top-0 bottom-0 w-1 overflow-hidden">
+           <div className="absolute inset-0 w-full blur-[2px] animate-beam-vertical" style={{ background: getBeamGradient(beamColor) }} />
+         </div>
+         <div className="absolute right-0 top-0 bottom-0 w-1 overflow-hidden">
+           <div className="absolute inset-0 w-full blur-[2px] animate-beam-vertical" style={{ background: getBeamGradient(beamColor) }} />
+         </div>
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className={`p-2 rounded-lg bg-background/50 ${style.text}`}>

@@ -201,6 +201,9 @@ return (
             <div className="absolute left-0 top-0 bottom-0 w-1 overflow-hidden">
               <div className="absolute inset-0 w-full bg-gradient-to-b from-transparent via-sky-500/40 to-transparent blur-[2px] animate-beam-vertical" />
             </div>
+            <div className="absolute right-0 top-0 bottom-0 w-1 overflow-hidden">
+              <div className="absolute inset-0 w-full bg-gradient-to-b from-transparent via-sky-500/40 to-transparent blur-[2px] animate-beam-vertical" />
+            </div>
             <div className={`grid w-full ${isAdmin ? 'grid-cols-[25%_10%_10%_15%_15%_20%_5%]' : 'grid-cols-[28%_12%_12%_15%_15%_30%]'}`}>
               <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b">Task Information</div>
               <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l">Status</div>

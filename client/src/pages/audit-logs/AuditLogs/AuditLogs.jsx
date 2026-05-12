@@ -307,7 +307,13 @@ const AuditLogs = () => {
       </BlurFade>
 
       <BlurFade>
-        <div className="bg-card border border-border rounded-xl overflow-hidden">
+        <div className="bg-card border border-border rounded-xl overflow-hidden relative">
+          <div className="absolute left-0 top-0 bottom-0 w-1 overflow-hidden">
+            <div className="absolute inset-0 w-full bg-gradient-to-b from-transparent via-purple-500/40 to-transparent blur-[2px] animate-beam-vertical" />
+          </div>
+          <div className="absolute right-0 top-0 bottom-0 w-1 overflow-hidden">
+            <div className="absolute inset-0 w-full bg-gradient-to-b from-transparent via-purple-500/40 to-transparent blur-[2px] animate-beam-vertical" />
+          </div>
           {loading ? (
             <div className="p-8 text-center text-muted-foreground">Loading audit logs...</div>
           ) : paginatedLogs.length === 0 ? (

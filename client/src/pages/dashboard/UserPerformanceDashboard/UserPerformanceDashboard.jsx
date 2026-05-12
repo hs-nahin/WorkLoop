@@ -350,7 +350,13 @@ const UserPerformanceDashboard = () => {
 
       {/* BOTTOM: Detailed Analytics Table */}
       <BlurFade delay={600}>
-        <Card className="border-border bg-card/50 backdrop-blur-sm overflow-hidden">
+        <Card className="border-border bg-card/50 backdrop-blur-sm overflow-hidden relative">
+          <div className="absolute left-0 top-0 bottom-0 w-1 overflow-hidden">
+            <div className="absolute inset-0 w-full bg-gradient-to-b from-transparent via-sky-500/40 to-transparent blur-[2px] animate-beam-vertical" />
+          </div>
+          <div className="absolute right-0 top-0 bottom-0 w-1 overflow-hidden">
+            <div className="absolute inset-0 w-full bg-gradient-to-b from-transparent via-sky-500/40 to-transparent blur-[2px] animate-beam-vertical" />
+          </div>
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle className="text-xl font-bold">Workforce Performance Ranking</CardTitle>

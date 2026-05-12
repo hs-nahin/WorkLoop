@@ -327,7 +327,7 @@ const PermissionsEditor = () => {
       </div>
 
       {dirty && (
-        <div className="fixed bottom-6 right-6 flex items-center gap-2 bg-card border border-border rounded-xl px-4 py-3 shadow-lg animate-in slide-in-from-bottom-4 z-40">
+        <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 flex items-center gap-2 bg-card border border-border rounded-xl px-4 py-3 shadow-lg animate-in slide-in-from-bottom-4 z-40">
           <span className="text-sm text-muted-foreground">Unsaved changes</span>
           <Button size="sm" onClick={handleSave} disabled={saving} className="cursor-pointer">
             {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} className="mr-1" />}

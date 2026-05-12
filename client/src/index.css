@@ -210,6 +210,20 @@
   --sidebar-ring: oklch(0.55 0.18 255);
 }
 
+:root {
+  --progress-offset-1: 12px;
+  --progress-offset-2: 24px;
+  --progress-offset-3: 44px;
+}
+
+@media (min-width: 640px) {
+  :root {
+    --progress-offset-1: 14px;
+    --progress-offset-2: 28px;
+    --progress-offset-3: 56px;
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

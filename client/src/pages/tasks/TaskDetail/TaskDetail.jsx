@@ -658,10 +658,10 @@ const TaskDetail = () => {
                          style={{
                            width: task.status === 'pending' ? '0px' :
                                   task.status === 'in progress'
-                                    ? `calc(50% - ${window.innerWidth < 640 ? '12px' : '14px'})`
+                                    ? 'calc(50% - var(--progress-offset-1))'
                                     : task.status === 'submitted'
-                                      ? `calc(100% - ${window.innerWidth < 640 ? '44px' : '56px'})`
-                                      : `calc(100% - ${window.innerWidth < 640 ? '24px' : '28px'})`
+                                      ? 'calc(100% - var(--progress-offset-3))'
+                                      : 'calc(100% - var(--progress-offset-2))'
                          }}
                        >
                        <div className="absolute inset-0 bg-gradient-to-r from-sky-400 via-sky-500 to-sky-600 rounded-full" />

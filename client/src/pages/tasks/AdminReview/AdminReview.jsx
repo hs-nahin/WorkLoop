@@ -113,23 +113,23 @@ const AdminReview = () => {
                     className="w-full h-24"
                   />
 
-                  <div className="flex gap-3">
-                    <Button 
-                      onClick={() => handleApprove(task.id)}
-                      className="flex-1 cursor-pointer bg-green-600 hover:bg-green-700 text-white"
-                    >
-                      <CheckCircle2 size={16} className="mr-2" />
-                      Approve & Complete
-                    </Button>
-                    <Button 
-                      onClick={() => handleReject(task.id)}
-                      variant="outline"
-                      className="flex-1 cursor-pointer text-red-600 border-red-600/30 hover:bg-red-600/10"
-                    >
-                      <XCircle size={16} className="mr-2" />
-                      Reject & Send Back
-                    </Button>
-                  </div>
+                   <div className="flex flex-col sm:flex-row gap-3">
+                     <Button 
+                       onClick={() => handleApprove(task.id)}
+                       className="flex-1 cursor-pointer bg-green-600 hover:bg-green-700 text-white"
+                     >
+                       <CheckCircle2 size={16} className="mr-2" />
+                       Approve & Complete
+                     </Button>
+                     <Button 
+                       onClick={() => handleReject(task.id)}
+                       variant="outline"
+                       className="flex-1 cursor-pointer text-red-600 border-red-600/30 hover:bg-red-600/10"
+                     >
+                       <XCircle size={16} className="mr-2" />
+                       Reject & Send Back
+                     </Button>
+                   </div>
                 </div>
               </MagicCard>
             </BlurFade>
