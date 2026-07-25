@@ -107,7 +107,7 @@ const UserPerformanceDashboard = () => {
 
   // --- Analytics Computations ---
   const metrics = useMemo(() => {
-    const officerUsers = users.filter(u => u.role === 'IT OFFICER' || u.role === 'ASSISTANT');
+    const officerUsers = users.filter(u => { const r = (u.role || '').toUpperCase(); return r === 'IT OFFICER' || r === 'ASSISTANT' || r === 'USER'; });
     
     const userStats = officerUsers.map(officer => {
       const assigned = tasks.filter(t => t.officerId === officer.id || t.officerId === officer.userId);

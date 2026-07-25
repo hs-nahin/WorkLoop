@@ -3,6 +3,7 @@ import { db } from '@/firebase/firebaseConfig';
 
 export const ROLES = {
   ADMIN: 'ADMIN',
+  USER: 'USER',
   IT_OFFICER: 'IT OFFICER',
   IT_OFFICER_UNDERSCORE: 'IT_OFFICER',
   ASSISTANT: 'ASSISTANT',
@@ -38,6 +39,7 @@ export const ALL_PERMISSIONS = [
   { id: 'PERFORMANCE_VIEW', label: 'View Performance Reports', group: 'System' },
   { id: 'COMPANY_SETTINGS', label: 'Manage Company Settings', group: 'System' },
   { id: 'DASHBOARD_ADMIN', label: 'Admin Dashboard Access', group: 'System' },
+  { id: 'PROFILE_VIEW', label: 'View Profile', group: 'System' },
 ];
 
 export const DEFAULT_PERMISSIONS = {
@@ -51,6 +53,19 @@ export const DEFAULT_PERMISSIONS = {
     COMMENT_CREATE: true,
     USER_LIST: true, USER_CREATE: true, USER_EDIT: true, USER_DELETE: true, USER_TOGGLE: true, USER_PASSWORD_RESET: true,
     AUDIT_LOG_VIEW: true, PERFORMANCE_VIEW: true, COMPANY_SETTINGS: true, DASHBOARD_ADMIN: true,
+    PROFILE_VIEW: true,
+  },
+  USER: {
+    TASK_CREATE: false, TASK_EDIT: false, TASK_DELETE: false,
+    TASK_ASSIGN_OFFICER: false, TASK_ASSIGN_ASSISTANT: false,
+    TASK_ACCEPT: true, TASK_SUBMIT: true, TASK_MARK_INCOMPLETE: true,
+    TASK_APPROVE: false, TASK_REJECT: false, TASK_VIEW_ALL: false, TASK_ADD_PROGRESS: true,
+    SUBTASK_CREATE: true, SUBTASK_EDIT: true, SUBTASK_DELETE: true, SUBTASK_UPDATE_STATUS: true,
+    ATTACHMENT_UPLOAD: true, ATTACHMENT_DELETE: true,
+    COMMENT_CREATE: true,
+    USER_LIST: false, USER_CREATE: false, USER_EDIT: false, USER_DELETE: false, USER_TOGGLE: false, USER_PASSWORD_RESET: false,
+    AUDIT_LOG_VIEW: false, PERFORMANCE_VIEW: false, COMPANY_SETTINGS: false, DASHBOARD_ADMIN: false,
+    PROFILE_VIEW: true,
   },
   'IT OFFICER': {
     TASK_CREATE: false, TASK_EDIT: false, TASK_DELETE: false,
@@ -62,6 +77,7 @@ export const DEFAULT_PERMISSIONS = {
     COMMENT_CREATE: true,
     USER_LIST: false, USER_CREATE: false, USER_EDIT: false, USER_DELETE: false, USER_TOGGLE: false, USER_PASSWORD_RESET: false,
     AUDIT_LOG_VIEW: false, PERFORMANCE_VIEW: false, COMPANY_SETTINGS: false, DASHBOARD_ADMIN: false,
+    PROFILE_VIEW: true,
   },
   ASSISTANT: {
     TASK_CREATE: false, TASK_EDIT: false, TASK_DELETE: false,
@@ -73,6 +89,7 @@ export const DEFAULT_PERMISSIONS = {
     COMMENT_CREATE: true,
     USER_LIST: false, USER_CREATE: false, USER_EDIT: false, USER_DELETE: false, USER_TOGGLE: false, USER_PASSWORD_RESET: false,
     AUDIT_LOG_VIEW: false, PERFORMANCE_VIEW: false, COMPANY_SETTINGS: false, DASHBOARD_ADMIN: false,
+    PROFILE_VIEW: true,
   },
 };
 
@@ -173,7 +190,7 @@ export const unsubscribeRolePermissions = (role) => {
 export const loadPermissions = async () => {
   try {
     const results = {};
-    const roleNames = ['ADMIN', 'IT OFFICER', 'ASSISTANT'];
+    const roleNames = Object.keys(DEFAULT_PERMISSIONS);
     for (const role of roleNames) {
       const docRef = doc(db, 'rolePermissions', role);
       const snap = await getDoc(docRef);

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { 
   collection, 
   query, 
@@ -10,48 +10,59 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/firebase/firebaseConfig';
 
+const safeUnsub = (ref) => {
+  if (ref.current) {
+    try { ref.current(); } catch (_) {}
+    ref.current = null;
+  }
+};
+
 // Real-time task listener
 export const useRealTimeTasks = (userRole, userId) => {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const unsubRef = useRef(null);
+  const mountedRef = useRef(true);
 
   useEffect(() => {
-    if (!userId) {
-      setLoading(false);
-      return;
-    }
+    mountedRef.current = true;
+    if (!userId) { setLoading(false); return; }
+
+    safeUnsub(unsubRef);
 
     const tasksRef = collection(db, 'tasks');
     let constraints = [];
-
-    // Role-based filtering
-    if (userRole === 'IT OFFICER' || userRole === 'ASSISTANT') {
+    if (userRole === 'IT OFFICER' || userRole === 'ASSISTANT' || userRole === 'USER') {
       constraints.push(where('officerId', '==', userId));
     }
-
     constraints.push(orderBy('createdAt', 'desc'));
     constraints.push(limit(100));
 
     const q = query(tasksRef, ...constraints);
 
-    const unsubscribeFunc = onSnapshot(q, 
+    unsubRef.current = onSnapshot(q,
       (snapshot) => {
-        const tasksData = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          createdAt: doc.data().createdAt?.toDate?.() || doc.data().createdAt,
-          deadline: doc.data().deadline?.toDate?.() || doc.data().deadline,
+        if (!mountedRef.current) return;
+        const tasksData = snapshot.docs.map(d => ({
+          id: d.id,
+          ...d.data(),
+          createdAt: d.data().createdAt?.toDate?.() || d.data().createdAt,
+          deadline: d.data().deadline?.toDate?.() || d.data().deadline,
         }));
         setTasks(tasksData);
         setLoading(false);
       },
       (err) => {
+        if (!mountedRef.current) return;
         console.error('Error fetching tasks:', err);
         setLoading(false);
       }
     );
 
-    return () => unsubscribeFunc();
+    return () => {
+      mountedRef.current = false;
+      safeUnsub(unsubRef);
+    };
   }, [userRole, userId]);
 
   return { tasks, loading };
@@ -61,16 +72,19 @@ export const useRealTimeTasks = (userRole, userId) => {
 export const useRealTimeTask = (taskId) => {
   const [task, setTask] = useState(null);
   const [loading, setLoading] = useState(true);
+  const unsubRef = useRef(null);
+  const mountedRef = useRef(true);
 
   useEffect(() => {
-    if (!taskId) {
-      setLoading(false);
-      return;
-    }
+    mountedRef.current = true;
+    if (!taskId) { setLoading(false); return; }
+
+    safeUnsub(unsubRef);
 
     const taskRef = doc(db, 'tasks', taskId);
-    const unsubscribeFunc = onSnapshot(taskRef,
+    unsubRef.current = onSnapshot(taskRef,
       (docSnap) => {
+        if (!mountedRef.current) return;
         if (docSnap.exists()) {
           setTask({ id: docSnap.id, ...docSnap.data() });
         } else {
@@ -79,12 +93,16 @@ export const useRealTimeTask = (taskId) => {
         setLoading(false);
       },
       (err) => {
+        if (!mountedRef.current) return;
         console.error('Error fetching task:', err);
         setLoading(false);
       }
     );
 
-    return () => unsubscribeFunc();
+    return () => {
+      mountedRef.current = false;
+      safeUnsub(unsubRef);
+    };
   }, [taskId]);
 
   return { task, loading };
@@ -104,28 +122,30 @@ export const useRealTimeStats = (userId, userRole) => {
     tasks: []
   });
   const [loading, setLoading] = useState(true);
+  const unsubRef = useRef(null);
+  const mountedRef = useRef(true);
 
   useEffect(() => {
-    if (!userId) {
-      setLoading(false);
-      return;
-    }
+    mountedRef.current = true;
+    if (!userId) { setLoading(false); return; }
+
+    safeUnsub(unsubRef);
 
     const tasksRef = collection(db, 'tasks');
     let constraints = [];
-
-    if (userRole === 'IT OFFICER' || userRole === 'ASSISTANT') {
+    if (userRole === 'IT OFFICER' || userRole === 'ASSISTANT' || userRole === 'USER') {
       constraints.push(where('officerId', '==', userId));
     }
 
     const q = query(tasksRef, ...constraints);
 
-    const unsubscribeFunc = onSnapshot(q,
+    unsubRef.current = onSnapshot(q,
       (snapshot) => {
-        const allTasks = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          createdAt: doc.data().createdAt?.toDate?.() || doc.data().createdAt,
+        if (!mountedRef.current) return;
+        const allTasks = snapshot.docs.map(d => ({
+          id: d.id,
+          ...d.data(),
+          createdAt: d.data().createdAt?.toDate?.() || d.data().createdAt,
         }));
 
         const pending = allTasks.filter(t => t.status === 'pending').length;
@@ -134,9 +154,7 @@ export const useRealTimeStats = (userId, userRole) => {
         const completed = allTasks.filter(t => t.status === 'completed' || t.status === 'approved').length;
         const rejected = allTasks.filter(t => t.status === 'rejected').length;
 
-        // Weekly trend (last 7 days)
         const now = new Date();
-        const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
         const weeklyTrend = [];
         for (let i = 6; i >= 0; i--) {
           const day = new Date(now);
@@ -169,12 +187,16 @@ export const useRealTimeStats = (userId, userRole) => {
         setLoading(false);
       },
       (err) => {
+        if (!mountedRef.current) return;
         console.error('Error fetching stats:', err);
         setLoading(false);
       }
     );
 
-    return () => unsubscribeFunc();
+    return () => {
+      mountedRef.current = false;
+      safeUnsub(unsubRef);
+    };
   }, [userId, userRole]);
 
   return { stats, loading };

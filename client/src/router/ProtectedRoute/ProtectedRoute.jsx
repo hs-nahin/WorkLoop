@@ -3,7 +3,7 @@ import { Navigate, Outlet, useLocation } from 'react-router';
 import { AuthContext } from '@/context/AuthContext';
 import { hasPermission } from '@/lib/permissions';
 
-const ProtectedRoute = ({ allowedPermissions }) => {
+const ProtectedRoute = ({ allowedPermissions, requiredRole }) => {
   const { user, token, loading } = useContext(AuthContext);
   const location = useLocation();
 
@@ -18,7 +18,18 @@ const ProtectedRoute = ({ allowedPermissions }) => {
   }
 
   const role = user?.role || '';
-  
+
+  if (requiredRole) {
+    const required = requiredRole.toUpperCase();
+    const userRole = role.toUpperCase();
+    if (userRole !== required) {
+      if (userRole === 'ADMIN') {
+        return <Navigate to="/admin/dashboard" replace />;
+      }
+      return <Navigate to="/dashboard" replace />;
+    }
+  }
+
   if (allowedPermissions && allowedPermissions.length > 0) {
     const hasAccess = allowedPermissions.some(p => hasPermission(role, p));
     if (!hasAccess) {

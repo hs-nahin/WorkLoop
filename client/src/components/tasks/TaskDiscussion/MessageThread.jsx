@@ -67,7 +67,7 @@ const MessageThread = ({ taskId }) => {
                 <span className={`text-[9px] sm:text-xs px-1 sm:px-1.5 py-0.5 rounded ${
                   msg.senderRole === 'ADMIN' 
                     ? 'bg-red-600/20 text-red-600'
-                    : msg.senderRole === 'IT OFFICER'
+                    : msg.senderRole === 'IT OFFICER' || msg.senderRole === 'USER'
                     ? 'bg-blue-600/20 text-blue-600'
                     : 'bg-green-600/20 text-green-600'
                 }`}>

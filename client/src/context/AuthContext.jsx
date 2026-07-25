@@ -15,6 +15,13 @@ import { useContext } from 'react';
 
 export { AuthContext };
 
+const normalizeRole = (role) => {
+  if (!role) return 'USER';
+  const r = role.toUpperCase();
+  if (r === 'IT_OFFICER') return 'IT OFFICER';
+  return r;
+};
+
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -34,7 +41,9 @@ export const AuthProvider = ({ children }) => {
     try {
       const userDoc = await getDoc(doc(db, 'users', uid));
       if (userDoc.exists()) {
-        return { id: userDoc.id, ...userDoc.data() };
+        const data = { id: userDoc.id, ...userDoc.data() };
+        data.role = normalizeRole(data.role);
+        return data;
       }
       return null;
     } catch (error) {
@@ -99,6 +108,20 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const registerAdmin = async ({ name, email, password }) => {
+    const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    const response = await fetch(`${API_BASE_URL}/auth/register-admin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to create admin account');
+    }
+    return data;
+  };
+
   const logout = async () => {
     try {
       await signOut(auth);
@@ -111,10 +134,10 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const user = firestoreProfile || (firebaseUser ? { 
-    email: firebaseUser.email, 
+  const user = firestoreProfile || (firebaseUser ? {
+    email: firebaseUser.email,
     uid: firebaseUser.uid,
-    role: 'USER' 
+    role: 'USER'
   } : null);
 
   const fetchMe = useCallback(async () => {
@@ -127,7 +150,7 @@ export const AuthProvider = ({ children }) => {
   }, [firebaseUser, fetchFirestoreProfile]);
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, logout, fetchMe, permissionsVersion }}>
+    <AuthContext.Provider value={{ user, token, loading, login, registerAdmin, logout, fetchMe, permissionsVersion }}>
       {children}
     </AuthContext.Provider>
   );

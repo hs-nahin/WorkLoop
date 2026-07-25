@@ -1,15 +1,13 @@
-const jwt = require('jsonwebtoken');
-require('dotenv').config();
-
+// Legacy file - JWT auth no longer used. Firebase Admin SDK handles all authentication.
+// This file is kept for backward compatibility but generateToken/verifyToken are no-ops.
 const generateToken = (user) => {
-    return jwt.sign({ userId: user.userId, role: user.role }, process.env.JWT_SECRET, { expiresIn: '24h' });
+  console.warn('JWT generateToken is deprecated. Use Firebase Auth.');
+  return null;
 };
 
 const verifyToken = (token) => {
-    return jwt.verify(token, process.env.JWT_SECRET);
+  console.warn('JWT verifyToken is deprecated. Use Firebase Auth.');
+  return null;
 };
 
-module.exports = {
-    generateToken,
-    verifyToken
-};
+module.exports = { generateToken, verifyToken };

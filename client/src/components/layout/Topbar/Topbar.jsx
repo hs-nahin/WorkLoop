@@ -114,9 +114,12 @@ const TopBar = () => {
   };
 
   const getRoleBadgeColor = (role) => {
-    switch(role) {
+    const r = (role || '').toUpperCase();
+    switch(r) {
       case "ADMIN":
         return "bg-green-50 dark:bg-green-800";
+      case "USER":
+      case "IT OFFICER":
       case "IT_OFFICER":
         return "bg-blue-50 dark:bg-blue-800";
       case "ASSISTANT":
@@ -124,6 +127,13 @@ const TopBar = () => {
       default:
         return "bg-gray-50 dark:bg-gray-800";
     }
+  };
+
+  const getRoleDisplay = (role) => {
+    const r = (role || '').toUpperCase();
+    if (r === 'ADMIN') return 'Admin';
+    if (r === 'USER') return 'User';
+    return r;
   };
 
   return (
@@ -134,7 +144,7 @@ const TopBar = () => {
             variant="outline"
             className={`font-medium opacity-70 ${getRoleBadgeColor(user?.role)} text-foreground`}
           >
-            {user?.role || "Guest"} Session
+            {getRoleDisplay(user?.role)} Session
           </Badge>
         </div>
         {hasPermission(user?.role, "DASHBOARD_ADMIN") && (
@@ -231,7 +241,7 @@ const TopBar = () => {
             <div className="flex items-center gap-1 sm:gap-3 p-0.5 sm:p-1 sm:pl-2 rounded-full border hover:bg-accent transition-colors cursor-pointer">
               <div className="text-right hidden sm:block">
                 <p className="text-xs font-semibold text-foreground leading-none">{user?.name || "User"}</p>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">{user?.role || "Role"}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">{getRoleDisplay(user?.role)}</p>
               </div>
               <Avatar className="h-7 w-7 sm:h-8 sm:w-8 border-2 border-primary/20">
                 <AvatarImage src={user?.profileImage} alt={user?.name} />
@@ -242,11 +252,11 @@ const TopBar = () => {
             </div>
           </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48 sm:w-56">
-              <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => navigate('/profile')}>
+              <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => navigate((user?.role || '').toUpperCase() === 'ADMIN' ? '/admin/profile' : '/profile')}>
                 <User size={15} className="sm:size-[16px]" />
                 <span>Profile</span>
               </DropdownMenuItem>
-              <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => navigate('/settings')}>
+              <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => navigate((user?.role || '').toUpperCase() === 'ADMIN' ? '/admin/settings' : '/settings')}>
                 <Settings size={15} className="sm:size-[16px]" />
                 <span>Settings</span>
               </DropdownMenuItem>

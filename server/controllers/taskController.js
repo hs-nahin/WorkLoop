@@ -129,10 +129,14 @@ const acceptTask = async (req, res) => {
         await createSystemMessage(id, `Task accepted by ${req.user.name || 'Officer'} - status changed to In Progress`);
         
         // Create notifications for all admins that task has been accepted
-        const adminQuery = await adminDb.collection('users').where('role', '==', 'ADMIN').get();
+        const allUsersSnapshot = await adminDb.collection('users').get();
+        const adminDocs = allUsersSnapshot.docs.filter(d => {
+            const role = (d.data().role || '').toUpperCase();
+            return role === 'ADMIN';
+        });
         
-        if (!adminQuery.empty) {
-            const notificationsPromises = adminQuery.docs.map(adminDoc => {
+        if (adminDocs.length > 0) {
+            const notificationsPromises = adminDocs.map(adminDoc => {
                 return adminDb.collection('notifications').add({
                     type: 'task_accepted',
                     taskId: id,
@@ -222,10 +226,14 @@ const submitTask = async (req, res) => {
         await createSystemMessage(id, `Task submitted by ${req.user.name || 'Officer'} - status changed to Submitted`);
         
         // Create notifications for all admins
-        const adminQuery = await adminDb.collection('users').where('role', '==', 'ADMIN').get();
+        const allUsersSnapshot = await adminDb.collection('users').get();
+        const adminDocs = allUsersSnapshot.docs.filter(d => {
+            const role = (d.data().role || '').toUpperCase();
+            return role === 'ADMIN';
+        });
         
-        if (!adminQuery.empty) {
-            const notificationsPromises = adminQuery.docs.map(adminDoc => {
+        if (adminDocs.length > 0) {
+            const notificationsPromises = adminDocs.map(adminDoc => {
                 return adminDb.collection('notifications').add({
                     type: 'task_submitted',
                     taskId: id,
@@ -468,7 +476,7 @@ const createSubtask = async (req, res) => {
             description: description || '',
             assignedUserId,
             assignedUserName: userData.name || 'Unknown',
-            assignedUserRole: userData.role || 'ASSISTANT',
+            assignedUserRole: (userData.role || 'USER').toUpperCase(),
             status: 'pending',
             deadline: deadline || null,
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -609,7 +617,7 @@ const createAttachment = async (req, res) => {
             fileType: fileType || null,
             uploadedBy: req.user.uid,
             uploaderName: req.user.name || 'Unknown',
-            uploaderRole: req.user.role || 'USER',
+            uploaderRole: (req.user.role || 'USER').toUpperCase(),
             uploadedAt: admin.firestore.FieldValue.serverTimestamp(),
             version,
             notes: notes || null

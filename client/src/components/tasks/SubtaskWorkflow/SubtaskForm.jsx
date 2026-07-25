@@ -48,8 +48,8 @@ const SubtaskForm = ({ subtask, onSubmit, onCancel, users }) => {
 
   // Sort users: Officers first (A-Z), then others (A-Z)
   const sortedUsers = [...users].sort((a, b) => {
-    const aIsOfficer = a.role === 'IT_OFFICER' || a.role === 'IT OFFICER';
-    const bIsOfficer = b.role === 'IT_OFFICER' || b.role === 'IT OFFICER';
+    const aIsOfficer = (a.role || '').toUpperCase() === 'IT_OFFICER' || (a.role || '').toUpperCase() === 'IT OFFICER' || (a.role || '').toUpperCase() === 'USER';
+    const bIsOfficer = (b.role || '').toUpperCase() === 'IT_OFFICER' || (b.role || '').toUpperCase() === 'IT OFFICER' || (b.role || '').toUpperCase() === 'USER';
 
     if (aIsOfficer && !bIsOfficer) return -1;
     if (!aIsOfficer && bIsOfficer) return 1;

@@ -19,7 +19,8 @@ router.get('/stats', verifyToken, async (req, res) => {
       totalUsers: (await adminDb.collection('users').get()).size
     };
 
-    if (req.user.role.toUpperCase() !== 'ADMIN') {
+    const role = (req.user.role || '').toUpperCase();
+    if (role !== 'ADMIN') {
       const myTasks = tasks.filter(t => t.assignedOfficerUid === req.user.uid);
       return res.json({
         myTasks: myTasks.length,
@@ -40,7 +41,8 @@ router.get('/recent', verifyToken, async (req, res) => {
   try {
     let query = adminDb.collection('tasks').orderBy('createdAt', 'desc').limit(10);
     
-    if (req.user.role.toUpperCase() !== 'ADMIN') {
+    const role = (req.user.role || '').toUpperCase();
+    if (role !== 'ADMIN') {
       query = query.where('assignedOfficerUid', '==', req.user.uid);
     }
 

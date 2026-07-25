@@ -25,7 +25,7 @@ const SubtaskWorkflow = ({ taskId, task }) => {
       try {
         const data = await apiRequest({ endpoint: '/users' });
         // Get IT_OFFICER and ASSISTANT users for subtask assignment
-        const techUsers = data.filter(u => u.role === 'IT_OFFICER' || u.role === 'IT OFFICER' || u.role === 'ASSISTANT');
+        const techUsers = data.filter(u => { const r = (u.role || '').toUpperCase(); return r === 'IT_OFFICER' || r === 'IT OFFICER' || r === 'ASSISTANT' || r === 'USER'; });
         setUsers(techUsers || []);
       } catch (error) {
         console.error('Error fetching users:', error);

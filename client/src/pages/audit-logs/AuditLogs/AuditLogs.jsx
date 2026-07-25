@@ -194,6 +194,7 @@ const AuditLogs = () => {
       case 'IT_OFFICER':
       case 'IT OFFICER': return 'bg-blue-500/20 text-blue-500';
       case 'ASSISTANT': return 'bg-purple-500/20 text-purple-500';
+      case 'USER': return 'bg-blue-500/20 text-blue-500';
       default: return 'bg-gray-500/20 text-gray-500';
     }
   };

@@ -5,18 +5,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AuthContext } from '@/context/AuthContextInstance';
-import { Eye, EyeOff, Loader2, Lock, User } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Lock, Mail, User } from 'lucide-react';
 import { useContext, useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { toast } from 'sonner';
 
-const Login = () => {
-  const [userId, setUserId] = useState('');
+const RegisterAdmin = () => {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { login, user, token, loading } = useContext(AuthContext);
+  const { registerAdmin, user, token, loading } = useContext(AuthContext);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -30,39 +31,29 @@ const Login = () => {
     }
   }, [user, token, loading, navigate]);
 
-  const EMAIL_DOMAIN = 'workloop.local';
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!userId.trim()) return toast.error('Please enter your User ID');
-    if (!password.trim()) return toast.error('Please enter your password');
+    if (!name.trim()) return toast.error('Please enter your full name');
+    if (!email.trim()) return toast.error('Please enter your email');
+    if (!password.trim()) return toast.error('Please enter a password');
 
-    setIsLoading(true);
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return toast.error('Please enter a valid email address');
+    }
+    if (password.length < 6) {
+      return toast.error('Password must be at least 6 characters');
+    }
+
+    setIsSubmitting(true);
     try {
-      const email = `${userId.trim()}@${EMAIL_DOMAIN}`;
-      const result = await login({ email, password });
-
-      const role = (result.profile?.role || '').toUpperCase();
-      toast.success('Welcome back to WorkLoop!');
-      if (role === 'ADMIN') {
-        navigate('/admin/dashboard');
-      } else {
-        navigate('/dashboard');
-      }
+      await registerAdmin({ name, email, password });
+      toast.success('Admin account created! You can now log in.');
+      navigate('/login');
     } catch (error) {
-      let message = 'Invalid credentials. Please try again.';
-      if (error.code === 'auth/user-not-found') {
-        message = 'No account found with this User ID.';
-      } else if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-        message = 'Incorrect password. Please try again.';
-      } else if (error.code === 'auth/too-many-requests') {
-        message = 'Too many failed attempts. Please try again later.';
-      } else if (error.message) {
-        message = error.message;
-      }
-      toast.error(message);
+      toast.error(error.message || 'Failed to create admin account');
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -80,28 +71,45 @@ const Login = () => {
                 className="text-3xl font-black tracking-tighter italic"
               />
             </div>
-            <CardTitle className="text-xl font-bold">Sign In</CardTitle>
+            <CardTitle className="text-xl font-bold">Create Admin Account</CardTitle>
             <CardDescription>
-              Access your internal IT workflow management system
+              Register a new administrator account
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="userId" className="text-xs font-medium opacity-70 uppercase tracking-wider">
-                  User ID
+                <Label htmlFor="name" className="text-xs font-medium opacity-70 uppercase tracking-wider">
+                  Full Name
                 </Label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
                   <Input
-                    id="userId"
+                    id="name"
                     type="text"
-                    value={userId}
-                    onChange={(e) => setUserId(e.target.value)}
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
                     required
                     className="pl-10"
-                    placeholder="Enter your User ID"
-                    autoComplete="username"
+                    placeholder="System Administrator"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-xs font-medium opacity-70 uppercase tracking-wider">
+                  Email Address
+                </Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="pl-10"
+                    placeholder="admin@company.com"
                   />
                 </div>
               </div>
@@ -119,8 +127,7 @@ const Login = () => {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     className="pl-10 pr-10"
-                    placeholder="••••••••"
-                    autoComplete="current-password"
+                    placeholder="Minimum 6 characters"
                   />
                   <button
                     type="button"
@@ -135,24 +142,24 @@ const Login = () => {
 
               <Button
                 type="submit"
-                disabled={isLoading}
+                disabled={isSubmitting}
                 className="w-full py-6 text-base font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
               >
-                {isLoading ? (
+                {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Authenticating...
+                    Creating Account...
                   </>
                 ) : (
-                  "Enter Workspace"
+                  "Create Admin Account"
                 )}
               </Button>
             </form>
 
             <div className="mt-6 text-center text-sm text-muted-foreground">
-              Need to create an admin account?{' '}
-              <Link to="/register" className="text-primary hover:underline font-medium">
-                Register here
+              Already have an account?{' '}
+              <Link to="/login" className="text-primary hover:underline font-medium">
+                Sign in
               </Link>
             </div>
           </CardContent>
@@ -162,4 +169,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default RegisterAdmin;

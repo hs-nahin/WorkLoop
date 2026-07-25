@@ -49,7 +49,7 @@ const PRIORITY_LEVELS = [
   { id: 'critical', label: 'Critical', color: 'text-red-600' },
 ];
 
-const ROLES = ['all', 'ADMIN', 'OFFICER', 'ASSISTANT'];
+const ROLES = ['all', 'ADMIN', 'USER', 'OFFICER', 'ASSISTANT'];
 
 const AnnouncementsPage = () => {
   const { user } = useAuth();

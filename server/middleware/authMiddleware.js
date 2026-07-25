@@ -1,55 +1,7 @@
-const jwt = require('jsonwebtoken');
-const { verifyToken } = require('../utils/token');
-const { admin, adminAuth, adminDb } = require('../firebase-admin');
+// Legacy file - auth middleware consolidated in ./auth.js
+// This file re-exports from the primary auth middleware for backward compatibility
+const { verifyToken, adminOnly, selfOrAdmin, authorize, writeAuditLog } = require('./auth');
 
-const protect = async (req, res, next) => {
-    let token;
-    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-        token = req.headers.authorization.split(' ')[1];
-    }
+const protect = verifyToken;
 
-    if (!token) {
-        return res.status(401).json({ message: 'Not authorized, no token' });
-    }
-
-    try {
-        let decoded;
-        try {
-            const decodedFirebase = await adminAuth.verifyIdToken(token);
-            decoded = {
-                userId: decodedFirebase.uid,
-                email: decodedFirebase.email,
-                role: 'USER'
-            };
-        } catch (firebaseError) {
-            try {
-                decoded = verifyToken(token);
-            } catch (jwtError) {
-                return res.status(401).json({ message: 'Not authorized, token failed' });
-            }
-        }
-        
-        // IMPORTANT: Fetch current role from Firestore to prevent stale token roles
-        const userDoc = await adminDb.collection('users').doc(decoded.userId).get();
-        if (userDoc.exists) {
-            decoded.role = userDoc.data().role || 'USER';
-            decoded.name = userDoc.data().name;
-        }
-
-        req.user = decoded;
-        next();
-    } catch (error) {
-        return res.status(401).json({ message: 'Not authorized, token failed' });
-    }
-};
-
-const authorize = (...roles) => {
-    return (req, res, next) => {
-        if (!req.user || !roles.includes(req.user.role)) {
-            return res.status(403).json({ message: 'Role not authorized' });
-        }
-        next();
-    };
-};
-
-module.exports = { protect, authorize };
+module.exports = { protect, authorize, verifyToken, adminOnly, selfOrAdmin, writeAuditLog };

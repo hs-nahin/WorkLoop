@@ -17,7 +17,7 @@ router.get('/', verifyToken, async (req, res) => {
         id: user.uid,
         email: user.email,
         name: user.displayName || user.email?.split('@')[0] || 'Unknown',
-        role: 'IT OFFICER', // Default role for fallback
+        role: 'USER', // Default role for fallback
         isActive: true
       }));
       return res.json(fallbackUsers);

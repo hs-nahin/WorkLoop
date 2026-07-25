@@ -33,12 +33,13 @@ import { Shield, Save, RotateCcw, Loader2, User, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiRequest } from '@/api/apiClient';
 
-const ROLES = ['ADMIN', 'IT OFFICER', 'ASSISTANT'];
+const ROLES = ['ADMIN', 'USER', 'IT OFFICER', 'ASSISTANT'];
 
 const roleColors = {
   ADMIN: 'bg-red-500/10 border-red-500/30 text-red-500',
   'IT OFFICER': 'bg-blue-500/10 border-blue-500/30 text-blue-500',
   ASSISTANT: 'bg-purple-500/10 border-purple-500/30 text-purple-500',
+  'USER': 'bg-blue-500/10 border-blue-500/30 text-blue-500',
 };
 
 const GROUPS = ALL_PERMISSIONS.reduce((acc, p) => {

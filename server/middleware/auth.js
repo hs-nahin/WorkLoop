@@ -1,5 +1,12 @@
 const { admin, adminAuth, adminDb } = require('../firebase-admin');
 
+const normalizeRole = (role) => {
+  if (!role) return '';
+  const r = role.toUpperCase();
+  if (r === 'IT_OFFICER') return 'IT OFFICER';
+  return r;
+};
+
 const verifyToken = async (req, res, next) => {
   let token;
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
@@ -24,7 +31,7 @@ const verifyToken = async (req, res, next) => {
       return res.status(403).json({ message: 'Account deactivated' });
     }
 
-    req.user = { uid: decodedToken.uid, ...userData };
+    req.user = { uid: decodedToken.uid, ...userData, role: normalizeRole(userData.role) };
     next();
   } catch (error) {
     console.error('Token verification error:', error);
@@ -33,7 +40,7 @@ const verifyToken = async (req, res, next) => {
 };
 
 const adminOnly = (req, res, next) => {
-  if (req.user?.role?.toUpperCase() !== 'ADMIN') {
+  if (req.user?.role !== 'ADMIN') {
     return res.status(403).json({ message: 'Admin access required' });
   }
   next();
@@ -41,7 +48,7 @@ const adminOnly = (req, res, next) => {
 
 const selfOrAdmin = (req, res, next) => {
   const targetUid = req.params.uid;
-  if (req.user?.uid !== targetUid && req.user?.role?.toUpperCase() !== 'ADMIN') {
+  if (req.user?.uid !== targetUid && req.user?.role !== 'ADMIN') {
     return res.status(403).json({ message: 'Access denied' });
   }
   next();
@@ -49,8 +56,8 @@ const selfOrAdmin = (req, res, next) => {
 
 const authorize = (allowedRoles) => {
   return (req, res, next) => {
-    const userRole = req.user?.role?.toUpperCase();
-    if (!userRole || !allowedRoles.map(r => r.toUpperCase()).includes(userRole)) {
+    const userRole = req.user?.role;
+    if (!userRole || !allowedRoles.map(r => normalizeRole(r)).includes(userRole)) {
       return res.status(403).json({ message: 'Insufficient permissions' });
     }
     next();

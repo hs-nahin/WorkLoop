@@ -10,6 +10,8 @@ import {
   Megaphone,
   PanelLeftClose,
   PanelLeftOpen,
+  Shield,
+  Users,
   X,
 } from "lucide-react";
 import { useContext, useMemo, useState } from "react";
@@ -20,14 +22,24 @@ import { AuthContext } from "../../../context/AuthContextInstance.js";
 import { cn } from "../../../lib/utils";
 import { hasPermission } from "../../../lib/permissions";
 
-const menuItems = [
+const adminMenuItems = [
+  { name: "Dashboard", path: "/admin/dashboard", icon: LayoutDashboard, roles: ["PROFILE_VIEW"] },
+  { name: "User Management", path: "/admin/user-management", icon: Users, roles: ["USER_LIST"] },
+  { name: "Tasks", path: "/admin/tasks", icon: CheckSquare, roles: ["COMMENT_CREATE"] },
+  { name: "Completed", path: "/admin/completed", icon: CheckCircle2, roles: ["COMMENT_CREATE"] },
+  { name: "Performance", path: "/admin/performance", icon: BarChart3, roles: ["PERFORMANCE_VIEW"] },
+  { name: "Announcements", path: "/admin/announcements", icon: Megaphone, roles: ["DASHBOARD_ADMIN"] },
+  { name: "Announcement History", path: "/admin/announcements/history", icon: History, roles: ["PROFILE_VIEW"] },
+  { name: "Audit Logs", path: "/admin/audit-logs", icon: History, roles: ["AUDIT_LOG_VIEW"] },
+  { name: "Permissions", path: "/admin/permissions", icon: Shield, roles: ["COMPANY_SETTINGS"] },
+];
+
+const userMenuItems = [
   { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard, roles: ["PROFILE_VIEW"] },
   { name: "Tasks", path: "/tasks", icon: CheckSquare, roles: ["COMMENT_CREATE"] },
   { name: "Completed", path: "/completed", icon: CheckCircle2, roles: ["COMMENT_CREATE"] },
-  { name: "Performance", path: "/performance", icon: BarChart3, roles: ["PERFORMANCE_VIEW"] },
-  { name: "Announcements", path: "/announcements", icon: Megaphone, roles: ["DASHBOARD_ADMIN"] },
+  { name: "Announcements", path: "/announcements", icon: Megaphone, roles: ["PROFILE_VIEW"] },
   { name: "Announcement History", path: "/announcements/history", icon: History, roles: ["PROFILE_VIEW"] },
-  { name: "Audit Logs", path: "/audit-logs", icon: History, roles: ["AUDIT_LOG_VIEW"] },
 ];
 
 const WorkLoopLogo = () => (
@@ -42,9 +54,12 @@ const Sidebar = () => {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [mobileCollapsed, setMobileCollapsed] = useState(false);
 
+  const isAdmin = (user?.role || '').toUpperCase() === 'ADMIN';
+  const baseMenuItems = isAdmin ? adminMenuItems : userMenuItems;
+
   const filteredItems = useMemo(
-    () => menuItems.filter(item => item.roles.some(r => hasPermission(user?.role, r))),
-    [user?.role]
+    () => baseMenuItems.filter(item => item.roles.some(r => hasPermission(user?.role, r))),
+    [user?.role, isAdmin]
   );
 
   const renderContent = (options = {}) => {
@@ -57,7 +72,7 @@ const Sidebar = () => {
         {/* Logo section */}
         <div className={cn("mb-7 flex animate-slide-in-left", isCollapsed ? "justify-center" : "px-5")}
           style={{ animationDelay: isMobile ? '20ms' : undefined }}>
-          <Link to="/dashboard" onClick={onNavClick} className={cn("flex items-center group", isCollapsed ? "justify-center" : "gap-2.5")}>
+          <Link to={isAdmin ? "/admin/dashboard" : "/dashboard"} onClick={onNavClick} className={cn("flex items-center group", isCollapsed ? "justify-center" : "gap-2.5")}>
             <div className={cn("shrink-0 group-hover:scale-105 transition-transform duration-300", isCollapsed ? "size-9" : "size-8")}>
               <WorkLoopLogo />
             </div>
@@ -75,7 +90,7 @@ const Sidebar = () => {
           <div className="px-5 mb-2 animate-slide-in-left"
             style={{ animationDelay: isMobile ? '30ms' : undefined }}>
             <p className="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-[0.12em]">
-              Navigation
+              {isAdmin ? 'Admin Panel' : 'Navigation'}
             </p>
           </div>
         )}
@@ -127,7 +142,7 @@ const Sidebar = () => {
         {/* Bottom section */}
         <div className={cn("mt-auto animate-slide-in-left", isCollapsed ? "flex justify-center p-2" : "px-3 py-2")}
           style={{ animationDelay: isMobile ? `${80 + filteredItems.length * 50}ms` : undefined }}>
-          <CreateTaskDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
+          {isAdmin && <CreateTaskDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />}
           <Button
             variant="ghost"
             className={cn(

@@ -11,6 +11,9 @@ import TaskList from "@/pages/tasks/TaskList/TaskList";
 import CompletedTasks from "@/pages/tasks/CompletedTasks/CompletedTasks";
 import AnnouncementsPage from "@/pages/announcements/AnnouncementsPage";
 import AnnouncementHistory from "@/pages/announcements/AnnouncementHistory";
+import UserManagement from "@/pages/admin/UserManagement/UserManagement";
+import RegisterAdmin from "@/pages/auth/RegisterAdmin/RegisterAdmin";
+import ErrorBoundary from "@/components/ui/ErrorBoundary";
 import { createBrowserRouter, RouterProvider } from "react-router";
 import ProtectedRoute from "@/router/ProtectedRoute/ProtectedRoute";
 
@@ -21,6 +24,10 @@ const router = createBrowserRouter([
     element: <Login />,
   },
   {
+    path: '/register',
+    element: <RegisterAdmin />,
+  },
+  {
     path: '/',
     element: <ProtectedRoute />,
     children: [
@@ -29,53 +36,103 @@ const router = createBrowserRouter([
         children: [
           {
             path: 'dashboard',
-            element: <Dashboard />,
+            element: <ErrorBoundary><Dashboard /></ErrorBoundary>,
           },
           {
             path: 'tasks',
-            element: <TaskList />,
+            element: <ErrorBoundary><TaskList /></ErrorBoundary>,
           },
           {
             path: 'tasks/:id',
-            element: <TaskDetail />,
+            element: <ErrorBoundary><TaskDetail /></ErrorBoundary>,
           },
           {
             path: 'completed',
-            element: <CompletedTasks />,
+            element: <ErrorBoundary><CompletedTasks /></ErrorBoundary>,
           },
-            {
-              path: 'settings',
-              element: <Settings />,
-            },
-            {
-              path: 'profile',
-              element: <Profile />,
-            },
-            {
-              path: 'performance',
-              element: <UserPerformanceDashboard />,
-            },
-             {
-               path: 'audit-logs',
-               element: <AuditLogs />,
-             },
-             {
-               path: 'announcements',
-               element: <AnnouncementsPage />,
-             },
-             {
-               path: 'announcements/history',
-               element: <AnnouncementHistory />,
-             },
-             {
-               path: 'permissions',
-               element: <PermissionsEditor />,
-             },
-
+          {
+            path: 'settings',
+            element: <ErrorBoundary><Settings /></ErrorBoundary>,
+          },
+          {
+            path: 'profile',
+            element: <ErrorBoundary><Profile /></ErrorBoundary>,
+          },
+          {
+            path: 'announcements',
+            element: <ErrorBoundary><AnnouncementsPage /></ErrorBoundary>,
+          },
+          {
+            path: 'announcements/history',
+            element: <ErrorBoundary><AnnouncementHistory /></ErrorBoundary>,
+          },
 
           {
             index: true,
-            element: <Dashboard />,
+            element: <ErrorBoundary><Dashboard /></ErrorBoundary>,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    path: '/admin',
+    element: <ProtectedRoute requiredRole="ADMIN" />,
+    children: [
+      {
+        element: <MainLayout />,
+        children: [
+          {
+            path: 'dashboard',
+            element: <ErrorBoundary><Dashboard /></ErrorBoundary>,
+          },
+          {
+            path: 'user-management',
+            element: <ErrorBoundary><UserManagement /></ErrorBoundary>,
+          },
+          {
+            path: 'tasks',
+            element: <ErrorBoundary><TaskList /></ErrorBoundary>,
+          },
+          {
+            path: 'tasks/:id',
+            element: <ErrorBoundary><TaskDetail /></ErrorBoundary>,
+          },
+          {
+            path: 'completed',
+            element: <ErrorBoundary><CompletedTasks /></ErrorBoundary>,
+          },
+          {
+            path: 'performance',
+            element: <ErrorBoundary><UserPerformanceDashboard /></ErrorBoundary>,
+          },
+          {
+            path: 'audit-logs',
+            element: <ErrorBoundary><AuditLogs /></ErrorBoundary>,
+          },
+          {
+            path: 'permissions',
+            element: <ErrorBoundary><PermissionsEditor /></ErrorBoundary>,
+          },
+          {
+            path: 'settings',
+            element: <ErrorBoundary><Settings /></ErrorBoundary>,
+          },
+          {
+            path: 'profile',
+            element: <ErrorBoundary><Profile /></ErrorBoundary>,
+          },
+          {
+            path: 'announcements',
+            element: <ErrorBoundary><AnnouncementsPage /></ErrorBoundary>,
+          },
+          {
+            path: 'announcements/history',
+            element: <ErrorBoundary><AnnouncementHistory /></ErrorBoundary>,
+          },
+          {
+            index: true,
+            element: <ErrorBoundary><Dashboard /></ErrorBoundary>,
           },
         ],
       },

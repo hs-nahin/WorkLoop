@@ -57,7 +57,7 @@ const Profile = () => {
             <div className="flex justify-center gap-2">
               <div className={`px-3 py-1 rounded-full text-[10px] font-bold border ${
                 user.role === 'ADMIN' ? 'bg-red-500/10 text-red-600 border-red-500/20' :
-                user.role === 'IT OFFICER' || user.role === 'IT_OFFICER' ? 'bg-blue-500/10 text-blue-600 border-blue-500/20' :
+                (user.role === 'IT OFFICER' || user.role === 'IT_OFFICER' || user.role === 'USER') ? 'bg-blue-500/10 text-blue-600 border-blue-500/20' :
                 'bg-purple-500/10 text-purple-600 border-purple-500/20'
               }`}>
                 {user.role}

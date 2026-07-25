@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const { admin, adminDb } = require('../firebase-admin');
-const { protect, authorize } = require('../middleware/authMiddleware');
+const { verifyToken, authorize, writeAuditLog } = require('../middleware/auth');
 
 // Get announcements based on user role and status
-router.get('/', protect, async (req, res) => {
+router.get('/', verifyToken, async (req, res) => {
     try {
         const userRole = req.user.role;
         const now = new Date();
@@ -42,10 +42,10 @@ router.get('/', protect, async (req, res) => {
 });
 
 // Mark announcement as read by user
-router.post('/:id/read', protect, async (req, res) => {
+router.post('/:id/read', verifyToken, async (req, res) => {
     try {
         const { id } = req.params;
-        const userId = req.user.userId;
+        const userId = req.user.uid;
 
         await adminDb.collection('announcements').doc(id).collection('readBy').doc(userId).set({
             readAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -59,7 +59,7 @@ router.post('/:id/read', protect, async (req, res) => {
 });
 
 // ADMIN: Create announcement
-router.post('/', protect, authorize('ADMIN'), async (req, res) => {
+router.post('/', verifyToken, authorize(['ADMIN']), async (req, res) => {
     try {
         const { title, message, type, priority, startsAt, expiresAt, targetRoles, pinned } = req.body;
 
@@ -77,20 +77,16 @@ router.post('/', protect, authorize('ADMIN'), async (req, res) => {
             targetRoles: targetRoles || ['all'],
             pinned: pinned || false,
             active: true,
-            createdBy: req.user.userId || req.user.uid,
+            createdBy: req.user.uid,
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
         };
 
         const docRef = await adminDb.collection('announcements').add(announcementData);
 
-        const userName = req.user.name || req.user.email || 'Unknown User';
-
-        await adminDb.collection('audit-logs').add({
-            action: 'ANNOUNCEMENT_CREATED',
-            userId: req.user.userId || req.user.uid,
-            userName: userName,
-            details: `Created announcement: ${title}`,
-            timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        await writeAuditLog('ANNOUNCEMENT_CREATED', req.user, {
+            targetId: docRef.id,
+            targetTitle: title,
+            description: `Created announcement: ${title}`,
         });
 
         const createdDoc = await docRef.get();
@@ -104,7 +100,7 @@ router.post('/', protect, authorize('ADMIN'), async (req, res) => {
 });
 
 // ADMIN: Update announcement
-router.put('/:id', protect, authorize('ADMIN'), async (req, res) => {
+router.put('/:id', verifyToken, authorize(['ADMIN']), async (req, res) => {
     try {
         const { id } = req.params;
         const updates = req.body;
@@ -113,12 +109,9 @@ router.put('/:id', protect, authorize('ADMIN'), async (req, res) => {
 
         await adminDb.collection('announcements').doc(id).update(updates);
 
-        await adminDb.collection('audit-logs').add({
-            action: 'ANNOUNCEMENT_UPDATED',
-            userId: req.user.userId,
-            userName: req.user.name || req.user.email || 'Unknown User',
-            details: `Updated announcement ${id}`,
-            timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        await writeAuditLog('ANNOUNCEMENT_UPDATED', req.user, {
+            targetId: id,
+            description: `Updated announcement ${id}`,
         });
 
         res.json({ message: 'Announcement updated successfully' });
@@ -129,27 +122,25 @@ router.put('/:id', protect, authorize('ADMIN'), async (req, res) => {
 });
 
 // ADMIN: Delete announcement
-router.delete('/:id', protect, authorize('ADMIN'), async (req, res) => {
+router.delete('/:id', verifyToken, authorize(['ADMIN']), async (req, res) => {
     try {
         const { id } = req.params;
         await adminDb.collection('announcements').doc(id).delete();
 
-        await adminDb.collection('audit-logs').add({
-            action: 'ANNOUNCEMENT_DELETED',
-            userId: req.user.userId,
-            userName: req.user.name,
-            details: `Deleted announcement ${id}`,
-            timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        await writeAuditLog('ANNOUNCEMENT_DELETED', req.user, {
+            targetId: id,
+            description: `Deleted announcement ${id}`,
         });
 
         res.json({ message: 'Announcement deleted successfully' });
     } catch (error) {
+        console.error('Error deleting announcement:', error);
         res.status(500).json({ message: 'Error deleting announcement', error: error.message });
     }
 });
 
 // ADMIN: Toggle active status
-router.patch('/:id/toggle', protect, authorize('ADMIN'), async (req, res) => {
+router.patch('/:id/toggle', verifyToken, authorize(['ADMIN']), async (req, res) => {
     try {
         const { id } = req.params;
         const docRef = adminDb.collection('announcements').doc(id);
@@ -160,12 +151,9 @@ router.patch('/:id/toggle', protect, authorize('ADMIN'), async (req, res) => {
         const currentStatus = doc.data().active;
         await docRef.update({ active: !currentStatus });
 
-        await adminDb.collection('audit-logs').add({
-            action: 'ANNOUNCEMENT_STATUS_TOGGLED',
-            userId: req.user.userId,
-            userName: req.user.name || req.user.email || 'Unknown User',
-            details: `Toggled status of announcement ${id} to ${!currentStatus}`,
-            timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        await writeAuditLog('ANNOUNCEMENT_STATUS_TOGGLED', req.user, {
+            targetId: id,
+            description: `Toggled status of announcement ${id} to ${!currentStatus}`,
         });
 
         res.json({ message: `Announcement ${!currentStatus ? 'activated' : 'deactivated'} successfully` });
