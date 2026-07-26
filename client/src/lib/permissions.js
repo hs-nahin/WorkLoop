@@ -70,6 +70,7 @@ let permissionsVersion = 0;
 let unsubRolePerms = null;
 let unsubUserPerms = null;
 let currentUserId = null;
+let subscribeScheduled = null;
 
 export const setCurrentUser = (uid) => {
   currentUserId = uid;
@@ -226,38 +227,57 @@ export const canAll = (role, permissions) => {
 export const subscribeToPermissions = (uid) => {
   unsubscribeFromPermissions();
 
-  unsubRolePerms = onSnapshot(collection(db, 'rolePermissions'), (snapshot) => {
-    snapshot.docChanges().forEach((change) => {
-      if (change.type === 'added' || change.type === 'modified' || change.type === 'removed') {
-        const roleId = change.doc.id;
-        const data = change.doc.data();
-        if (change.type === 'removed') {
-          cachedPermissions[roleId] = { ...DEFAULT_ROLE_PERMISSIONS };
-        } else {
-          cachedPermissions[roleId] = { ...DEFAULT_ROLE_PERMISSIONS, ...data };
-        }
-      }
-    });
-    notifyChange();
-  }, (error) => {
-    console.error('Role permissions listener error:', error);
-  });
+  const doSubscribe = () => {
+    try {
+      unsubRolePerms = onSnapshot(collection(db, 'rolePermissions'), (snapshot) => {
+        snapshot.docChanges().forEach((change) => {
+          if (change.type === 'added' || change.type === 'modified' || change.type === 'removed') {
+            const roleId = change.doc.id;
+            const data = change.doc.data();
+            if (change.type === 'removed') {
+              cachedPermissions[roleId] = { ...DEFAULT_ROLE_PERMISSIONS };
+            } else {
+              cachedPermissions[roleId] = { ...DEFAULT_ROLE_PERMISSIONS, ...data };
+            }
+          }
+        });
+        notifyChange();
+      }, (error) => {
+        console.error('Role permissions listener error:', error);
+      });
+    } catch (error) {
+      console.error('Failed to subscribe to role permissions:', error);
+    }
 
-  if (uid) {
-    unsubUserPerms = onSnapshot(doc(db, 'userPermissions', uid), (docSnap) => {
-      if (docSnap.exists()) {
-        cachedUserPermissions[uid] = docSnap.data();
-      } else {
-        cachedUserPermissions[uid] = {};
+    if (uid) {
+      try {
+        unsubUserPerms = onSnapshot(doc(db, 'userPermissions', uid), (docSnap) => {
+          if (docSnap.exists()) {
+            cachedUserPermissions[uid] = docSnap.data();
+          } else {
+            cachedUserPermissions[uid] = {};
+          }
+          notifyChange();
+        }, (error) => {
+          console.error('User permissions listener error:', error);
+        });
+      } catch (error) {
+        console.error('Failed to subscribe to user permissions:', error);
       }
-      notifyChange();
-    }, (error) => {
-      console.error('User permissions listener error:', error);
-    });
-  }
+    }
+  };
+
+  subscribeScheduled = setTimeout(() => {
+    subscribeScheduled = null;
+    doSubscribe();
+  }, 50);
 };
 
 export const unsubscribeFromPermissions = () => {
+  if (subscribeScheduled) {
+    clearTimeout(subscribeScheduled);
+    subscribeScheduled = null;
+  }
   if (unsubRolePerms) {
     try { unsubRolePerms(); } catch (_) {}
     unsubRolePerms = null;
