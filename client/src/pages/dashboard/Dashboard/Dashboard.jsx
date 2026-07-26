@@ -31,6 +31,8 @@ import BlurFade from "@/components/animations/BlurFade";
 import NumberTicker from "@/components/animations/NumberTicker";
 import { AuthContext } from "@/context/AuthContextInstance";
 import { useRealTimeStats } from "@/hooks/useRealtime";
+import { loadRoles } from "@/lib/permissions";
+import { resolveRoleName } from "@/lib/roleUtils";
 
 import TaskStatusChart from "@/components/dashboard/TaskStatusChart/TaskStatusChart";
 import WeeklyTrendChart from "@/components/dashboard/WeeklyTrendChart/WeeklyTrendChart";
@@ -66,6 +68,7 @@ const Dashboard = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [officers, setOfficers] = useState([]);
   const [assistants, setAssistants] = useState([]);
+  const [roles, setRoles] = useState([]);
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
@@ -128,6 +131,10 @@ const Dashboard = () => {
       fetchUsers();
     }
   }, [user]);
+
+  useEffect(() => {
+    loadRoles().then(setRoles);
+  }, []);
   
   const handleCreateTask = async () => {
     if (!newTask.title.trim()) return toast.error('Title is required');
@@ -178,7 +185,12 @@ const Dashboard = () => {
       <AnnouncementBanner />
       <header>
         <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground mt-1">Operational intelligence & analytics</p>
+        <p className="text-muted-foreground mt-1">
+          {user?.role === 'ADMIN'
+            ? 'Operational intelligence & analytics'
+            : `Welcome back, ${user?.name || 'User'} — ${resolveRoleName(user?.role, roles)}`
+          }
+        </p>
       </header>
 
       {/* Top Summary Cards */}

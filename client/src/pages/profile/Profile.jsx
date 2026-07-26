@@ -20,11 +20,12 @@ import {
   X,
   Loader2,
 } from 'lucide-react';
-import { useContext, useMemo, useState } from 'react';
+import { useContext, useEffect, useMemo, useState } from 'react';
 import { AuthContext } from '@/context/AuthContextInstance.js';
 import { toast } from 'sonner';
 import { auth } from '@/lib/firebase';
-import { getRoleBadgeColor } from '@/lib/roleUtils';
+import { getRoleBadgeColor, resolveRoleName } from '@/lib/roleUtils';
+import { loadRoles } from '@/lib/permissions';
 
 const Profile = () => {
   const { user, fetchMe } = useContext(AuthContext);
@@ -32,6 +33,11 @@ const Profile = () => {
   const [editingName, setEditingName] = useState(false);
   const [nameValue, setNameValue] = useState('');
   const [saving, setSaving] = useState(false);
+  const [roles, setRoles] = useState([]);
+
+  useEffect(() => {
+    loadRoles().then(setRoles);
+  }, []);
 
   const joinDate = useMemo(() => {
     if (!user?.createdAt) return null;
@@ -110,7 +116,7 @@ const Profile = () => {
             </div>
             <div className="flex justify-center gap-2">
               <div className={`px-3 py-1 rounded-full text-[10px] font-bold border ${getRoleBadgeColor(user.role)}`}>
-                {user.role}
+                {resolveRoleName(user.role, roles)}
               </div>
             </div>
             <Separator />
@@ -211,7 +217,7 @@ const Profile = () => {
                   <Shield size={14} /> Role
                 </label>
                 <p className="p-3 rounded-lg bg-muted/50 border border-border text-sm font-medium">
-                  {user.role || 'N/A'}
+                  {resolveRoleName(user.role, roles)}
                 </p>
               </div>
               {user.location && (

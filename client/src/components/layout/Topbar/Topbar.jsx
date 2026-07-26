@@ -8,10 +8,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Bell, LogOut, Settings, User, Trash2, Megaphone } from "lucide-react";
 import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { getRoleTopbarColor, getRoleDisplayName } from "@/lib/roleUtils";
+import { getRoleTopbarColor, resolveRoleName } from "@/lib/roleUtils";
 import { apiRequest } from "../../../api/apiClient";
 import { AuthContext } from "../../../context/AuthContextInstance.js";
-import { hasPermission } from "../../../lib/permissions";
+import { hasPermission, loadRoles } from "../../../lib/permissions";
 import { db } from "../../../lib/firebase";
 import { collection, query, where, orderBy, onSnapshot, updateDoc, doc, deleteDoc } from "firebase/firestore";
 
@@ -21,6 +21,11 @@ const TopBar = () => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
+  const [roles, setRoles] = useState([]);
+
+  useEffect(() => {
+    loadRoles().then(setRoles);
+  }, []);
 
   useEffect(() => {
     if (!user?.uid) return;
@@ -120,7 +125,7 @@ const TopBar = () => {
 
   const getRoleBadgeColor = (role) => getRoleTopbarColor(role);
 
-  const getRoleDisplay = (role) => getRoleDisplayName(role);
+  const getRoleDisplay = (role) => resolveRoleName(role, roles);
 
   return (
     <header className="h-16 border-b bg-card/80 backdrop-blur-md px-2 sm:px-4 md:px-6 pl-14 flex items-center justify-between sticky top-0 z-40">
