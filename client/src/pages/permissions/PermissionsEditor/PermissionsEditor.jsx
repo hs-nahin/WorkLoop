@@ -111,7 +111,8 @@ const PermissionsEditor = () => {
     );
   }
 
-  const allRoleIds = ['ADMIN', ...roles.map(r => r.id)];
+  const BUILTIN_ROLE_IDS = ['USER', 'IT OFFICER', 'ASSISTANT'];
+  const allRoleIds = ['ADMIN', ...new Set([...BUILTIN_ROLE_IDS, ...roles.map(r => r.id)])];
 
   const handleToggle = (permissionId) => {
     setPerms(prev => {

@@ -156,8 +156,9 @@ export const getRoles = () => cachedRoles;
 
 export const loadRoles = async () => {
   try {
-    const snap = await getDocs(collection(db, 'roles'));
-    cachedRoles = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const { apiRequest } = await import('@/api/apiClient');
+    const roles = await apiRequest({ endpoint: '/roles' });
+    cachedRoles = Array.isArray(roles) ? roles : [];
     return cachedRoles;
   } catch (error) {
     console.error('Failed to load roles:', error);
@@ -230,21 +231,15 @@ export const loadPermissions = async () => {
   try {
     const results = { ADMIN: { ...ADMIN_FULL_PERMISSIONS } };
 
-    const roleSnap = await getDocs(collection(db, 'roles'));
-    const dynamicRoles = roleSnap.docs.map(d => d.id);
+    const { apiRequest } = await import('@/api/apiClient');
+    const roles = await apiRequest({ endpoint: '/roles' });
+    const rolesList = Array.isArray(roles) ? roles : [];
 
-    for (const roleId of dynamicRoles) {
+    for (const role of rolesList) {
+      const roleId = role.id;
       const defaults = DEFAULT_ROLE_PERMISSIONS[roleId] || {};
-      try {
-        const permSnap = await getDoc(doc(db, 'rolePermissions', roleId));
-        if (permSnap.exists()) {
-          results[roleId] = { ...defaults, ...permSnap.data() };
-        } else {
-          results[roleId] = { ...defaults };
-        }
-      } catch (_) {
-        results[roleId] = { ...defaults };
-      }
+      const stored = role.defaultPermissions || {};
+      results[roleId] = { ...defaults, ...stored };
     }
 
     for (const roleId of Object.keys(DEFAULT_ROLE_PERMISSIONS)) {
@@ -254,10 +249,10 @@ export const loadPermissions = async () => {
     }
 
     cachedPermissions = results;
-    cachedRoles = roleSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    cachedRoles = rolesList;
     return results;
   } catch (error) {
-    console.error('Failed to load permissions from Firestore, using defaults:', error);
+    console.error('Failed to load permissions from server, using defaults:', error);
     cachedPermissions = { ADMIN: { ...ADMIN_FULL_PERMISSIONS }, ...DEFAULT_ROLE_PERMISSIONS };
     return cachedPermissions;
   }
