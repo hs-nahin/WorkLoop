@@ -78,10 +78,6 @@ const PermissionsEditor = () => {
 
   const isUserMode = selectedUser !== null;
 
-  const isSystemRole = useCallback((roleId) => {
-    return roleId === 'ADMIN' || roleId === 'USER';
-  }, []);
-
   const refreshData = useCallback(async () => {
     await loadPermissions();
     setPerms(getPermissions());
@@ -111,8 +107,7 @@ const PermissionsEditor = () => {
     );
   }
 
-  const BUILTIN_ROLE_IDS = ['USER', 'IT OFFICER', 'ASSISTANT'];
-  const allRoleIds = ['ADMIN', ...new Set([...BUILTIN_ROLE_IDS, ...roles.map(r => r.id)])];
+  const allRoleIds = ['ADMIN', ...roles.map(r => r.id)];
 
   const handleToggle = (permissionId) => {
     setPerms(prev => {
@@ -200,8 +195,8 @@ const PermissionsEditor = () => {
   const handleCreateRole = async () => {
     if (!newRoleName.trim()) return toast.error('Role name is required');
     const roleId = newRoleName.trim().toUpperCase().replace(/\s+/g, '_');
-    if (['ADMIN', 'USER', 'IT_OFFICER', 'IT OFFICER', 'ASSISTANT'].includes(roleId)) {
-      return toast.error('This role name is reserved');
+    if (roleId === 'ADMIN') {
+      return toast.error('Cannot create a role named ADMIN');
     }
     if (roles.some(r => r.id === roleId)) {
       return toast.error('A role with this name already exists');
@@ -383,7 +378,7 @@ const PermissionsEditor = () => {
             )}
           </h2>
           <div className="flex gap-2">
-            {!isUserMode && !isSystemRole(activeRole) && (
+            {!isUserMode && activeRole !== 'ADMIN' && (
               <>
                 <Button
                   variant="outline"

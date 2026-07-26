@@ -1,29 +1,17 @@
 const ROLE_COLORS = {
   ADMIN: 'bg-red-500/20 text-red-500',
-  USER: 'bg-blue-500/20 text-blue-500',
-  'IT OFFICER': 'bg-blue-500/20 text-blue-500',
-  ASSISTANT: 'bg-purple-500/20 text-purple-500',
 };
 
 const ROLE_BADGE_COLORS = {
   ADMIN: 'bg-red-500/10 border-red-500/30 text-red-500',
-  USER: 'bg-blue-500/10 border-blue-500/30 text-blue-500',
-  'IT OFFICER': 'bg-blue-500/10 border-blue-500/30 text-blue-500',
-  ASSISTANT: 'bg-purple-500/10 border-purple-500/30 text-purple-500',
 };
 
 const ROLE_TOPBAR_COLORS = {
   ADMIN: 'bg-red-50 dark:bg-red-800',
-  USER: 'bg-blue-50 dark:bg-blue-800',
-  'IT OFFICER': 'bg-blue-50 dark:bg-blue-800',
-  ASSISTANT: 'bg-purple-50 dark:bg-purple-800',
 };
 
 const ROLE_AVATAR_COLORS = {
   ADMIN: 'bg-red-400/20 text-red-400',
-  USER: 'bg-sky-400/20 text-sky-400',
-  'IT OFFICER': 'bg-blue-500/20 text-blue-500',
-  ASSISTANT: 'bg-purple-500/20 text-purple-500',
 };
 
 const CUSTOM_ROLE_PALETTE = [
@@ -81,7 +69,5 @@ export const getRoleAvatarColor = (role) => getFromPalette(role, CUSTOM_AVATAR_P
 
 export const getRoleDisplayName = (role) => {
   if (!role) return 'Unknown';
-  const r = role.toUpperCase();
-  if (r === 'IT_OFFICER') return 'IT Officer';
-  return role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
+  return role.charAt(0).toUpperCase() + role.slice(1).toLowerCase().replace(/_/g, ' ');
 };

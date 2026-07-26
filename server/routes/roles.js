@@ -3,8 +3,6 @@ const router = express.Router();
 const { admin, adminDb } = require('../firebase-admin');
 const { verifyToken, writeAuditLog } = require('../middleware/auth');
 
-const SYSTEM_ROLES = ['ADMIN', 'USER'];
-
 // ADMIN: List all roles
 router.get('/', verifyToken, async (req, res) => {
   try {
@@ -36,8 +34,8 @@ router.post('/', verifyToken, async (req, res) => {
 
     const roleId = name.trim().toUpperCase().replace(/\s+/g, '_');
 
-    if (SYSTEM_ROLES.includes(roleId)) {
-      return res.status(400).json({ message: `Cannot create a role with reserved name "${name}"` });
+    if (roleId === 'ADMIN') {
+      return res.status(400).json({ message: 'Cannot create a role named ADMIN' });
     }
 
     const existing = await adminDb.doc(`roles/${roleId}`).get();
@@ -48,7 +46,6 @@ router.post('/', verifyToken, async (req, res) => {
     const roleData = {
       name: name.trim(),
       description: description || '',
-      isSystem: false,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       createdBy: req.user.uid,
     };
@@ -78,14 +75,13 @@ router.put('/:id', verifyToken, async (req, res) => {
     const { id } = req.params;
     const { name, description } = req.body;
 
+    if (id === 'ADMIN') {
+      return res.status(400).json({ message: 'Cannot rename the Admin role' });
+    }
+
     const roleDoc = await adminDb.doc(`roles/${id}`).get();
     if (!roleDoc.exists) {
       return res.status(404).json({ message: 'Role not found' });
-    }
-
-    const roleData = roleDoc.data();
-    if (roleData.isSystem && SYSTEM_ROLES.includes(id)) {
-      return res.status(400).json({ message: 'Cannot rename system roles' });
     }
 
     const updateData = {};
@@ -102,7 +98,7 @@ router.put('/:id', verifyToken, async (req, res) => {
       description: `Updated role: ${name || id}`,
     });
 
-    res.json({ id, ...roleData, ...updateData });
+    res.json({ id, ...roleDoc.data(), ...updateData });
   } catch (error) {
     console.error('Update role error:', error);
     res.status(500).json({ message: error.message || 'Failed to update role' });
@@ -139,6 +135,19 @@ router.put('/:id/permissions', verifyToken, async (req, res) => {
   }
 });
 
+// ADMIN: Load per-user permission overrides
+router.get('/users/:uid/permissions', verifyToken, async (req, res) => {
+  try {
+    const { uid } = req.params;
+    const doc = await adminDb.doc(`userPermissions/${uid}`).get();
+    const permissions = doc.exists ? doc.data() : {};
+    res.json({ uid, permissions });
+  } catch (error) {
+    console.error('Load user permissions error:', error);
+    res.status(500).json({ message: error.message || 'Failed to load user permissions' });
+  }
+});
+
 // ADMIN: Save per-user permission overrides
 router.put('/users/:uid/permissions', verifyToken, async (req, res) => {
   try {
@@ -164,18 +173,18 @@ router.put('/users/:uid/permissions', verifyToken, async (req, res) => {
   }
 });
 
-// ADMIN: Delete a custom role
+// ADMIN: Delete a role
 router.delete('/:id', verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
 
+    if (id === 'ADMIN') {
+      return res.status(400).json({ message: 'Cannot delete the Admin role' });
+    }
+
     const roleDoc = await adminDb.doc(`roles/${id}`).get();
     if (!roleDoc.exists) {
       return res.status(404).json({ message: 'Role not found' });
-    }
-
-    if (roleDoc.data().isSystem || SYSTEM_ROLES.includes(id)) {
-      return res.status(400).json({ message: 'Cannot delete system roles' });
     }
 
     await adminDb.doc(`roles/${id}`).delete();

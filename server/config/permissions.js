@@ -1,72 +1,54 @@
-const PERMISSION_ROLES = {
-  TASK_CREATE: ['ADMIN'],
-  TASK_EDIT: ['ADMIN'],
-  TASK_DELETE: ['ADMIN'],
-  TASK_ASSIGN_OFFICER: ['ADMIN'],
-  TASK_ASSIGN_ASSISTANT: ['ADMIN'],
-  TASK_ACCEPT: ['IT OFFICER', 'IT_OFFICER', 'USER'],
-  TASK_SUBMIT: ['IT OFFICER', 'IT_OFFICER', 'USER'],
-  TASK_MARK_INCOMPLETE: ['IT OFFICER', 'IT_OFFICER', 'USER'],
-  TASK_APPROVE: ['ADMIN'],
-  TASK_REJECT: ['ADMIN'],
-  TASK_VIEW_ALL: ['ADMIN'],
-  TASK_ADD_PROGRESS: ['IT OFFICER', 'IT_OFFICER', 'ASSISTANT', 'USER'],
+const { adminDb } = require('../firebase-admin');
 
-  SUBTASK_CREATE: ['ADMIN', 'IT OFFICER', 'IT_OFFICER', 'USER'],
-  SUBTASK_EDIT: ['ADMIN', 'IT OFFICER', 'IT_OFFICER', 'USER'],
-  SUBTASK_DELETE: ['ADMIN', 'IT OFFICER', 'IT_OFFICER', 'USER'],
-  SUBTASK_UPDATE_STATUS: ['ADMIN', 'IT OFFICER', 'IT_OFFICER', 'ASSISTANT', 'USER'],
-  SUBTASK_ACCEPT: ['ADMIN', 'IT OFFICER', 'IT_OFFICER', 'ASSISTANT', 'USER'],
-  SUBTASK_REJECT: ['ADMIN', 'IT OFFICER', 'IT_OFFICER', 'ASSISTANT', 'USER'],
+let rolePermissionsCache = {};
+let lastCacheRefresh = 0;
+const CACHE_TTL_MS = 60000;
 
-  ATTACHMENT_UPLOAD: ['ADMIN', 'IT OFFICER', 'IT_OFFICER', 'ASSISTANT', 'USER'],
-  ATTACHMENT_DELETE: ['ADMIN', 'IT OFFICER', 'IT_OFFICER', 'ASSISTANT', 'USER'],
-
-  COMMENT_CREATE: ['ADMIN', 'IT OFFICER', 'IT_OFFICER', 'ASSISTANT', 'USER'],
-
-  USER_LIST: ['ADMIN'],
-  USER_CREATE: ['ADMIN'],
-  USER_EDIT: ['ADMIN'],
-  USER_DELETE: ['ADMIN'],
-  USER_TOGGLE: ['ADMIN'],
-  USER_PASSWORD_RESET: ['ADMIN'],
-
-  AUDIT_LOG_VIEW: ['ADMIN'],
-  PERFORMANCE_VIEW: ['ADMIN'],
-  COMPANY_SETTINGS: ['ADMIN'],
-  DASHBOARD_ADMIN: ['ADMIN'],
-  NOTIFICATIONS_ADMIN_VIEW: ['ADMIN'],
-  NOTIFICATIONS_OFFICER_VIEW: ['IT OFFICER', 'IT_OFFICER', 'ASSISTANT', 'USER'],
-
-  SETTINGS_VIEW: ['ADMIN'],
-  PROFILE_VIEW: ['ADMIN', 'IT OFFICER', 'IT_OFFICER', 'ASSISTANT', 'USER'],
+const refreshCache = async () => {
+  try {
+    const snapshot = await adminDb.collection('rolePermissions').get();
+    const cache = {};
+    snapshot.docs.forEach(doc => {
+      cache[doc.id] = doc.data();
+    });
+    rolePermissionsCache = cache;
+    lastCacheRefresh = Date.now();
+  } catch (error) {
+    console.error('Failed to refresh permissions cache:', error);
+  }
 };
 
-const normalizeRole = (role) => {
-  if (!role) return '';
-  const r = role.toUpperCase();
-  if (r === 'IT_OFFICER') return 'IT OFFICER';
-  return r;
+const getRolePermissions = async (roleId) => {
+  if (Date.now() - lastCacheRefresh > CACHE_TTL_MS) {
+    await refreshCache();
+  }
+  return rolePermissionsCache[roleId] || {};
 };
 
 const checkPermission = (permissionName) => {
   return (req, res, next) => {
-    const allowedRoles = PERMISSION_ROLES[permissionName];
-    if (!allowedRoles) {
-      return res.status(500).json({ message: `Permission ${permissionName} not defined` });
+    const userRole = (req.user?.role || '').toUpperCase();
+    if (!userRole) {
+      return res.status(403).json({ message: 'No role assigned' });
     }
-    const userRole = normalizeRole(req.user?.role);
-    if (!userRole || !allowedRoles.map(r => normalizeRole(r)).includes(userRole)) {
-      return res.status(403).json({ message: 'Insufficient permissions' });
-    }
-    next();
+    if (userRole === 'ADMIN') return next();
+
+    getRolePermissions(userRole)
+      .then(perms => {
+        if (perms[permissionName] === true) return next();
+        return res.status(403).json({ message: 'Insufficient permissions' });
+      })
+      .catch(() => {
+        return res.status(500).json({ message: 'Failed to check permissions' });
+      });
   };
 };
 
-const hasRole = (userRole, permissionName) => {
-  const allowedRoles = PERMISSION_ROLES[permissionName];
-  if (!allowedRoles) return false;
-  return allowedRoles.map(r => normalizeRole(r)).includes(normalizeRole(userRole));
+const hasRole = async (userRole, permissionName) => {
+  const r = (userRole || '').toUpperCase();
+  if (r === 'ADMIN') return true;
+  const perms = await getRolePermissions(r);
+  return perms[permissionName] === true;
 };
 
-module.exports = { PERMISSION_ROLES, checkPermission, hasRole };
+module.exports = { checkPermission, hasRole, refreshCache };

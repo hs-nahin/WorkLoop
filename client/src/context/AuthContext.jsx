@@ -2,10 +2,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import {
-  subscribeUserPermissions,
-  unsubscribeUserPermissions,
-  subscribeRolePermissions,
-  unsubscribeRolePermissions,
   onPermissionsChange,
   getPermissionsVersion,
 } from '../lib/permissions';
@@ -80,19 +76,13 @@ export const AuthProvider = ({ children }) => {
   }, [fetchFirestoreProfile]);
 
   useEffect(() => {
-    const uid = firestoreProfile?.uid || firebaseUser?.uid;
-    const role = firestoreProfile?.role;
-    if (uid) subscribeUserPermissions(uid);
-    if (role) subscribeRolePermissions(role);
     const unsubChange = onPermissionsChange(() => {
       setPermissionsVersion(getPermissionsVersion());
     });
     return () => {
-      if (uid) unsubscribeUserPermissions(uid);
-      if (role) unsubscribeRolePermissions(role);
       unsubChange();
     };
-  }, [firestoreProfile?.uid, firestoreProfile?.role, firebaseUser?.uid]);
+  }, []);
 
   const login = async ({ email, password }) => {
     try {

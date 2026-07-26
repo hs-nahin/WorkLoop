@@ -1,5 +1,3 @@
-import { doc, getDoc, onSnapshot, collection, getDocs } from 'firebase/firestore';
-import { db } from '@/firebase/firebaseConfig';
 import { apiRequest } from '@/api/apiClient';
 
 export const ALL_PERMISSIONS = [
@@ -42,69 +40,13 @@ export const ADMIN_FULL_PERMISSIONS = ALL_PERMISSIONS.reduce((acc, p) => {
   return acc;
 }, {});
 
-const DEFAULT_ROLE_PERMISSIONS = {
-  USER: {
-    TASK_CREATE: false, TASK_EDIT: false, TASK_DELETE: false,
-    TASK_ASSIGN_OFFICER: false, TASK_ASSIGN_ASSISTANT: false,
-    TASK_ACCEPT: true, TASK_SUBMIT: true, TASK_MARK_INCOMPLETE: true,
-    TASK_APPROVE: false, TASK_REJECT: false, TASK_VIEW_ALL: false, TASK_ADD_PROGRESS: true,
-    SUBTASK_CREATE: true, SUBTASK_EDIT: true, SUBTASK_DELETE: true, SUBTASK_UPDATE_STATUS: true, SUBTASK_ACCEPT: true, SUBTASK_REJECT: true,
-    ATTACHMENT_UPLOAD: true, ATTACHMENT_DELETE: true,
-    COMMENT_CREATE: true,
-    USER_LIST: false, USER_CREATE: false, USER_EDIT: false, USER_DELETE: false, USER_TOGGLE: false, USER_PASSWORD_RESET: false,
-    AUDIT_LOG_VIEW: false, PERFORMANCE_VIEW: false, COMPANY_SETTINGS: false, DASHBOARD_ADMIN: false,
-    PROFILE_VIEW: true,
-  },
-  'IT OFFICER': {
-    TASK_CREATE: false, TASK_EDIT: false, TASK_DELETE: false,
-    TASK_ASSIGN_OFFICER: false, TASK_ASSIGN_ASSISTANT: false,
-    TASK_ACCEPT: true, TASK_SUBMIT: true, TASK_MARK_INCOMPLETE: true,
-    TASK_APPROVE: false, TASK_REJECT: false, TASK_VIEW_ALL: false, TASK_ADD_PROGRESS: true,
-    SUBTASK_CREATE: true, SUBTASK_EDIT: true, SUBTASK_DELETE: true, SUBTASK_UPDATE_STATUS: true, SUBTASK_ACCEPT: true, SUBTASK_REJECT: true,
-    ATTACHMENT_UPLOAD: true, ATTACHMENT_DELETE: true,
-    COMMENT_CREATE: true,
-    USER_LIST: false, USER_CREATE: false, USER_EDIT: false, USER_DELETE: false, USER_TOGGLE: false, USER_PASSWORD_RESET: false,
-    AUDIT_LOG_VIEW: false, PERFORMANCE_VIEW: false, COMPANY_SETTINGS: false, DASHBOARD_ADMIN: false,
-    PROFILE_VIEW: true,
-  },
-  ASSISTANT: {
-    TASK_CREATE: false, TASK_EDIT: false, TASK_DELETE: false,
-    TASK_ASSIGN_OFFICER: false, TASK_ASSIGN_ASSISTANT: false,
-    TASK_ACCEPT: false, TASK_SUBMIT: false, TASK_MARK_INCOMPLETE: false,
-    TASK_APPROVE: false, TASK_REJECT: false, TASK_VIEW_ALL: false, TASK_ADD_PROGRESS: false,
-    SUBTASK_CREATE: false, SUBTASK_EDIT: false, SUBTASK_DELETE: false, SUBTASK_UPDATE_STATUS: true, SUBTASK_ACCEPT: true, SUBTASK_REJECT: true,
-    ATTACHMENT_UPLOAD: true, ATTACHMENT_DELETE: true,
-    COMMENT_CREATE: true,
-    USER_LIST: false, USER_CREATE: false, USER_EDIT: false, USER_DELETE: false, USER_TOGGLE: false, USER_PASSWORD_RESET: false,
-    AUDIT_LOG_VIEW: false, PERFORMANCE_VIEW: false, COMPANY_SETTINGS: false, DASHBOARD_ADMIN: false,
-    PROFILE_VIEW: true,
-  },
-};
+const roleKey = (role) => (role || '').toUpperCase();
 
-const roleKey = (role) => {
-  const r = (role || '').toUpperCase();
-  if (r === 'IT_OFFICER') return 'IT OFFICER';
-  return r;
-};
-
-let cachedPermissions = null;
+let cachedPermissions = { ADMIN: { ...ADMIN_FULL_PERMISSIONS } };
 let cachedRoles = [];
 let cachedUserPermissions = {};
-let permissionsReady = false;
-let readyListeners = [];
 let changeListeners = [];
 let permissionsVersion = 0;
-const rolePermissionUnsubs = {};
-const userPermissionUnsubs = {};
-let rolesUnsub = null;
-
-export const onPermissionsReady = (fn) => {
-  if (permissionsReady) {
-    fn();
-  } else {
-    readyListeners.push(fn);
-  }
-};
 
 export const onPermissionsChange = (fn) => {
   changeListeners.push(fn);
@@ -115,48 +57,15 @@ export const onPermissionsChange = (fn) => {
 
 export const getPermissionsVersion = () => permissionsVersion;
 
-const notifyReady = () => {
-  permissionsReady = true;
-  readyListeners.forEach(fn => fn());
-  readyListeners = [];
-};
-
 const notifyChange = () => {
   permissionsVersion++;
   changeListeners.forEach(fn => fn());
-};
-
-export const subscribeRoles = () => {
-  if (rolesUnsub) return;
-  try {
-    rolesUnsub = onSnapshot(
-      collection(db, 'roles'),
-      (snap) => {
-        cachedRoles = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        notifyChange();
-      },
-      () => {
-        cachedRoles = [];
-      }
-    );
-  } catch (err) {
-    console.error('Failed to subscribe to roles:', err);
-    cachedRoles = [];
-  }
-};
-
-export const unsubscribeRoles = () => {
-  if (rolesUnsub) {
-    rolesUnsub();
-    rolesUnsub = null;
-  }
 };
 
 export const getRoles = () => cachedRoles;
 
 export const loadRoles = async () => {
   try {
-    const { apiRequest } = await import('@/api/apiClient');
     const roles = await apiRequest({ endpoint: '/roles' });
     cachedRoles = Array.isArray(roles) ? roles : [];
     return cachedRoles;
@@ -166,86 +75,15 @@ export const loadRoles = async () => {
   }
 };
 
-export const subscribeRolePermissions = (role) => {
-  const key = roleKey(role);
-  if (!key || rolePermissionUnsubs[key]) return;
-  try {
-    rolePermissionUnsubs[key] = onSnapshot(
-      doc(db, 'rolePermissions', key),
-      (snap) => {
-        if (!cachedPermissions) return;
-        if (snap.exists()) {
-          const stored = snap.data();
-          const defaults = DEFAULT_ROLE_PERMISSIONS[key] || {};
-          cachedPermissions[key] = { ...defaults, ...stored };
-        } else {
-          const defaults = DEFAULT_ROLE_PERMISSIONS[key] || {};
-          cachedPermissions[key] = { ...defaults };
-        }
-        notifyChange();
-      },
-      () => {}
-    );
-  } catch (err) {
-    console.error('Failed to subscribe to role permissions:', err);
-  }
-};
-
-export const unsubscribeRolePermissions = (role) => {
-  const key = roleKey(role);
-  if (key && rolePermissionUnsubs[key]) {
-    rolePermissionUnsubs[key]();
-    delete rolePermissionUnsubs[key];
-  }
-};
-
-export const subscribeUserPermissions = (uid) => {
-  if (!uid) return;
-  if (userPermissionUnsubs[uid]) return;
-  try {
-    userPermissionUnsubs[uid] = onSnapshot(
-      doc(db, 'userPermissions', uid),
-      (snap) => {
-        const data = snap.exists() ? snap.data() : {};
-        cachedUserPermissions[uid] = data;
-        notifyChange();
-      },
-      () => {
-        cachedUserPermissions[uid] = {};
-      }
-    );
-  } catch (err) {
-    console.error('Failed to subscribe to user permissions:', err);
-    cachedUserPermissions[uid] = {};
-  }
-};
-
-export const unsubscribeUserPermissions = (uid) => {
-  if (uid && userPermissionUnsubs[uid]) {
-    userPermissionUnsubs[uid]();
-    delete userPermissionUnsubs[uid];
-  }
-};
-
 export const loadPermissions = async () => {
   try {
     const results = { ADMIN: { ...ADMIN_FULL_PERMISSIONS } };
 
-    const { apiRequest } = await import('@/api/apiClient');
     const roles = await apiRequest({ endpoint: '/roles' });
     const rolesList = Array.isArray(roles) ? roles : [];
 
     for (const role of rolesList) {
-      const roleId = role.id;
-      const defaults = DEFAULT_ROLE_PERMISSIONS[roleId] || {};
-      const stored = role.defaultPermissions || {};
-      results[roleId] = { ...defaults, ...stored };
-    }
-
-    for (const roleId of Object.keys(DEFAULT_ROLE_PERMISSIONS)) {
-      if (!results[roleId]) {
-        results[roleId] = { ...(DEFAULT_ROLE_PERMISSIONS[roleId] || {}) };
-      }
+      results[role.id] = { ...(role.defaultPermissions || {}) };
     }
 
     cachedPermissions = results;
@@ -253,7 +91,7 @@ export const loadPermissions = async () => {
     return results;
   } catch (error) {
     console.error('Failed to load permissions from server, using defaults:', error);
-    cachedPermissions = { ADMIN: { ...ADMIN_FULL_PERMISSIONS }, ...DEFAULT_ROLE_PERMISSIONS };
+    cachedPermissions = { ADMIN: { ...ADMIN_FULL_PERMISSIONS } };
     return cachedPermissions;
   }
 };
@@ -268,6 +106,7 @@ export const savePermissions = async (role, permissions) => {
     if (cachedPermissions) {
       cachedPermissions[role] = permissions;
     }
+    notifyChange();
     return true;
   } catch (error) {
     console.error('Failed to save permissions:', error);
@@ -275,9 +114,7 @@ export const savePermissions = async (role, permissions) => {
   }
 };
 
-export const getPermissions = () => {
-  return cachedPermissions || { ADMIN: { ...ADMIN_FULL_PERMISSIONS }, ...DEFAULT_ROLE_PERMISSIONS };
-};
+export const getPermissions = () => cachedPermissions;
 
 export const saveUserPermissions = async (uid, permissions) => {
   try {
@@ -287,6 +124,7 @@ export const saveUserPermissions = async (uid, permissions) => {
       body: { permissions },
     });
     cachedUserPermissions[uid] = permissions;
+    notifyChange();
     return true;
   } catch (error) {
     console.error('Failed to save user permissions:', error);
@@ -296,9 +134,8 @@ export const saveUserPermissions = async (uid, permissions) => {
 
 export const loadUserPermissions = async (uid) => {
   try {
-    const docRef = doc(db, 'userPermissions', uid);
-    const snap = await getDoc(docRef);
-    const perms = snap.exists() ? snap.data() : {};
+    const result = await apiRequest({ endpoint: `/roles/users/${uid}/permissions` });
+    const perms = result?.permissions || {};
     cachedUserPermissions[uid] = perms;
     return perms;
   } catch (error) {
@@ -311,7 +148,7 @@ export const loadUserPermissions = async (uid) => {
 export const getUserEffectivePermissions = (uid, role) => {
   const key = roleKey(role);
   if (key === 'ADMIN') return { ...ADMIN_FULL_PERMISSIONS };
-  const rolePerms = (cachedPermissions || {})[key] || DEFAULT_ROLE_PERMISSIONS[key] || {};
+  const rolePerms = (cachedPermissions || {})[key] || {};
   const userOverrides = cachedUserPermissions[uid];
   if (!userOverrides || Object.keys(userOverrides).length === 0) {
     return { ...rolePerms };
@@ -333,7 +170,7 @@ export const hasUserPermission = (user, permission) => {
 export const hasPermission = (role, permission) => {
   const key = roleKey(role);
   if (key === 'ADMIN') return true;
-  const perms = cachedPermissions || { ADMIN: { ...ADMIN_FULL_PERMISSIONS }, ...DEFAULT_ROLE_PERMISSIONS };
+  const perms = cachedPermissions || { ADMIN: { ...ADMIN_FULL_PERMISSIONS } };
   const rolePerms = perms[key];
   if (!rolePerms) return false;
   return rolePerms[permission] === true;
@@ -347,15 +184,4 @@ export const canAll = (role, permissions) => {
   return permissions.every(p => hasPermission(role, p));
 };
 
-let permissionsPromise = null;
-
-const ensurePermissionsLoaded = () => {
-  if (!permissionsPromise) {
-    permissionsPromise = loadPermissions().then(() => {
-      notifyReady();
-    });
-  }
-  return permissionsPromise;
-};
-
-ensurePermissionsLoaded();
+loadPermissions();
