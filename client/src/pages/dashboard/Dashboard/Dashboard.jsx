@@ -99,8 +99,7 @@ const Dashboard = () => {
         
         const officerList = uniqueUsers.filter(user => user.role?.toUpperCase() !== 'ASSISTANT');
         setOfficers(officerList);
-        const assistantList = uniqueUsers.filter(user => user.role?.toUpperCase() === 'ASSISTANT');
-        setAssistants(assistantList);
+        setAssistants(uniqueUsers);
       } catch (error) {
         console.error('Failed to fetch users:', error);
       }

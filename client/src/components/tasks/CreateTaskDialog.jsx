@@ -45,9 +45,8 @@ export function CreateTaskDialog({ open, onOpenChange }) {
         const usersData = await apiRequest({ endpoint: "/users" });
         const activeUsers = usersData.filter(u => u.role?.toUpperCase() !== 'ADMIN' && u.isActive !== false);
         const officerList = activeUsers.filter(u => u.role?.toUpperCase() !== 'ASSISTANT');
-        const assistantList = activeUsers.filter(u => u.role?.toUpperCase() === 'ASSISTANT');
         setOfficers(officerList);
-        setAssistants(assistantList);
+        setAssistants(activeUsers);
       } catch (error) {
         toast.error("Failed to fetch users");
       }
