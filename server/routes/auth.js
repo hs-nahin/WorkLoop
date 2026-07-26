@@ -16,7 +16,19 @@ const normalizeRole = (role) => {
 // AUTHENTICATED: Get current user profile
 router.get('/me', verifyToken, async (req, res) => {
   try {
-    const userDoc = await adminDb.doc(`users/${req.user.uid}`).get();
+    let userDoc = await adminDb.doc(`users/${req.user.uid}`).get();
+
+    if (!userDoc.exists && req.user.email) {
+      const snapshot = await adminDb.collection('users').where('email', '==', req.user.email).limit(1).get();
+      if (!snapshot.empty) {
+        const oldDoc = snapshot.docs[0];
+        const oldData = oldDoc.data();
+        await adminDb.doc(`users/${req.user.uid}`).set(oldData);
+        await oldDoc.ref.delete();
+        userDoc = await adminDb.doc(`users/${req.user.uid}`).get();
+      }
+    }
+
     if (!userDoc.exists) {
       return res.status(404).json({ message: 'User profile not found' });
     }
@@ -264,7 +276,19 @@ router.patch('/update-profile', verifyToken, async (req, res) => {
     }
 
     const trimmed = name.trim();
-    const userDoc = await adminDb.doc(`users/${req.user.uid}`).get();
+    let userDoc = await adminDb.doc(`users/${req.user.uid}`).get();
+
+    if (!userDoc.exists && req.user.email) {
+      const snapshot = await adminDb.collection('users').where('email', '==', req.user.email).limit(1).get();
+      if (!snapshot.empty) {
+        const oldDoc = snapshot.docs[0];
+        const oldData = oldDoc.data();
+        await adminDb.doc(`users/${req.user.uid}`).set(oldData);
+        await oldDoc.ref.delete();
+        userDoc = await adminDb.doc(`users/${req.user.uid}`).get();
+      }
+    }
+
     if (!userDoc.exists) {
       return res.status(404).json({ message: 'User profile not found' });
     }
