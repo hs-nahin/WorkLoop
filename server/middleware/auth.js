@@ -1,7 +1,7 @@
 const { admin, adminAuth, adminDb } = require('../firebase-admin');
 
 const normalizeRole = (role) => {
-  if (!role) return '';
+  if (!role) return 'USER';
   return role.toUpperCase();
 };
 

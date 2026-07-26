@@ -125,8 +125,9 @@ export const AuthProvider = ({ children }) => {
   };
 
   const user = firestoreProfile || (firebaseUser ? {
-    email: firebaseUser.email,
     uid: firebaseUser.uid,
+    email: firebaseUser.email,
+    name: firebaseUser.displayName || '',
     role: 'USER'
   } : null);
 

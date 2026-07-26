@@ -139,11 +139,6 @@ router.post('/create-user', verifyToken, checkPermission('USER_CREATE'), async (
       return res.status(409).json({ message: `A user with User ID "${userId}" already exists` });
     }
 
-    const existingDoc = await adminDb.doc(`users/${userId}`).get();
-    if (existingDoc.exists) {
-      return res.status(409).json({ message: `A user with User ID "${userId}" already exists in the system` });
-    }
-
     const userRecord = await adminAuth.createUser({
       email,
       password,
@@ -151,12 +146,11 @@ router.post('/create-user', verifyToken, checkPermission('USER_CREATE'), async (
     });
 
     const userData = {
-      uid: userId,
       name,
       email,
       userId,
       displayId: displayId || userId,
-      role: normalizeRole(userRole) || 'USER',
+      role: normalizeRole(userRole),
       location: location || '',
       designation: designation || '',
       isActive: true,
@@ -164,18 +158,18 @@ router.post('/create-user', verifyToken, checkPermission('USER_CREATE'), async (
       createdBy: req.user.uid,
     };
 
-    await adminDb.doc(`users/${userId}`).set(userData);
+    await adminDb.doc(`users/${userRecord.uid}`).set(userData);
 
     await writeAuditLog('user_created', req.user, {
-      targetId: userId,
+      targetId: userRecord.uid,
       targetTitle: name,
       description: `Created user: ${name} (ID: ${userId})`,
     });
 
-    res.status(201).json({ uid: userId, ...userData });
+    res.status(201).json({ uid: userRecord.uid, ...userData });
   } catch (error) {
     console.error('Create user error:', error);
-    if (error.code === 'auth/email-already-exists') {
+    if (error.code === 'auth/email-always-exists') {
       return res.status(409).json({ message: 'A user with these credentials already exists' });
     }
     res.status(500).json({ message: error.message || 'Failed to create user' });
@@ -234,7 +228,11 @@ router.put('/update-user/:uid', verifyToken, checkPermission('USER_EDIT'), async
     const updateData = {};
     if (name) {
       updateData.name = name;
-      await adminAuth.updateUser(uid, { displayName: name });
+      try {
+        await adminAuth.updateUser(uid, { displayName: name });
+      } catch (e) {
+        console.error('Warning: Failed to update Firebase Auth displayName:', e.message);
+      }
     }
     if (displayId !== undefined) updateData.displayId = displayId;
     if (location !== undefined) updateData.location = location;
@@ -316,10 +314,8 @@ router.delete('/delete-user/:uid', verifyToken, checkPermission('USER_DELETE'), 
       return res.status(403).json({ message: 'Cannot delete a system administrator' });
     }
 
-    const email = userData.email || userIdToEmail(uid);
     try {
-      const authUser = await adminAuth.getUserByEmail(email);
-      await adminAuth.deleteUser(authUser.uid);
+      await adminAuth.deleteUser(uid);
     } catch (e) {
       if (e.code !== 'auth/user-not-found') {
         console.error('Error deleting Firebase Auth user:', e);
@@ -358,11 +354,9 @@ router.patch('/toggle-user/:uid', verifyToken, checkPermission('USER_TOGGLE'), a
     }
 
     const newActiveStatus = !userData.isActive;
-    const email = userData.email || userIdToEmail(uid);
 
     try {
-      const authUser = await adminAuth.getUserByEmail(email);
-      await adminAuth.updateUser(authUser.uid, { disabled: !newActiveStatus });
+      await adminAuth.updateUser(uid, { disabled: !newActiveStatus });
     } catch (e) {
       if (e.code !== 'auth/user-not-found') {
         console.error('Error updating Firebase Auth user:', e);
@@ -400,11 +394,9 @@ router.patch('/reset-password/:uid', verifyToken, checkPermission('USER_PASSWORD
     }
 
     const userData = userDoc.data();
-    const email = userData.email || userIdToEmail(uid);
 
     try {
-      const authUser = await adminAuth.getUserByEmail(email);
-      await adminAuth.updateUser(authUser.uid, { password: newPassword });
+      await adminAuth.updateUser(uid, { password: newPassword });
     } catch (e) {
       return res.status(404).json({ message: 'User not found in authentication system' });
     }
