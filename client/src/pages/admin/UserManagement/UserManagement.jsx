@@ -488,14 +488,15 @@ const UserManagement = () => {
                 value={createForm.role}
                 onValueChange={(val) => setCreateForm({ ...createForm, role: val })}
               >
-                <SelectTrigger className="w-full h-8">
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select role" />
                 </SelectTrigger>
-                <SelectContent className="z-[60]">
-                  {allRoles.map((r) => (
-                    <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
-                  ))}
-                  {allRoles.length === 0 && (
+                <SelectContent>
+                  {allRoles.length > 0 ? (
+                    allRoles.map((r) => (
+                      <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+                    ))
+                  ) : (
                     <SelectItem value="USER">USER</SelectItem>
                   )}
                 </SelectContent>
@@ -544,14 +545,15 @@ const UserManagement = () => {
                   value={editForm.role}
                   onValueChange={(val) => setEditForm({ ...editForm, role: val })}
                 >
-                  <SelectTrigger className="w-full h-8">
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select role" />
                   </SelectTrigger>
-                  <SelectContent className="z-[60]">
-                    {allRoles.map((r) => (
-                      <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
-                    ))}
-                    {allRoles.length === 0 && (
+                  <SelectContent>
+                    {allRoles.length > 0 ? (
+                      allRoles.map((r) => (
+                        <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+                      ))
+                    ) : (
                       <SelectItem value="USER">USER</SelectItem>
                     )}
                   </SelectContent>
