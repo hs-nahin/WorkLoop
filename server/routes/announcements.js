@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const { admin, adminDb } = require('../firebase-admin');
-const { verifyToken, authorize, writeAuditLog } = require('../middleware/auth');
+const { verifyToken, writeAuditLog } = require('../middleware/auth');
+const { checkPermission } = require('../config/permissions');
 
 // Get announcements based on user role and status
 router.get('/', verifyToken, async (req, res) => {
@@ -58,8 +59,8 @@ router.post('/:id/read', verifyToken, async (req, res) => {
     }
 });
 
-// ADMIN: Create announcement
-router.post('/', verifyToken, authorize(['ADMIN']), async (req, res) => {
+// Create announcement
+router.post('/', verifyToken, checkPermission('ANNOUNCEMENT_CREATE'), async (req, res) => {
     try {
         const { title, message, type, priority, startsAt, expiresAt, targetRoles, pinned } = req.body;
 
@@ -99,8 +100,8 @@ router.post('/', verifyToken, authorize(['ADMIN']), async (req, res) => {
     }
 });
 
-// ADMIN: Update announcement
-router.put('/:id', verifyToken, authorize(['ADMIN']), async (req, res) => {
+// Update announcement
+router.put('/:id', verifyToken, checkPermission('ANNOUNCEMENT_EDIT'), async (req, res) => {
     try {
         const { id } = req.params;
         const updates = req.body;
@@ -121,8 +122,8 @@ router.put('/:id', verifyToken, authorize(['ADMIN']), async (req, res) => {
     }
 });
 
-// ADMIN: Delete announcement
-router.delete('/:id', verifyToken, authorize(['ADMIN']), async (req, res) => {
+// Delete announcement
+router.delete('/:id', verifyToken, checkPermission('ANNOUNCEMENT_DELETE'), async (req, res) => {
     try {
         const { id } = req.params;
         await adminDb.collection('announcements').doc(id).delete();
@@ -139,8 +140,8 @@ router.delete('/:id', verifyToken, authorize(['ADMIN']), async (req, res) => {
     }
 });
 
-// ADMIN: Toggle active status
-router.patch('/:id/toggle', verifyToken, authorize(['ADMIN']), async (req, res) => {
+// Toggle active status
+router.patch('/:id/toggle', verifyToken, checkPermission('ANNOUNCEMENT_EDIT'), async (req, res) => {
     try {
         const { id } = req.params;
         const docRef = adminDb.collection('announcements').doc(id);

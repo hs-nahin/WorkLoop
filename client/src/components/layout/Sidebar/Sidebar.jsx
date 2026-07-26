@@ -28,8 +28,8 @@ const menuItems = [
   { name: "Tasks", path: "/tasks", icon: CheckSquare, roles: ["COMMENT_CREATE"] },
   { name: "Completed", path: "/completed", icon: CheckCircle2, roles: ["COMMENT_CREATE"] },
   { name: "Performance", path: "/performance", icon: BarChart3, roles: ["PERFORMANCE_VIEW"], adminOnly: true },
-  { name: "Announcements", path: "/announcements", icon: Megaphone, roles: ["PROFILE_VIEW"] },
-  { name: "Announcement History", path: "/announcements/history", icon: History, roles: ["PROFILE_VIEW"] },
+  { name: "Announcements", path: "/announcements", icon: Megaphone, roles: ["ANNOUNCEMENT_VIEW"] },
+  { name: "Announcement History", path: "/announcements/history", icon: History, roles: ["ANNOUNCEMENT_HISTORY_VIEW"] },
   { name: "Audit Logs", path: "/audit-logs", icon: History, roles: ["AUDIT_LOG_VIEW"], adminOnly: true },
   { name: "Permissions", path: "/permissions", icon: Shield, roles: ["COMPANY_SETTINGS"], adminOnly: true },
 ];

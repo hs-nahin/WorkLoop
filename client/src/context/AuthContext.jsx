@@ -4,6 +4,9 @@ import { auth } from '../lib/firebase';
 import {
   onPermissionsChange,
   getPermissionsVersion,
+  loadPermissions,
+  subscribeToPermissions,
+  unsubscribeFromPermissions,
 } from '../lib/permissions';
 import { AuthContext } from './AuthContextInstance';
 import { useContext } from 'react';
@@ -61,6 +64,8 @@ export const AuthProvider = ({ children }) => {
         setFirebaseUser(user);
         const profile = await fetchFirestoreProfile(user.uid);
         setFirestoreProfile(profile);
+        await loadPermissions();
+        subscribeToPermissions(user.uid);
       } else {
         setFirebaseUser(null);
         setFirestoreProfile(null);
@@ -91,6 +96,8 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('firebase_token', idToken);
       const profile = await fetchFirestoreProfile(user.uid);
       setFirestoreProfile(profile);
+      await loadPermissions();
+      subscribeToPermissions(user.uid);
       return { user, profile };
     } catch (error) {
       console.error('Login error:', error);
@@ -114,6 +121,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
+      unsubscribeFromPermissions();
       await signOut(auth);
       setFirebaseUser(null);
       setFirestoreProfile(null);

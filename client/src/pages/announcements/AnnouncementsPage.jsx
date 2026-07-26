@@ -28,6 +28,7 @@ import {
   ArrowLeft 
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { hasPermission } from '@/lib/permissions';
 import { apiRequest } from '@/api/apiClient';
 import { toast } from 'sonner';
 import BlurFade from '@/components/animations/BlurFade';
@@ -56,6 +57,7 @@ const AnnouncementsPage = () => {
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -219,7 +221,7 @@ const AnnouncementsPage = () => {
            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Organizational Announcements</h1>
            <p className="text-sm text-muted-foreground">Broadcast critical updates to your organization</p>
          </div>
-         {!showForm && !editingId && (
+          {hasPermission(user?.role, 'ANNOUNCEMENT_CREATE') && !showForm && !editingId && (
            <Button onClick={() => setShowForm(true)} className="gap-2 w-full md:w-auto">
              <Plus size={18} /> Create Announcement
            </Button>
@@ -356,7 +358,7 @@ const AnnouncementsPage = () => {
                   </Badge>
                 </div>
                 <Badge variant="secondary" className={PRIORITY_LEVELS.find(p => p.id === ann.priority)?.color}>
-                  {ann.priority.toUpperCase()}
+                  {(ann.priority || 'low').toUpperCase()}
                 </Badge>
               </div>
 
@@ -372,34 +374,41 @@ const AnnouncementsPage = () => {
 
               <div className="flex justify-between items-center pt-4 border-t">
                 <div className="flex gap-2">
-                  <Button variant="ghost" size="sm" onClick={() => togglePin(ann)} className="p-2 h-8 w-8">
-                    {ann.pinned ? <PinOff size={14} /> : <Pin size={14} />}
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => toggleActive(ann)} className="p-2 h-8 w-8">
-                    {ann.active ? <CheckCircle size={14} className="text-green-500" /> : <XCircle size={14} className="text-red-500" />}
-                  </Button>
+                  {hasPermission(user?.role, 'ANNOUNCEMENT_EDIT') && (
+                    <>
+                      <Button variant="ghost" size="sm" onClick={() => togglePin(ann)} className="p-2 h-8 w-8">
+                        {ann.pinned ? <PinOff size={14} /> : <Pin size={14} />}
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => toggleActive(ann)} className="p-2 h-8 w-8">
+                        {ann.active ? <CheckCircle size={14} className="text-green-500" /> : <XCircle size={14} className="text-red-500" />}
+                      </Button>
+                    </>
+                  )}
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="ghost" size="sm" onClick={() => {
-                    setEditingId(ann.id);
-                    setShowForm(false);
-                    setFormData({
-                      title: ann.title,
-                      message: ann.message,
-                      type: ann.type,
-                      priority: ann.priority,
-                      startsAt: ann.startsAt || '',
-                      expiresAt: ann.expiresAt || '',
-                      targetRoles: ann.targetRoles,
-                      pinned: ann.pinned,
-                    });
-                  }} className="p-2 h-8 w-8">
-                    <Edit3 size={14} />
-                  </Button>
-                   <Button variant="ghost" size="sm" onClick={() => confirmDelete(ann.id)} className="p-2 h-8 w-8 text-destructive hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400 transition-colors">
-                     <Trash2 size={14} />
-                   </Button>
-
+                  {hasPermission(user?.role, 'ANNOUNCEMENT_EDIT') && (
+                    <Button variant="ghost" size="sm" onClick={() => {
+                      setEditingId(ann.id);
+                      setShowForm(false);
+                      setFormData({
+                        title: ann.title,
+                        message: ann.message,
+                        type: ann.type,
+                        priority: ann.priority,
+                        startsAt: ann.startsAt || '',
+                        expiresAt: ann.expiresAt || '',
+                        targetRoles: ann.targetRoles,
+                        pinned: ann.pinned,
+                      });
+                    }} className="p-2 h-8 w-8">
+                      <Edit3 size={14} />
+                    </Button>
+                  )}
+                  {hasPermission(user?.role, 'ANNOUNCEMENT_DELETE') && (
+                    <Button variant="ghost" size="sm" onClick={() => confirmDelete(ann.id)} className="p-2 h-8 w-8 text-destructive hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400 transition-colors">
+                      <Trash2 size={14} />
+                    </Button>
+                  )}
                 </div>
               </div>
             </MagicCard>

@@ -163,8 +163,12 @@ const UserPerformanceDashboard = () => {
     }).reverse();
 
     const trendData = last7Days.map(date => {
-      const created = tasks.filter(t => t.createdAt?.toDate().toISOString().split('T')[0] === date).length;
-      const completed = tasks.filter(t => t.status === 'completed' && t.updatedAt?.toDate().toISOString().split('T')[0] === date).length;
+      const created = tasks.filter(t => {
+        try { return t.createdAt?.toDate?.()?.toISOString?.().split('T')[0] === date; } catch { return false; }
+      }).length;
+      const completed = tasks.filter(t => {
+        try { return t.status === 'completed' && t.updatedAt?.toDate?.()?.toISOString?.().split('T')[0] === date; } catch { return false; }
+      }).length;
       return { date, created, completed };
     });
 

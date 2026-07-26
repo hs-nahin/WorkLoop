@@ -50,14 +50,6 @@ const router = createBrowserRouter([
                 element: <ErrorBoundary><Profile /></ErrorBoundary>,
               },
               {
-                path: 'announcements',
-                element: <ErrorBoundary><AnnouncementsPage /></ErrorBoundary>,
-              },
-              {
-                path: 'announcements/history',
-                element: <ErrorBoundary><AnnouncementHistory /></ErrorBoundary>,
-              },
-              {
                 index: true,
                 element: <ErrorBoundary><Dashboard /></ErrorBoundary>,
               },
@@ -77,6 +69,24 @@ const router = createBrowserRouter([
               {
                 path: 'completed',
                 element: <ErrorBoundary><CompletedTasks /></ErrorBoundary>,
+              },
+            ],
+          },
+          {
+            element: <ProtectedRoute allowedPermissions={['ANNOUNCEMENT_VIEW']} />,
+            children: [
+              {
+                path: 'announcements',
+                element: <ErrorBoundary><AnnouncementsPage /></ErrorBoundary>,
+              },
+            ],
+          },
+          {
+            element: <ProtectedRoute allowedPermissions={['ANNOUNCEMENT_HISTORY_VIEW']} />,
+            children: [
+              {
+                path: 'announcements/history',
+                element: <ErrorBoundary><AnnouncementHistory /></ErrorBoundary>,
               },
             ],
           },

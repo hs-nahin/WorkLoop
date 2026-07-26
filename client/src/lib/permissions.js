@@ -1,4 +1,6 @@
 import { apiRequest } from '@/api/apiClient';
+import { db } from '@/firebase/firebaseConfig';
+import { collection, onSnapshot, doc } from 'firebase/firestore';
 
 export const ALL_PERMISSIONS = [
   { id: 'TASK_CREATE', label: 'Create Task', group: 'Task Management' },
@@ -33,6 +35,11 @@ export const ALL_PERMISSIONS = [
   { id: 'COMPANY_SETTINGS', label: 'Manage Company Settings', group: 'System' },
   { id: 'DASHBOARD_ADMIN', label: 'Admin Dashboard Access', group: 'System' },
   { id: 'PROFILE_VIEW', label: 'View Profile', group: 'System' },
+  { id: 'ANNOUNCEMENT_VIEW', label: 'Access Announcements Page', group: 'Announcements' },
+  { id: 'ANNOUNCEMENT_HISTORY_VIEW', label: 'Access Announcement History', group: 'Announcements' },
+  { id: 'ANNOUNCEMENT_CREATE', label: 'Create Announcements', group: 'Announcements' },
+  { id: 'ANNOUNCEMENT_EDIT', label: 'Edit Announcements', group: 'Announcements' },
+  { id: 'ANNOUNCEMENT_DELETE', label: 'Delete Announcements', group: 'Announcements' },
 ];
 
 export const ADMIN_FULL_PERMISSIONS = ALL_PERMISSIONS.reduce((acc, p) => {
@@ -55,6 +62,8 @@ let cachedRoles = [];
 let cachedUserPermissions = {};
 let changeListeners = [];
 let permissionsVersion = 0;
+let unsubRolePerms = null;
+let unsubUserPerms = null;
 
 export const onPermissionsChange = (fn) => {
   changeListeners.push(fn);
@@ -195,6 +204,51 @@ export const canAny = (role, permissions) => {
 
 export const canAll = (role, permissions) => {
   return permissions.every(p => hasPermission(role, p));
+};
+
+export const subscribeToPermissions = (uid) => {
+  unsubscribeFromPermissions();
+
+  unsubRolePerms = onSnapshot(collection(db, 'rolePermissions'), (snapshot) => {
+    snapshot.docChanges().forEach((change) => {
+      if (change.type === 'added' || change.type === 'modified' || change.type === 'removed') {
+        const roleId = change.doc.id;
+        const data = change.doc.data();
+        if (change.type === 'removed') {
+          cachedPermissions[roleId] = { ...DEFAULT_ROLE_PERMISSIONS };
+        } else {
+          cachedPermissions[roleId] = { ...DEFAULT_ROLE_PERMISSIONS, ...data };
+        }
+      }
+    });
+    notifyChange();
+  }, (error) => {
+    console.error('Role permissions listener error:', error);
+  });
+
+  if (uid) {
+    unsubUserPerms = onSnapshot(doc(db, 'userPermissions', uid), (docSnap) => {
+      if (docSnap.exists()) {
+        cachedUserPermissions[uid] = docSnap.data();
+      } else {
+        cachedUserPermissions[uid] = {};
+      }
+      notifyChange();
+    }, (error) => {
+      console.error('User permissions listener error:', error);
+    });
+  }
+};
+
+export const unsubscribeFromPermissions = () => {
+  if (unsubRolePerms) {
+    try { unsubRolePerms(); } catch (_) {}
+    unsubRolePerms = null;
+  }
+  if (unsubUserPerms) {
+    try { unsubUserPerms(); } catch (_) {}
+    unsubUserPerms = null;
+  }
 };
 
 loadPermissions();

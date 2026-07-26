@@ -20,8 +20,8 @@ const ProtectedRoute = ({ allowedPermissions, requiredRole }) => {
   const role = user?.role || '';
 
   if (requiredRole) {
-    const required = requiredRole.toUpperCase();
-    const userRole = role.toUpperCase();
+    const required = (requiredRole || '').toUpperCase();
+    const userRole = (role || '').toUpperCase();
     if (userRole !== required) {
       if (userRole === 'ADMIN') {
         return <Navigate to="/dashboard" replace />;

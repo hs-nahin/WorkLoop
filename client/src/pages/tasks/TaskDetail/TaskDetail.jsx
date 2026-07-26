@@ -531,7 +531,7 @@ const TaskDetail = () => {
                 )}
 
                 {/* Accept Task - inside workflow */}
-                {hasPermission(user?.role, 'TASK_ACCEPT') && (task.officerId === user.uid || task.officerId === user.id) && task.status === 'pending' && (
+                {hasPermission(user?.role, 'TASK_ACCEPT') && user && (task.officerId === user.uid || task.officerId === user.id) && task.status === 'pending' && (
                   <div className="pt-4 border-t border-border space-y-3">
                     <h4 className="text-sm font-bold text-foreground uppercase tracking-widest">Accept Task</h4>
                     <p className="text-sm text-muted-foreground">Accept this task to start working on it</p>
@@ -543,7 +543,7 @@ const TaskDetail = () => {
           </BlurFade>
 
            {/* In Progress Actions - Complete & Incomplete buttons */}
-           {hasPermission(user?.role, 'TASK_SUBMIT') && (task.officerId === user.uid || task.officerId === user.id) && task.status === 'in progress' && (
+           {hasPermission(user?.role, 'TASK_SUBMIT') && user && (task.officerId === user.uid || task.officerId === user.id) && task.status === 'in progress' && (
              <BlurFade delay={100}>
                <MagicCard>
                  <div className="space-y-4">
@@ -597,7 +597,7 @@ const TaskDetail = () => {
            )}
 
            {/* Show Progress History for in progress tasks */}
-           {hasPermission(user?.role, 'TASK_ADD_PROGRESS') && (task.officerId === user.uid || task.officerId === user.id) && task.status === 'in progress' && task.progressReports && task.progressReports.length > 0 && (
+           {hasPermission(user?.role, 'TASK_ADD_PROGRESS') && user && (task.officerId === user.uid || task.officerId === user.id) && task.status === 'in progress' && task.progressReports && task.progressReports.length > 0 && (
              <BlurFade delay={150}>
                <MagicCard>
                  <div className="space-y-4">
@@ -779,7 +779,7 @@ const TaskDetail = () => {
                   )}
 
                   {/* Accept Task - inside workflow */}
-                  {hasPermission(user?.role, 'TASK_ACCEPT') && (task.officerId === user.uid || task.officerId === user.id) && task.status === 'pending' && (
+                {hasPermission(user?.role, 'TASK_ACCEPT') && user && (task.officerId === user.uid || task.officerId === user.id) && task.status === 'pending' && (
                     <div className="pt-4 border-t border-border space-y-3">
                       <h4 className="text-sm font-bold text-foreground uppercase tracking-widest">Accept Task</h4>
                       <p className="text-sm text-muted-foreground">Accept this task to start working on it</p>

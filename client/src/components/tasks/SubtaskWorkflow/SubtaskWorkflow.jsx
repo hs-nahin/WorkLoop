@@ -157,7 +157,7 @@ const SubtaskWorkflow = ({ taskId, task }) => {
       // System message for status change
       if (updates.status) {
         const subtaskDoc = await subtaskRef.get();
-        const subtaskTitle = subtaskDoc.exists ? subtaskDoc.data().title : 'Unknown';
+        const subtaskTitle = subtaskDoc.exists() ? subtaskDoc.data().title : 'Unknown';
         await addDoc(collection(db, 'tasks', taskId, 'messages'), {
           text: `Subtask "${subtaskTitle}" status changed to ${updates.status}`,
           senderId: 'system',
@@ -183,7 +183,7 @@ const SubtaskWorkflow = ({ taskId, task }) => {
       // Get subtask info before deleting
       const subtaskRef = doc(db, 'tasks', taskId, 'subtasks', subtaskId);
       const subtaskDoc = await subtaskRef.get();
-      const subtaskData = subtaskDoc.exists ? subtaskDoc.data() : null;
+      const subtaskData = subtaskDoc.exists() ? subtaskDoc.data() : null;
 
       await deleteDoc(subtaskRef);
 
