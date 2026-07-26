@@ -82,8 +82,8 @@ const TaskDetail = () => {
   useEffect(() => {
     if (realtimeTask) {
       setTask(realtimeTask);
-      setIsLoading(taskLoading);
     }
+    setIsLoading(taskLoading);
   }, [realtimeTask, taskLoading]);
 
   useEffect(() => {
@@ -236,7 +236,13 @@ const TaskDetail = () => {
   };
 
   if (isLoading) return <div className="min-h-screen flex items-center justify-center text-foreground font-mono animate-pulse">Loading Task...</div>;
-  if (!task) return null;
+  if (!task) return (
+    <div className="min-h-screen flex flex-col items-center justify-center gap-4 text-muted-foreground">
+      <p className="text-lg font-semibold">Task not found</p>
+      <p className="text-sm">This task may have been deleted or you may not have access.</p>
+      <Button variant="outline" onClick={() => navigate('/tasks')}>Back to Tasks</Button>
+    </div>
+  );
 
   const getStatusColor = (status) => {
     switch (status) {
