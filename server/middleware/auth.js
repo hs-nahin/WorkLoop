@@ -17,7 +17,18 @@ const verifyToken = async (req, res, next) => {
 
   try {
     const decodedToken = await adminAuth.verifyIdToken(token);
-    const userDoc = await adminDb.doc(`users/${decodedToken.uid}`).get();
+    let userDoc = await adminDb.doc(`users/${decodedToken.uid}`).get();
+
+    if (!userDoc.exists && decodedToken.email) {
+      const snapshot = await adminDb.collection('users').where('email', '==', decodedToken.email).limit(1).get();
+      if (!snapshot.empty) {
+        const oldDoc = snapshot.docs[0];
+        const oldData = oldDoc.data();
+        await adminDb.doc(`users/${decodedToken.uid}`).set(oldData);
+        await oldDoc.ref.delete();
+        userDoc = await adminDb.doc(`users/${decodedToken.uid}`).get();
+      }
+    }
 
     if (!userDoc.exists) {
       return res.status(401).json({ message: 'User not found' });
