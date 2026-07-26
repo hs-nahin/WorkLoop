@@ -39,43 +39,48 @@ const SubtaskWorkflow = ({ taskId, task }) => {
   useEffect(() => {
     if (!taskId) return;
 
-    const q = query(
-      collection(db, 'tasks', taskId, 'subtasks'),
-      orderBy('createdAt', 'asc')
-    );
+    let unsubscribe = () => {};
+    try {
+      const q = query(
+        collection(db, 'tasks', taskId, 'subtasks'),
+        orderBy('createdAt', 'asc')
+      );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const subs = snapshot.docs.map(doc => {
-        const data = doc.data();
-        let assignedUserName = data.assignedUserName;
-        let assignedUserRole = data.assignedUserRole;
-        
-        // Resolve name from users if not stored
-        if (!assignedUserName && data.assignedUserId) {
-          const matchedUser = users.find(u => (u.userId || u.id) === data.assignedUserId);
-          if (matchedUser) {
-            assignedUserName = matchedUser.name;
-            assignedUserRole = matchedUser.role;
+      unsubscribe = onSnapshot(q, (snapshot) => {
+        const subs = snapshot.docs.map(doc => {
+          const data = doc.data();
+          let assignedUserName = data.assignedUserName;
+          let assignedUserRole = data.assignedUserRole;
+          
+          if (!assignedUserName && data.assignedUserId) {
+            const matchedUser = users.find(u => (u.userId || u.id) === data.assignedUserId);
+            if (matchedUser) {
+              assignedUserName = matchedUser.name;
+              assignedUserRole = matchedUser.role;
+            }
           }
-        }
-        
-        return {
-          id: doc.id,
-          ...data,
-          assignedUserName,
-          assignedUserRole,
-          createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
-          updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date()
-        };
+          
+          return {
+            id: doc.id,
+            ...data,
+            assignedUserName,
+            assignedUserRole,
+            createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
+            updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date()
+          };
+        });
+        setSubtasks(subs);
+        setLoading(false);
+      }, (error) => {
+        console.error('Error fetching subtasks:', error);
+        setLoading(false);
       });
-      setSubtasks(subs);
+    } catch (err) {
+      console.error('Failed to initialize subtasks listener:', err);
       setLoading(false);
-    }, (error) => {
-      console.error('Error fetching subtasks:', error);
-      setLoading(false);
-    });
+    }
 
-    return () => unsubscribe();
+    return () => { try { unsubscribe(); } catch (_) {} };
   }, [taskId, users]);
 
   const canManageSubtasks = () => {

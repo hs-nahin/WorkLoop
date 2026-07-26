@@ -11,6 +11,7 @@ const userRoutes = require('./routes/users');
 const companyRoutes = require('./routes/company');
 const dashboardRoutes = require('./routes/dashboard');
 const announcementRoutes = require('./routes/announcements');
+const roleRoutes = require('./routes/roles');
 
 const app = express();
 
@@ -31,6 +32,7 @@ app.use('/api/users', upload.single('avatar'), userRoutes);
 app.use('/api/company', upload.single('logo'), companyRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/announcements', announcementRoutes);
+app.use('/api/roles', roleRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

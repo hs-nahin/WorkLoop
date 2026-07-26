@@ -117,24 +117,30 @@ const AuditLogs = () => {
   }, []);
 
   useEffect(() => {
-    const q = query(
-      collection(db, 'auditLogs'),
-      orderBy('timestamp', 'desc')
-    );
+    let unsubscribe = () => {};
+    try {
+      const q = query(
+        collection(db, 'auditLogs'),
+        orderBy('timestamp', 'desc')
+      );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const allLogs = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setLogs(allLogs);
+      unsubscribe = onSnapshot(q, (snapshot) => {
+        const allLogs = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setLogs(allLogs);
+        setLoading(false);
+      }, (error) => {
+        console.error('Error fetching audit logs:', error);
+        setLoading(false);
+      });
+    } catch (err) {
+      console.error('Failed to initialize audit logs listener:', err);
       setLoading(false);
-    }, (error) => {
-      console.error('Error fetching audit logs:', error);
-      setLoading(false);
-    });
+    }
 
-    return () => unsubscribe();
+    return () => { try { unsubscribe(); } catch (_) {} };
   }, []);
 
   const filteredLogs = useMemo(() => {

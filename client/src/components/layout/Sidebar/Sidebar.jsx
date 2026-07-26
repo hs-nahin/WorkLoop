@@ -22,24 +22,16 @@ import { AuthContext } from "../../../context/AuthContextInstance.js";
 import { cn } from "../../../lib/utils";
 import { hasPermission } from "../../../lib/permissions";
 
-const adminMenuItems = [
-  { name: "Dashboard", path: "/admin/dashboard", icon: LayoutDashboard, roles: ["PROFILE_VIEW"] },
-  { name: "User Management", path: "/admin/user-management", icon: Users, roles: ["USER_LIST"] },
-  { name: "Tasks", path: "/admin/tasks", icon: CheckSquare, roles: ["COMMENT_CREATE"] },
-  { name: "Completed", path: "/admin/completed", icon: CheckCircle2, roles: ["COMMENT_CREATE"] },
-  { name: "Performance", path: "/admin/performance", icon: BarChart3, roles: ["PERFORMANCE_VIEW"] },
-  { name: "Announcements", path: "/admin/announcements", icon: Megaphone, roles: ["DASHBOARD_ADMIN"] },
-  { name: "Announcement History", path: "/admin/announcements/history", icon: History, roles: ["PROFILE_VIEW"] },
-  { name: "Audit Logs", path: "/admin/audit-logs", icon: History, roles: ["AUDIT_LOG_VIEW"] },
-  { name: "Permissions", path: "/admin/permissions", icon: Shield, roles: ["COMPANY_SETTINGS"] },
-];
-
-const userMenuItems = [
+const menuItems = [
   { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard, roles: ["PROFILE_VIEW"] },
+  { name: "User Management", path: "/user-management", icon: Users, roles: ["USER_LIST"], adminOnly: true },
   { name: "Tasks", path: "/tasks", icon: CheckSquare, roles: ["COMMENT_CREATE"] },
   { name: "Completed", path: "/completed", icon: CheckCircle2, roles: ["COMMENT_CREATE"] },
+  { name: "Performance", path: "/performance", icon: BarChart3, roles: ["PERFORMANCE_VIEW"], adminOnly: true },
   { name: "Announcements", path: "/announcements", icon: Megaphone, roles: ["PROFILE_VIEW"] },
   { name: "Announcement History", path: "/announcements/history", icon: History, roles: ["PROFILE_VIEW"] },
+  { name: "Audit Logs", path: "/audit-logs", icon: History, roles: ["AUDIT_LOG_VIEW"], adminOnly: true },
+  { name: "Permissions", path: "/permissions", icon: Shield, roles: ["COMPANY_SETTINGS"], adminOnly: true },
 ];
 
 const WorkLoopLogo = () => (
@@ -48,19 +40,20 @@ const WorkLoopLogo = () => (
 
 const Sidebar = () => {
   const { sidebarOpen, toggleSidebar } = useContext(AppContext);
-  const { user, logout } = useContext(AuthContext);
+  const { user, logout, permissionsVersion } = useContext(AuthContext);
   const location = useLocation();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [mobileCollapsed, setMobileCollapsed] = useState(false);
 
   const isAdmin = (user?.role || '').toUpperCase() === 'ADMIN';
-  const baseMenuItems = isAdmin ? adminMenuItems : userMenuItems;
 
-  const filteredItems = useMemo(
-    () => baseMenuItems.filter(item => item.roles.some(r => hasPermission(user?.role, r))),
-    [user?.role, isAdmin]
-  );
+  const filteredItems = useMemo(() => {
+    return menuItems.filter(item => {
+      if (item.adminOnly && !isAdmin) return false;
+      return item.roles.some(r => hasPermission(user?.role, r));
+    });
+  }, [user?.role, isAdmin, permissionsVersion]);
 
   const renderContent = (options = {}) => {
     const { onNavClick, collapsed } = options;
@@ -72,7 +65,7 @@ const Sidebar = () => {
         {/* Logo section */}
         <div className={cn("mb-7 flex animate-slide-in-left", isCollapsed ? "justify-center" : "px-5")}
           style={{ animationDelay: isMobile ? '20ms' : undefined }}>
-          <Link to={isAdmin ? "/admin/dashboard" : "/dashboard"} onClick={onNavClick} className={cn("flex items-center group", isCollapsed ? "justify-center" : "gap-2.5")}>
+          <Link to="/dashboard" onClick={onNavClick} className={cn("flex items-center group", isCollapsed ? "justify-center" : "gap-2.5")}>
             <div className={cn("shrink-0 group-hover:scale-105 transition-transform duration-300", isCollapsed ? "size-9" : "size-8")}>
               <WorkLoopLogo />
             </div>

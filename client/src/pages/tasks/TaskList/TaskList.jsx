@@ -70,7 +70,7 @@ const TaskList = () => {
   const isAdmin = user?.role === 'ADMIN';
 
   // Real-time tasks - auto-updates when any task changes
-  const { tasks: realtimeTasks, loading: tasksLoading } = useRealTimeTasks(user?.role, user?.uid);
+  const { tasks: realtimeTasks, loading: tasksLoading } = useRealTimeTasks(user?.uid, user?.role);
 
   // Update when real-time data changes
   useEffect(() => {

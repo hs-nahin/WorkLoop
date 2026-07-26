@@ -23,34 +23,39 @@ const AttachmentPanel = ({ taskId, task }) => {
   useEffect(() => {
     if (!taskId) return;
 
-    const q = query(
-      collection(db, 'tasks', taskId, 'attachments'),
-      orderBy('uploadedAt', 'desc')
-    );
+    let unsubscribe = () => {};
+    try {
+      const q = query(
+        collection(db, 'tasks', taskId, 'attachments'),
+        orderBy('uploadedAt', 'desc')
+      );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const atts = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        uploadedAt: doc.data().uploadedAt?.toDate ? doc.data().uploadedAt.toDate() : new Date()
-      }));
-      setAttachments(atts);
-      
-      // Group by baseFileName for version history
-      const grouped = atts.reduce((acc, att) => {
-        const key = att.baseFileName || att.fileName;
-        if (!acc[key]) acc[key] = [];
-        acc[key].push(att);
-        return acc;
-      }, {});
-      setGroupedAttachments(grouped);
+      unsubscribe = onSnapshot(q, (snapshot) => {
+        const atts = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          uploadedAt: doc.data().uploadedAt?.toDate ? doc.data().uploadedAt.toDate() : new Date()
+        }));
+        setAttachments(atts);
+        
+        const grouped = atts.reduce((acc, att) => {
+          const key = att.baseFileName || att.fileName;
+          if (!acc[key]) acc[key] = [];
+          acc[key].push(att);
+          return acc;
+        }, {});
+        setGroupedAttachments(grouped);
+        setLoading(false);
+      }, (error) => {
+        console.error('Error fetching attachments:', error);
+        setLoading(false);
+      });
+    } catch (err) {
+      console.error('Failed to initialize attachments listener:', err);
       setLoading(false);
-    }, (error) => {
-      console.error('Error fetching attachments:', error);
-      setLoading(false);
-    });
+    }
 
-    return () => unsubscribe();
+    return () => { try { unsubscribe(); } catch (_) {} };
   }, [taskId]);
 
   const canUpload = () => {

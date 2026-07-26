@@ -30,12 +30,14 @@ import { useContext, useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { AuthContext } from "@/context/AuthContextInstance";
+import { loadRoles } from "@/lib/permissions";
 
 const UserManagement = () => {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const [users, setUsers] = useState([]);
+  const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterLocation, setFilterLocation] = useState("all");
@@ -48,10 +50,10 @@ const UserManagement = () => {
   const [selectedUser, setSelectedUser] = useState(null);
 
   const [createForm, setCreateForm] = useState({
-    name: "", userId: "", password: "", location: "", designation: "", displayId: ""
+    name: "", userId: "", password: "", location: "", designation: "", displayId: "", role: "USER"
   });
   const [editForm, setEditForm] = useState({
-    name: "", displayId: "", location: "", designation: ""
+    name: "", displayId: "", location: "", designation: "", role: "USER"
   });
   const [resetPassword, setResetPassword] = useState("");
   const [showCreatePassword, setShowCreatePassword] = useState(false);
@@ -63,6 +65,8 @@ const UserManagement = () => {
       setLoading(true);
       const data = await apiRequest({ endpoint: "/auth/users" });
       setUsers(data);
+      const loadedRoles = await loadRoles();
+      setRoles(loadedRoles);
     } catch (error) {
       console.error("Failed to fetch users:", error);
       toast.error("Failed to load users");
@@ -74,6 +78,10 @@ const UserManagement = () => {
   useEffect(() => {
     fetchUsers();
   }, []);
+
+  const allRoles = useMemo(() => {
+    return roles.filter(r => r.id !== 'ADMIN');
+  }, [roles]);
 
   const locations = useMemo(() => {
     const set = new Set(users.map(u => u.location).filter(Boolean));
@@ -122,11 +130,12 @@ const UserManagement = () => {
           location: createForm.location.trim(),
           designation: createForm.designation.trim(),
           displayId: createForm.displayId.trim() || createForm.userId.trim(),
+          role: createForm.role || "USER",
         },
       });
       toast.success("User created successfully");
       setIsCreateOpen(false);
-      setCreateForm({ name: "", userId: "", password: "", location: "", designation: "", displayId: "" });
+      setCreateForm({ name: "", userId: "", password: "", location: "", designation: "", displayId: "", role: "USER" });
       fetchUsers();
     } catch (error) {
       toast.error(error.message || "Failed to create user");
@@ -148,6 +157,7 @@ const UserManagement = () => {
           displayId: editForm.displayId.trim(),
           location: editForm.location.trim(),
           designation: editForm.designation.trim(),
+          role: editForm.role || selectedUser.role,
         },
       });
       toast.success("User updated successfully");
@@ -217,7 +227,7 @@ const UserManagement = () => {
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <header className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/admin/dashboard")} className="cursor-pointer">
+        <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")} className="cursor-pointer">
           <ArrowLeft size={18} />
         </Button>
         <div>
@@ -341,6 +351,7 @@ const UserManagement = () => {
                           displayId: u.displayId || "",
                           location: u.location || "",
                           designation: u.designation || "",
+                          role: u.role || "USER",
                         });
                         setIsEditOpen(true);
                       }}
@@ -471,6 +482,25 @@ const UserManagement = () => {
                 onChange={(e) => setCreateForm({ ...createForm, displayId: e.target.value })}
               />
             </div>
+            <div className="grid gap-2">
+              <Label>Role</Label>
+              <Select
+                value={createForm.role}
+                onValueChange={(val) => setCreateForm({ ...createForm, role: val })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent>
+                  {allRoles.map((r) => (
+                    <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+                  ))}
+                  {allRoles.length === 0 && (
+                    <SelectItem value="USER">USER</SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsCreateOpen(false)} className="cursor-pointer">Cancel</Button>
@@ -525,6 +555,27 @@ const UserManagement = () => {
                 />
               </div>
             </div>
+            {selectedUser?.role !== "ADMIN" && (
+              <div className="grid gap-2">
+                <Label>Role</Label>
+                <Select
+                  value={editForm.role}
+                  onValueChange={(val) => setEditForm({ ...editForm, role: val })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allRoles.map((r) => (
+                      <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+                    ))}
+                    {allRoles.length === 0 && (
+                      <SelectItem value="USER">USER</SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsEditOpen(false)} className="cursor-pointer">Cancel</Button>

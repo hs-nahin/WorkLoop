@@ -8,6 +8,41 @@ const EMAIL_DOMAIN = 'workloop.local';
 
 const userIdToEmail = (userId) => `${userId}@${EMAIL_DOMAIN}`;
 
+const normalizeRole = (role) => {
+  if (!role) return 'USER';
+  const r = role.toUpperCase();
+  if (r === 'IT_OFFICER') return 'IT OFFICER';
+  return r;
+};
+
+// AUTHENTICATED: Get current user profile
+router.get('/me', verifyToken, async (req, res) => {
+  try {
+    const userDoc = await adminDb.doc(`users/${req.user.uid}`).get();
+    if (!userDoc.exists) {
+      return res.status(404).json({ message: 'User profile not found' });
+    }
+    const data = userDoc.data();
+    res.json({
+      uid: userDoc.id,
+      name: data.name || '',
+      email: data.email || '',
+      userId: data.userId || userDoc.id,
+      displayId: data.displayId || data.userId || userDoc.id,
+      role: normalizeRole(data.role),
+      location: data.location || '',
+      designation: data.designation || '',
+      isActive: data.isActive !== false,
+      isSystemAdmin: data.isSystemAdmin || false,
+      avatarUrl: data.avatarUrl || '',
+      createdAt: data.createdAt || null,
+    });
+  } catch (error) {
+    console.error('Get profile error:', error);
+    res.status(500).json({ message: 'Failed to fetch profile' });
+  }
+});
+
 // PUBLIC: Register a new Admin account
 router.post('/register-admin', async (req, res) => {
   try {
@@ -77,7 +112,7 @@ router.post('/register-admin', async (req, res) => {
 // ADMIN: Create a new user account
 router.post('/create-user', verifyToken, checkPermission('USER_CREATE'), async (req, res) => {
   try {
-    const { name, userId, password, displayId, location, designation } = req.body;
+    const { name, userId, password, displayId, location, designation, role: userRole } = req.body;
 
     if (!name || !userId || !password) {
       return res.status(400).json({ message: 'Name, User ID, and password are required' });
@@ -123,7 +158,7 @@ router.post('/create-user', verifyToken, checkPermission('USER_CREATE'), async (
       email,
       userId,
       displayId: displayId || userId,
-      role: 'USER',
+      role: normalizeRole(userRole) || 'USER',
       location: location || '',
       designation: designation || '',
       isActive: true,
@@ -191,7 +226,7 @@ router.get('/users', verifyToken, checkPermission('USER_LIST'), async (req, res)
 router.put('/update-user/:uid', verifyToken, checkPermission('USER_EDIT'), async (req, res) => {
   try {
     const { uid } = req.params;
-    const { name, displayId, location, designation } = req.body;
+    const { name, displayId, location, designation, role: userRole } = req.body;
 
     const userDoc = await adminDb.doc(`users/${uid}`).get();
     if (!userDoc.exists) {
@@ -206,6 +241,7 @@ router.put('/update-user/:uid', verifyToken, checkPermission('USER_EDIT'), async
     if (displayId !== undefined) updateData.displayId = displayId;
     if (location !== undefined) updateData.location = location;
     if (designation !== undefined) updateData.designation = designation;
+    if (userRole !== undefined) updateData.role = normalizeRole(userRole);
 
     await adminDb.doc(`users/${uid}`).update(updateData);
 
@@ -220,6 +256,49 @@ router.put('/update-user/:uid', verifyToken, checkPermission('USER_EDIT'), async
   } catch (error) {
     console.error('Update user error:', error);
     res.status(500).json({ message: error.message || 'Failed to update user' });
+  }
+});
+
+// AUTHENTICATED: Update own profile (name only — self-service)
+router.patch('/update-profile', verifyToken, async (req, res) => {
+  try {
+    const { name } = req.body;
+    if (!name || !name.trim()) {
+      return res.status(400).json({ message: 'Name is required' });
+    }
+
+    const trimmed = name.trim();
+    const userDoc = await adminDb.doc(`users/${req.user.uid}`).get();
+    if (!userDoc.exists) {
+      return res.status(404).json({ message: 'User profile not found' });
+    }
+
+    await adminDb.doc(`users/${req.user.uid}`).update({ name: trimmed });
+    try {
+      await adminAuth.updateUser(req.user.uid, { displayName: trimmed });
+    } catch (e) {
+      console.error('Warning: Failed to update Firebase Auth displayName:', e.message);
+    }
+
+    const updatedDoc = await adminDb.doc(`users/${req.user.uid}`).get();
+    const data = updatedDoc.data();
+    res.json({
+      uid: updatedDoc.id,
+      name: data.name,
+      email: data.email,
+      userId: data.userId,
+      displayId: data.displayId,
+      role: normalizeRole(data.role),
+      location: data.location,
+      designation: data.designation,
+      isActive: data.isActive !== false,
+      isSystemAdmin: data.isSystemAdmin || false,
+      avatarUrl: data.avatarUrl || '',
+      createdAt: data.createdAt || null,
+    });
+  } catch (error) {
+    console.error('Update profile error:', error);
+    res.status(500).json({ message: 'Failed to update profile' });
   }
 });
 

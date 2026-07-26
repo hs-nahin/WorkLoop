@@ -1,10 +1,12 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import {
   User,
@@ -13,12 +15,22 @@ import {
   MapPin,
   Hash,
   Calendar,
+  Pencil,
+  Check,
+  X,
+  Loader2,
 } from 'lucide-react';
-import { useContext, useMemo } from 'react';
+import { useContext, useMemo, useState } from 'react';
 import { AuthContext } from '@/context/AuthContextInstance.js';
+import { toast } from 'sonner';
+import { auth } from '@/lib/firebase';
 
 const Profile = () => {
-  const { user } = useContext(AuthContext);
+  const { user, fetchMe } = useContext(AuthContext);
+
+  const [editingName, setEditingName] = useState(false);
+  const [nameValue, setNameValue] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const joinDate = useMemo(() => {
     if (!user?.createdAt) return null;
@@ -27,6 +39,47 @@ const Profile = () => {
       year: 'numeric', month: 'long', day: 'numeric'
     });
   }, [user?.createdAt]);
+
+  const startEdit = () => {
+    setNameValue(user?.name || '');
+    setEditingName(true);
+  };
+
+  const cancelEdit = () => {
+    setEditingName(false);
+    setNameValue('');
+  };
+
+  const saveName = async () => {
+    const trimmed = nameValue.trim();
+    if (!trimmed) return toast.error('Name cannot be empty');
+    if (trimmed === (user?.name || '')) { setEditingName(false); return; }
+
+    setSaving(true);
+    try {
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const token = await auth.currentUser?.getIdToken();
+      const res = await fetch(`${API_BASE_URL}/auth/update-profile`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ name: trimmed }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || 'Failed to update name');
+      }
+      await fetchMe();
+      setEditingName(false);
+      toast.success('Name updated');
+    } catch (err) {
+      toast.error(err.message || 'Failed to update name');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   if (!user) {
     return <div className="text-center py-20 text-muted-foreground">User profile not found.</div>;
@@ -100,9 +153,53 @@ const Profile = () => {
                 <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                   <User size={14} /> Full Name
                 </label>
-                <p className="p-3 rounded-lg bg-muted/50 border border-border text-sm font-medium">
-                  {user.name || 'Not specified'}
-                </p>
+                {editingName ? (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={nameValue}
+                      onChange={(e) => setNameValue(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') saveName();
+                        if (e.key === 'Escape') cancelEdit();
+                      }}
+                      autoFocus
+                      className="h-9"
+                    />
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-9 w-9 shrink-0 text-green-600 hover:text-green-700 cursor-pointer"
+                      onClick={saveName}
+                      disabled={saving}
+                    >
+                      {saving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-9 w-9 shrink-0 cursor-pointer"
+                      onClick={cancelEdit}
+                      disabled={saving}
+                    >
+                      <X size={16} />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <p className="flex-1 p-3 rounded-lg bg-muted/50 border border-border text-sm font-medium">
+                      {user.name || 'Not specified'}
+                    </p>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-9 w-9 shrink-0 cursor-pointer"
+                      onClick={startEdit}
+                      title="Edit name"
+                    >
+                      <Pencil size={14} />
+                    </Button>
+                  </div>
+                )}
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">

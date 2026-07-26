@@ -24,34 +24,38 @@ const TopBar = () => {
   useEffect(() => {
     if (!user?.uid) return;
 
-    const notificationsRef = collection(db, 'notifications');
-    const q = query(
-      notificationsRef,
-      where('userId', '==', user.uid)
-    );
+    let unsubscribe = () => {};
+    try {
+      const notificationsRef = collection(db, 'notifications');
+      const q = query(
+        notificationsRef,
+        where('userId', '==', user.uid)
+      );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      try {
-        let notifs = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        
-        // Sort locally by createdAt
-        notifs = notifs.sort((a, b) => {
-          const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(0);
-          const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(0);
-          return dateB - dateA;
-        });
-        
-        setNotifications(notifs);
-        setUnreadCount(notifs.filter(n => !n.read).length);
-      } catch (err) {
-        console.error('Error processing notifications:', err);
-      }
-    }, (error) => {
-      console.error('Error listening to notifications:', error);
-    });
+      unsubscribe = onSnapshot(q, (snapshot) => {
+        try {
+          let notifs = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+          
+          notifs = notifs.sort((a, b) => {
+            const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(0);
+            const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(0);
+            return dateB - dateA;
+          });
+          
+          setNotifications(notifs);
+          setUnreadCount(notifs.filter(n => !n.read).length);
+        } catch (err) {
+          console.error('Error processing notifications:', err);
+        }
+      }, (error) => {
+        console.error('Error listening to notifications:', error);
+      });
+    } catch (err) {
+      console.error('Failed to initialize notifications listener:', err);
+    }
 
     return () => {
       try { unsubscribe(); } catch (e) {}
@@ -252,11 +256,11 @@ const TopBar = () => {
             </div>
           </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48 sm:w-56">
-              <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => navigate((user?.role || '').toUpperCase() === 'ADMIN' ? '/admin/profile' : '/profile')}>
+              <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => navigate('/profile')}>
                 <User size={15} className="sm:size-[16px]" />
                 <span>Profile</span>
               </DropdownMenuItem>
-              <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => navigate((user?.role || '').toUpperCase() === 'ADMIN' ? '/admin/settings' : '/settings')}>
+              <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => navigate('/settings')}>
                 <Settings size={15} className="sm:size-[16px]" />
                 <span>Settings</span>
               </DropdownMenuItem>

@@ -18,26 +18,32 @@ const MessageThread = ({ taskId }) => {
   useEffect(() => {
     if (!taskId) return;
 
-    const q = query(
-      collection(db, 'tasks', taskId, 'messages'),
-      orderBy('createdAt', 'asc')
-    );
+    let unsubscribe = () => {};
+    try {
+      const q = query(
+        collection(db, 'tasks', taskId, 'messages'),
+        orderBy('createdAt', 'asc')
+      );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const msgs = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate ? doc.data().createdAt.toDate() : new Date()
-      }));
-      setMessages(msgs);
+      unsubscribe = onSnapshot(q, (snapshot) => {
+        const msgs = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          createdAt: doc.data().createdAt?.toDate ? doc.data().createdAt.toDate() : new Date()
+        }));
+        setMessages(msgs);
+        setLoading(false);
+        scrollToBottom();
+      }, (error) => {
+        console.error('Error fetching messages:', error);
+        setLoading(false);
+      });
+    } catch (err) {
+      console.error('Failed to initialize messages listener:', err);
       setLoading(false);
-      scrollToBottom();
-    }, (error) => {
-      console.error('Error fetching messages:', error);
-      setLoading(false);
-    });
+    }
 
-    return () => unsubscribe();
+    return () => { try { unsubscribe(); } catch (_) {} };
   }, [taskId]);
 
   if (loading) return <div className="text-center py-6 sm:py-8 text-xs sm:text-sm text-muted-foreground">Loading messages...</div>;

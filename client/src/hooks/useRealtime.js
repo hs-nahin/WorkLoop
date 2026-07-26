@@ -18,7 +18,7 @@ const safeUnsub = (ref) => {
 };
 
 // Real-time task listener
-export const useRealTimeTasks = (userRole, userId) => {
+export const useRealTimeTasks = (userId, userRole) => {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const unsubRef = useRef(null);
@@ -30,34 +30,43 @@ export const useRealTimeTasks = (userRole, userId) => {
 
     safeUnsub(unsubRef);
 
-    const tasksRef = collection(db, 'tasks');
-    let constraints = [];
-    if (userRole === 'IT OFFICER' || userRole === 'ASSISTANT' || userRole === 'USER') {
-      constraints.push(where('officerId', '==', userId));
-    }
-    constraints.push(orderBy('createdAt', 'desc'));
-    constraints.push(limit(100));
+    try {
+      const tasksRef = collection(db, 'tasks');
+      let constraints = [];
+      if (userRole === 'IT OFFICER' || userRole === 'ASSISTANT' || userRole === 'USER') {
+        constraints.push(where('officerId', '==', userId));
+      }
+      constraints.push(orderBy('createdAt', 'desc'));
+      constraints.push(limit(100));
 
-    const q = query(tasksRef, ...constraints);
+      const q = query(tasksRef, ...constraints);
 
-    unsubRef.current = onSnapshot(q,
-      (snapshot) => {
-        if (!mountedRef.current) return;
-        const tasksData = snapshot.docs.map(d => ({
-          id: d.id,
-          ...d.data(),
-          createdAt: d.data().createdAt?.toDate?.() || d.data().createdAt,
-          deadline: d.data().deadline?.toDate?.() || d.data().deadline,
-        }));
-        setTasks(tasksData);
-        setLoading(false);
-      },
-      (err) => {
-        if (!mountedRef.current) return;
-        console.error('Error fetching tasks:', err);
+      unsubRef.current = onSnapshot(q,
+        (snapshot) => {
+          if (!mountedRef.current) return;
+          const tasksData = snapshot.docs.map(d => ({
+            id: d.id,
+            ...d.data(),
+            createdAt: d.data().createdAt?.toDate?.() || d.data().createdAt,
+            deadline: d.data().deadline?.toDate?.() || d.data().deadline,
+          }));
+          setTasks(tasksData);
+          setLoading(false);
+        },
+        (err) => {
+          if (!mountedRef.current) return;
+          console.error('Error fetching tasks:', err);
+          setTasks([]);
+          setLoading(false);
+        }
+      );
+    } catch (err) {
+      console.error('Failed to initialize task listener:', err);
+      if (mountedRef.current) {
+        setTasks([]);
         setLoading(false);
       }
-    );
+    }
 
     return () => {
       mountedRef.current = false;
@@ -81,23 +90,32 @@ export const useRealTimeTask = (taskId) => {
 
     safeUnsub(unsubRef);
 
-    const taskRef = doc(db, 'tasks', taskId);
-    unsubRef.current = onSnapshot(taskRef,
-      (docSnap) => {
-        if (!mountedRef.current) return;
-        if (docSnap.exists()) {
-          setTask({ id: docSnap.id, ...docSnap.data() });
-        } else {
+    try {
+      const taskRef = doc(db, 'tasks', taskId);
+      unsubRef.current = onSnapshot(taskRef,
+        (docSnap) => {
+          if (!mountedRef.current) return;
+          if (docSnap.exists()) {
+            setTask({ id: docSnap.id, ...docSnap.data() });
+          } else {
+            setTask(null);
+          }
+          setLoading(false);
+        },
+        (err) => {
+          if (!mountedRef.current) return;
+          console.error('Error fetching task:', err);
           setTask(null);
+          setLoading(false);
         }
-        setLoading(false);
-      },
-      (err) => {
-        if (!mountedRef.current) return;
-        console.error('Error fetching task:', err);
+      );
+    } catch (err) {
+      console.error('Failed to initialize task listener:', err);
+      if (mountedRef.current) {
+        setTask(null);
         setLoading(false);
       }
-    );
+    }
 
     return () => {
       mountedRef.current = false;
@@ -131,67 +149,74 @@ export const useRealTimeStats = (userId, userRole) => {
 
     safeUnsub(unsubRef);
 
-    const tasksRef = collection(db, 'tasks');
-    let constraints = [];
-    if (userRole === 'IT OFFICER' || userRole === 'ASSISTANT' || userRole === 'USER') {
-      constraints.push(where('officerId', '==', userId));
-    }
+    try {
+      const tasksRef = collection(db, 'tasks');
+      let constraints = [];
+      if (userRole === 'IT OFFICER' || userRole === 'ASSISTANT' || userRole === 'USER') {
+        constraints.push(where('officerId', '==', userId));
+      }
 
-    const q = query(tasksRef, ...constraints);
+      const q = query(tasksRef, ...constraints);
 
-    unsubRef.current = onSnapshot(q,
-      (snapshot) => {
-        if (!mountedRef.current) return;
-        const allTasks = snapshot.docs.map(d => ({
-          id: d.id,
-          ...d.data(),
-          createdAt: d.data().createdAt?.toDate?.() || d.data().createdAt,
-        }));
+      unsubRef.current = onSnapshot(q,
+        (snapshot) => {
+          if (!mountedRef.current) return;
+          const allTasks = snapshot.docs.map(d => ({
+            id: d.id,
+            ...d.data(),
+            createdAt: d.data().createdAt?.toDate?.() || d.data().createdAt,
+          }));
 
-        const pending = allTasks.filter(t => t.status === 'pending').length;
-        const inProgress = allTasks.filter(t => t.status === 'in progress').length;
-        const submitted = allTasks.filter(t => t.status === 'submitted').length;
-        const completed = allTasks.filter(t => t.status === 'completed' || t.status === 'approved').length;
-        const rejected = allTasks.filter(t => t.status === 'rejected').length;
+          const pending = allTasks.filter(t => t.status === 'pending').length;
+          const inProgress = allTasks.filter(t => t.status === 'in progress').length;
+          const submitted = allTasks.filter(t => t.status === 'submitted').length;
+          const completed = allTasks.filter(t => t.status === 'completed' || t.status === 'approved').length;
+          const rejected = allTasks.filter(t => t.status === 'rejected').length;
 
-        const now = new Date();
-        const weeklyTrend = [];
-        for (let i = 6; i >= 0; i--) {
-          const day = new Date(now);
-          day.setDate(day.getDate() - i);
-          const dayStart = new Date(day.getFullYear(), day.getMonth(), day.getDate());
-          const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
-          const dayTasks = allTasks.filter(t => {
-            const created = t.createdAt instanceof Date ? t.createdAt : new Date(t.createdAt);
-            return created >= dayStart && created < dayEnd;
+          const now = new Date();
+          const weeklyTrend = [];
+          for (let i = 6; i >= 0; i--) {
+            const day = new Date(now);
+            day.setDate(day.getDate() - i);
+            const dayStart = new Date(day.getFullYear(), day.getMonth(), day.getDate());
+            const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+            const dayTasks = allTasks.filter(t => {
+              const created = t.createdAt instanceof Date ? t.createdAt : new Date(t.createdAt);
+              return created >= dayStart && created < dayEnd;
+            });
+            weeklyTrend.push({
+              date: dayStart.toLocaleDateString('en-US', { weekday: 'short' }),
+              created: dayTasks.length,
+              completed: dayTasks.filter(t => t.status === 'completed' || t.status === 'approved').length,
+              submitted: dayTasks.filter(t => t.status === 'submitted').length,
+            });
+          }
+
+          setStats({
+            pending,
+            inProgress,
+            submitted,
+            completed,
+            total: allTasks.length,
+            rejected,
+            statusCounts: { pending, inProgress, submitted, completed, rejected },
+            weeklyTrend,
+            tasks: allTasks,
           });
-          weeklyTrend.push({
-            date: dayStart.toLocaleDateString('en-US', { weekday: 'short' }),
-            created: dayTasks.length,
-            completed: dayTasks.filter(t => t.status === 'completed' || t.status === 'approved').length,
-            submitted: dayTasks.filter(t => t.status === 'submitted').length,
-          });
+          setLoading(false);
+        },
+        (err) => {
+          if (!mountedRef.current) return;
+          console.error('Error fetching stats:', err);
+          setLoading(false);
         }
-
-        setStats({
-          pending,
-          inProgress,
-          submitted,
-          completed,
-          total: allTasks.length,
-          rejected,
-          statusCounts: { pending, inProgress, submitted, completed, rejected },
-          weeklyTrend,
-          tasks: allTasks,
-        });
-        setLoading(false);
-      },
-      (err) => {
-        if (!mountedRef.current) return;
-        console.error('Error fetching stats:', err);
+      );
+    } catch (err) {
+      console.error('Failed to initialize stats listener:', err);
+      if (mountedRef.current) {
         setLoading(false);
       }
-    );
+    }
 
     return () => {
       mountedRef.current = false;

@@ -22,12 +22,7 @@ const RegisterAdmin = () => {
 
   useEffect(() => {
     if (!loading && token && user) {
-      const role = (user.role || '').toUpperCase();
-      if (role === 'ADMIN') {
-        navigate('/admin/dashboard', { replace: true });
-      } else {
-        navigate('/dashboard', { replace: true });
-      }
+      navigate('/dashboard', { replace: true });
     }
   }, [user, token, loading, navigate]);
 

@@ -82,26 +82,35 @@ const UserPerformanceDashboard = () => {
 
   useEffect(() => {
     setLoading(true);
+    let unsubscribeUsers = () => {};
+    let unsubscribeTasks = () => {};
 
-    const unsubscribeUsers = onSnapshot(collection(db, 'users'), (snapshot) => {
-      setUsers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    }, (err) => {
-      console.error(err);
-      toast.error('Failed to fetch users');
-    });
+    try {
+      unsubscribeUsers = onSnapshot(collection(db, 'users'), (snapshot) => {
+        setUsers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      }, (err) => {
+        console.error(err);
+      });
+    } catch (err) {
+      console.error('Failed to initialize users listener:', err);
+    }
 
-    const unsubscribeTasks = onSnapshot(collection(db, 'tasks'), (snapshot) => {
-      setTasks(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    try {
+      unsubscribeTasks = onSnapshot(collection(db, 'tasks'), (snapshot) => {
+        setTasks(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        setLoading(false);
+      }, (err) => {
+        console.error(err);
+        setLoading(false);
+      });
+    } catch (err) {
+      console.error('Failed to initialize tasks listener:', err);
       setLoading(false);
-    }, (err) => {
-      console.error(err);
-      toast.error('Failed to fetch tasks');
-      setLoading(false);
-    });
+    }
 
     return () => {
-      unsubscribeUsers();
-      unsubscribeTasks();
+      try { unsubscribeUsers(); } catch (_) {}
+      try { unsubscribeTasks(); } catch (_) {}
     };
   }, [user]);
 

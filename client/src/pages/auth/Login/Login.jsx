@@ -21,12 +21,7 @@ const Login = () => {
 
   useEffect(() => {
     if (!loading && token && user) {
-      const role = (user.role || '').toUpperCase();
-      if (role === 'ADMIN') {
-        navigate('/admin/dashboard', { replace: true });
-      } else {
-        navigate('/dashboard', { replace: true });
-      }
+      navigate('/dashboard', { replace: true });
     }
   }, [user, token, loading, navigate]);
 
@@ -39,16 +34,12 @@ const Login = () => {
 
     setIsLoading(true);
     try {
-      const email = `${userId.trim()}@${EMAIL_DOMAIN}`;
+      const input = userId.trim();
+      const email = input.includes('@') ? input : `${input}@${EMAIL_DOMAIN}`;
       const result = await login({ email, password });
 
-      const role = (result.profile?.role || '').toUpperCase();
       toast.success('Welcome back to WorkLoop!');
-      if (role === 'ADMIN') {
-        navigate('/admin/dashboard');
-      } else {
-        navigate('/dashboard');
-      }
+      navigate('/dashboard');
     } catch (error) {
       let message = 'Invalid credentials. Please try again.';
       if (error.code === 'auth/user-not-found') {

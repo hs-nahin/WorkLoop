@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
-import { auth, db } from '../lib/firebase';
+import { auth } from '../lib/firebase';
 import {
   subscribeUserPermissions,
   unsubscribeUserPermissions,
@@ -39,15 +38,18 @@ export const AuthProvider = ({ children }) => {
 
   const fetchFirestoreProfile = useCallback(async (uid) => {
     try {
-      const userDoc = await getDoc(doc(db, 'users', uid));
-      if (userDoc.exists()) {
-        const data = { id: userDoc.id, ...userDoc.data() };
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const response = await fetch(`${API_BASE_URL}/auth/me`, {
+        headers: { Authorization: `Bearer ${await auth.currentUser?.getIdToken()}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
         data.role = normalizeRole(data.role);
         return data;
       }
       return null;
     } catch (error) {
-      console.error('Error fetching Firestore profile:', error);
+      console.error('Error fetching user profile:', error);
       return null;
     }
   }, []);

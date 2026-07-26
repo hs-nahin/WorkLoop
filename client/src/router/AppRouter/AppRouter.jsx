@@ -35,104 +35,71 @@ const router = createBrowserRouter([
         element: <MainLayout />,
         children: [
           {
-            path: 'dashboard',
-            element: <ErrorBoundary><Dashboard /></ErrorBoundary>,
+            element: <ProtectedRoute allowedPermissions={['PROFILE_VIEW']} />,
+            children: [
+              {
+                path: 'dashboard',
+                element: <ErrorBoundary><Dashboard /></ErrorBoundary>,
+              },
+              {
+                path: 'settings',
+                element: <ErrorBoundary><Settings /></ErrorBoundary>,
+              },
+              {
+                path: 'profile',
+                element: <ErrorBoundary><Profile /></ErrorBoundary>,
+              },
+              {
+                path: 'announcements',
+                element: <ErrorBoundary><AnnouncementsPage /></ErrorBoundary>,
+              },
+              {
+                path: 'announcements/history',
+                element: <ErrorBoundary><AnnouncementHistory /></ErrorBoundary>,
+              },
+              {
+                index: true,
+                element: <ErrorBoundary><Dashboard /></ErrorBoundary>,
+              },
+            ],
           },
           {
-            path: 'tasks',
-            element: <ErrorBoundary><TaskList /></ErrorBoundary>,
+            element: <ProtectedRoute allowedPermissions={['COMMENT_CREATE']} />,
+            children: [
+              {
+                path: 'tasks',
+                element: <ErrorBoundary><TaskList /></ErrorBoundary>,
+              },
+              {
+                path: 'tasks/:id',
+                element: <ErrorBoundary><TaskDetail /></ErrorBoundary>,
+              },
+              {
+                path: 'completed',
+                element: <ErrorBoundary><CompletedTasks /></ErrorBoundary>,
+              },
+            ],
           },
           {
-            path: 'tasks/:id',
-            element: <ErrorBoundary><TaskDetail /></ErrorBoundary>,
-          },
-          {
-            path: 'completed',
-            element: <ErrorBoundary><CompletedTasks /></ErrorBoundary>,
-          },
-          {
-            path: 'settings',
-            element: <ErrorBoundary><Settings /></ErrorBoundary>,
-          },
-          {
-            path: 'profile',
-            element: <ErrorBoundary><Profile /></ErrorBoundary>,
-          },
-          {
-            path: 'announcements',
-            element: <ErrorBoundary><AnnouncementsPage /></ErrorBoundary>,
-          },
-          {
-            path: 'announcements/history',
-            element: <ErrorBoundary><AnnouncementHistory /></ErrorBoundary>,
-          },
-
-          {
-            index: true,
-            element: <ErrorBoundary><Dashboard /></ErrorBoundary>,
-          },
-        ],
-      },
-    ],
-  },
-  {
-    path: '/admin',
-    element: <ProtectedRoute requiredRole="ADMIN" />,
-    children: [
-      {
-        element: <MainLayout />,
-        children: [
-          {
-            path: 'dashboard',
-            element: <ErrorBoundary><Dashboard /></ErrorBoundary>,
-          },
-          {
-            path: 'user-management',
-            element: <ErrorBoundary><UserManagement /></ErrorBoundary>,
-          },
-          {
-            path: 'tasks',
-            element: <ErrorBoundary><TaskList /></ErrorBoundary>,
-          },
-          {
-            path: 'tasks/:id',
-            element: <ErrorBoundary><TaskDetail /></ErrorBoundary>,
-          },
-          {
-            path: 'completed',
-            element: <ErrorBoundary><CompletedTasks /></ErrorBoundary>,
-          },
-          {
-            path: 'performance',
-            element: <ErrorBoundary><UserPerformanceDashboard /></ErrorBoundary>,
-          },
-          {
-            path: 'audit-logs',
-            element: <ErrorBoundary><AuditLogs /></ErrorBoundary>,
-          },
-          {
-            path: 'permissions',
-            element: <ErrorBoundary><PermissionsEditor /></ErrorBoundary>,
-          },
-          {
-            path: 'settings',
-            element: <ErrorBoundary><Settings /></ErrorBoundary>,
-          },
-          {
-            path: 'profile',
-            element: <ErrorBoundary><Profile /></ErrorBoundary>,
-          },
-          {
-            path: 'announcements',
-            element: <ErrorBoundary><AnnouncementsPage /></ErrorBoundary>,
-          },
-          {
-            path: 'announcements/history',
-            element: <ErrorBoundary><AnnouncementHistory /></ErrorBoundary>,
-          },
-          {
-            index: true,
-            element: <ErrorBoundary><Dashboard /></ErrorBoundary>,
+            element: <ProtectedRoute requiredRole="ADMIN" />,
+            children: [
+              {
+                path: 'user-management',
+                element: <ErrorBoundary><UserManagement /></ErrorBoundary>,
+              },
+              {
+                path: 'performance',
+                element: <ErrorBoundary><UserPerformanceDashboard /></ErrorBoundary>,
+              },
+              {
+                path: 'audit-logs',
+                element: <ErrorBoundary><AuditLogs /></ErrorBoundary>,
+              },
+              {
+                path: 'permissions',
+                element: <ErrorBoundary><PermissionsEditor /></ErrorBoundary>,
+              },
+            ],
           },
         ],
       },

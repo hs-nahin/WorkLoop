@@ -133,90 +133,100 @@ const ActivityTimeline = ({ taskId }) => {
     let cancelled = false;
 
     const loadEvents = () => {
-      const auditQuery = query(
-        collection(db, 'auditLogs'),
-        where('targetId', '==', taskId),
-        orderBy('timestamp', 'desc')
-      );
+      try {
+        const auditQuery = query(
+          collection(db, 'auditLogs'),
+          where('targetId', '==', taskId),
+          orderBy('timestamp', 'desc')
+        );
 
-      const messagesQuery = query(
-        collection(db, 'tasks', taskId, 'messages'),
-        orderBy('createdAt', 'desc')
-      );
+        unsubscribeAudit = onSnapshot(auditQuery, (snapshot) => {
+          if (cancelled) return;
+          const auditEvents = snapshot.docs
+            .map(doc => ({
+              id: `audit-${doc.id}`,
+              source: 'auditLog',
+              action: doc.data().action,
+              details: doc.data().details,
+              actorName: doc.data().performedByName,
+              actorUid: doc.data().performedByUid,
+              timestamp: doc.data().timestamp,
+              text: doc.data().details,
+              senderName: doc.data().performedByName,
+              senderRole: '',
+              targetId: doc.data().targetId,
+            }));
 
-      unsubscribeAudit = onSnapshot(auditQuery, (snapshot) => {
-        if (cancelled) return;
-        const auditEvents = snapshot.docs
-          .map(doc => ({
-            id: `audit-${doc.id}`,
-            source: 'auditLog',
-            action: doc.data().action,
-            details: doc.data().details,
-            actorName: doc.data().performedByName,
-            actorUid: doc.data().performedByUid,
-            timestamp: doc.data().timestamp,
-            text: doc.data().details,
-            senderName: doc.data().performedByName,
-            senderRole: '',
-            targetId: doc.data().targetId,
-          }));
-
-        setEvents(prev => {
-          const messageEvents = prev.filter(e => e.source === 'message');
-          const merged = [...messageEvents, ...auditEvents].sort((a, b) => {
-            const ta = a.timestamp?.toDate ? a.timestamp.toDate().getTime() : new Date(a.timestamp || 0).getTime();
-            const tb = b.timestamp?.toDate ? b.timestamp.toDate().getTime() : new Date(b.timestamp || 0).getTime();
-            return tb - ta;
+          setEvents(prev => {
+            const messageEvents = prev.filter(e => e.source === 'message');
+            const merged = [...messageEvents, ...auditEvents].sort((a, b) => {
+              const ta = a.timestamp?.toDate ? a.timestamp.toDate().getTime() : new Date(a.timestamp || 0).getTime();
+              const tb = b.timestamp?.toDate ? b.timestamp.toDate().getTime() : new Date(b.timestamp || 0).getTime();
+              return tb - ta;
+            });
+            return merged;
           });
-          return merged;
+          setLoading(false);
+        }, () => {
+          if (!cancelled) setLoading(false);
         });
-        setLoading(false);
-      }, () => {
+      } catch (err) {
+        console.error('Failed to initialize audit listener:', err);
         if (!cancelled) setLoading(false);
-      });
+      }
 
-      unsubscribeMessages = onSnapshot(messagesQuery, (snapshot) => {
-        if (cancelled) return;
-        const messageEvents = snapshot.docs
-          .map(doc => {
-            const data = doc.data();
-            return {
-              id: `msg-${doc.id}`,
-              source: 'message',
-              action: 'system_message',
-              details: data.text,
-              actorName: data.senderName,
-              actorUid: data.senderId,
-              timestamp: data.createdAt,
-              text: data.text,
-              senderName: data.senderName,
-              senderRole: data.senderRole || '',
-              type: data.type,
-            };
-          })
-          .filter(e => e.type === 'system');
+      try {
+        const messagesQuery = query(
+          collection(db, 'tasks', taskId, 'messages'),
+          orderBy('createdAt', 'desc')
+        );
 
-        setEvents(prev => {
-          const auditEvents = prev.filter(e => e.source === 'auditLog');
-          const merged = [...auditEvents, ...messageEvents].sort((a, b) => {
-            const ta = a.timestamp?.toDate ? a.timestamp.toDate().getTime() : new Date(a.timestamp || 0).getTime();
-            const tb = b.timestamp?.toDate ? b.timestamp.toDate().getTime() : new Date(b.timestamp || 0).getTime();
-            return tb - ta;
+        unsubscribeMessages = onSnapshot(messagesQuery, (snapshot) => {
+          if (cancelled) return;
+          const messageEvents = snapshot.docs
+            .map(doc => {
+              const data = doc.data();
+              return {
+                id: `msg-${doc.id}`,
+                source: 'message',
+                action: 'system_message',
+                details: data.text,
+                actorName: data.senderName,
+                actorUid: data.senderId,
+                timestamp: data.createdAt,
+                text: data.text,
+                senderName: data.senderName,
+                senderRole: data.senderRole || '',
+                type: data.type,
+              };
+            })
+            .filter(e => e.type === 'system');
+
+          setEvents(prev => {
+            const auditEvents = prev.filter(e => e.source === 'auditLog');
+            const merged = [...auditEvents, ...messageEvents].sort((a, b) => {
+              const ta = a.timestamp?.toDate ? a.timestamp.toDate().getTime() : new Date(a.timestamp || 0).getTime();
+              const tb = b.timestamp?.toDate ? b.timestamp.toDate().getTime() : new Date(b.timestamp || 0).getTime();
+              return tb - ta;
+            });
+            return merged;
           });
-          return merged;
+          setLoading(false);
+        }, () => {
+          if (!cancelled) setLoading(false);
         });
-        setLoading(false);
-      }, () => {
+      } catch (err) {
+        console.error('Failed to initialize messages listener:', err);
         if (!cancelled) setLoading(false);
-      });
+      }
     };
 
     loadEvents();
 
     return () => {
       cancelled = true;
-      unsubscribeAudit();
-      unsubscribeMessages();
+      try { unsubscribeAudit(); } catch (_) {}
+      try { unsubscribeMessages(); } catch (_) {}
     };
   }, [taskId]);
 
