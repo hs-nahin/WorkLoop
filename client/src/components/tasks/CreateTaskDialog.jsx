@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { apiRequest } from "../../api/apiClient";
 import { AuthContext } from "../../context/AuthContextInstance.js";
 import { useContext } from "react";
+import { hasPermission } from "../../lib/permissions";
 
 export function CreateTaskDialog({ open, onOpenChange }) {
   const { user } = useContext(AuthContext);
@@ -51,7 +52,7 @@ export function CreateTaskDialog({ open, onOpenChange }) {
         toast.error("Failed to fetch users");
       }
     };
-    if (open && user?.role === "ADMIN") {
+    if (open && hasPermission(user?.role, "TASK_CREATE")) {
       fetchUsers();
     }
   }, [open, user?.role]);

@@ -20,6 +20,7 @@ import {
 import { useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { AuthContext } from '@/context/AuthContextInstance.js';
+import { hasPermission } from '@/lib/permissions';
 
 const Settings = () => {
   const { user } = useContext(AuthContext);
@@ -120,7 +121,7 @@ const Settings = () => {
         </div>
 
         <div className="space-y-6">
-          {user?.role === 'ADMIN' && (
+          {(hasPermission(user?.role, 'AUDIT_LOG_VIEW') || hasPermission(user?.role, 'ROLE_MANAGE')) && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-sm font-bold text-foreground uppercase tracking-widest flex items-center gap-2">

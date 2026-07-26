@@ -107,8 +107,19 @@ router.put('/:id', verifyToken, checkPermission('ANNOUNCEMENT_EDIT'), async (req
         const updates = req.body;
 
         if (updates.createdAt) delete updates.createdAt;
+        if (updates.createdBy) delete updates.createdBy;
 
-        await adminDb.collection('announcements').doc(id).update(updates);
+        const allowedFields = ['title', 'message', 'type', 'priority', 'startsAt', 'expiresAt', 'targetRoles', 'pinned', 'active'];
+        const sanitized = {};
+        for (const key of allowedFields) {
+          if (updates[key] !== undefined) sanitized[key] = updates[key];
+        }
+
+        if (Object.keys(sanitized).length === 0) {
+          return res.status(400).json({ message: 'No valid fields to update' });
+        }
+
+        await adminDb.collection('announcements').doc(id).update(sanitized);
 
         await writeAuditLog('ANNOUNCEMENT_UPDATED', req.user, {
             targetId: id,

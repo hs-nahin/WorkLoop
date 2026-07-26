@@ -1,5 +1,5 @@
 import { useEffect, useState, useContext } from 'react';
-import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, doc, deleteDoc, getDoc } from 'firebase/firestore';
 import { db } from '@/firebase/firebaseConfig';
 import { AuthContext } from '@/context/AuthContext';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -156,8 +156,8 @@ const SubtaskWorkflow = ({ taskId, task }) => {
 
       // System message for status change
       if (updates.status) {
-        const subtaskDoc = await subtaskRef.get();
-        const subtaskTitle = subtaskDoc.exists() ? subtaskDoc.data().title : 'Unknown';
+        const subtaskDocSnap = await getDoc(subtaskRef);
+        const subtaskTitle = subtaskDocSnap.exists() ? subtaskDocSnap.data().title : 'Unknown';
         await addDoc(collection(db, 'tasks', taskId, 'messages'), {
           text: `Subtask "${subtaskTitle}" status changed to ${updates.status}`,
           senderId: 'system',
@@ -182,8 +182,8 @@ const SubtaskWorkflow = ({ taskId, task }) => {
     try {
       // Get subtask info before deleting
       const subtaskRef = doc(db, 'tasks', taskId, 'subtasks', subtaskId);
-      const subtaskDoc = await subtaskRef.get();
-      const subtaskData = subtaskDoc.exists() ? subtaskDoc.data() : null;
+      const subtaskDocSnap = await getDoc(subtaskRef);
+      const subtaskData = subtaskDocSnap.exists() ? subtaskDocSnap.data() : null;
 
       await deleteDoc(subtaskRef);
 

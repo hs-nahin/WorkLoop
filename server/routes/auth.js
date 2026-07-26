@@ -4,9 +4,21 @@ const { admin, adminAuth, adminDb } = require('../firebase-admin');
 const { verifyToken, selfOrAdmin, writeAuditLog } = require('../middleware/auth');
 const { checkPermission } = require('../config/permissions');
 
-const EMAIL_DOMAIN = 'workloop.local';
+const DEFAULT_EMAIL_DOMAIN = 'workloop.local';
 
-const userIdToEmail = (userId) => `${userId}@${EMAIL_DOMAIN}`;
+const getEmailDomain = async () => {
+  try {
+    const doc = await adminDb.doc('company/config').get();
+    return doc.exists ? (doc.data().emailDomain || DEFAULT_EMAIL_DOMAIN) : DEFAULT_EMAIL_DOMAIN;
+  } catch {
+    return DEFAULT_EMAIL_DOMAIN;
+  }
+};
+
+const userIdToEmail = async (userId) => {
+  const domain = await getEmailDomain();
+  return `${userId}@${domain}`;
+};
 
 const normalizeRole = (role) => {
   if (!role) return 'USER';
@@ -137,7 +149,7 @@ router.post('/create-user', verifyToken, checkPermission('USER_CREATE'), async (
       return res.status(400).json({ message: 'User ID can only contain letters, numbers, dots, hyphens, and underscores' });
     }
 
-    const email = userIdToEmail(userId);
+    const email = await userIdToEmail(userId);
 
     let existingUser = false;
     try {
@@ -181,7 +193,7 @@ router.post('/create-user', verifyToken, checkPermission('USER_CREATE'), async (
     res.status(201).json({ uid: userRecord.uid, ...userData });
   } catch (error) {
     console.error('Create user error:', error);
-    if (error.code === 'auth/email-always-exists') {
+    if (error.code === 'auth/email-already-exists') {
       return res.status(409).json({ message: 'A user with these credentials already exists' });
     }
     res.status(500).json({ message: error.message || 'Failed to create user' });

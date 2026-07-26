@@ -7,6 +7,7 @@ import { apiRequest } from '@/api/apiClient';
 import { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Users } from 'lucide-react';
+import { hasPermission } from '@/lib/permissions';
 
 const WorkloadDistribution = () => {
   const { user } = useContext(AuthContext);
@@ -24,7 +25,7 @@ const WorkloadDistribution = () => {
         console.error('Failed to fetch users:', e);
       }
     };
-    if (user?.role === 'ADMIN') fetchUsers();
+    if (hasPermission(user?.role, 'PERFORMANCE_VIEW')) fetchUsers();
   }, [user?.role]);
 
   const chartData = useMemo(() => {

@@ -24,14 +24,14 @@ import { hasPermission } from "../../../lib/permissions";
 
 const menuItems = [
   { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard, roles: ["PROFILE_VIEW"] },
-  { name: "User Management", path: "/user-management", icon: Users, roles: ["USER_LIST"], adminOnly: true },
-  { name: "Tasks", path: "/tasks", icon: CheckSquare, roles: ["COMMENT_CREATE"] },
-  { name: "Completed", path: "/completed", icon: CheckCircle2, roles: ["COMMENT_CREATE"] },
-  { name: "Performance", path: "/performance", icon: BarChart3, roles: ["PERFORMANCE_VIEW"], adminOnly: true },
+  { name: "Tasks", path: "/tasks", icon: CheckSquare, roles: ["TASK_VIEW_LIST"] },
+  { name: "Completed", path: "/completed", icon: CheckCircle2, roles: ["TASK_VIEW_LIST"] },
   { name: "Announcements", path: "/announcements", icon: Megaphone, roles: ["ANNOUNCEMENT_VIEW"] },
-  { name: "Announcement History", path: "/announcements/history", icon: History, roles: ["ANNOUNCEMENT_HISTORY_VIEW"] },
-  { name: "Audit Logs", path: "/audit-logs", icon: History, roles: ["AUDIT_LOG_VIEW"], adminOnly: true },
-  { name: "Permissions", path: "/permissions", icon: Shield, roles: ["COMPANY_SETTINGS"], adminOnly: true },
+  { name: "Announcement History", path: "/announcements-history", icon: History, roles: ["ANNOUNCEMENT_HISTORY_VIEW"] },
+  { name: "User Management", path: "/user-management", icon: Users, roles: ["USER_LIST"] },
+  { name: "Performance", path: "/performance", icon: BarChart3, roles: ["PERFORMANCE_VIEW"] },
+  { name: "Audit Logs", path: "/audit-logs", icon: History, roles: ["AUDIT_LOG_VIEW"] },
+  { name: "Permissions", path: "/permissions", icon: Shield, roles: ["ROLE_MANAGE"] },
 ];
 
 const WorkLoopLogo = () => (
@@ -46,14 +46,11 @@ const Sidebar = () => {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [mobileCollapsed, setMobileCollapsed] = useState(false);
 
-  const isAdmin = (user?.role || '').toUpperCase() === 'ADMIN';
-
   const filteredItems = useMemo(() => {
     return menuItems.filter(item => {
-      if (item.adminOnly && !isAdmin) return false;
       return item.roles.some(r => hasPermission(user?.role, r));
     });
-  }, [user?.role, isAdmin, permissionsVersion]);
+  }, [user?.role, permissionsVersion]);
 
   const renderContent = (options = {}) => {
     const { onNavClick, collapsed } = options;
@@ -83,7 +80,7 @@ const Sidebar = () => {
           <div className="px-5 mb-2 animate-slide-in-left"
             style={{ animationDelay: isMobile ? '30ms' : undefined }}>
             <p className="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-[0.12em]">
-              {isAdmin ? 'Admin Panel' : 'Navigation'}
+              Navigation
             </p>
           </div>
         )}
@@ -135,7 +132,7 @@ const Sidebar = () => {
         {/* Bottom section */}
         <div className={cn("mt-auto animate-slide-in-left", isCollapsed ? "flex justify-center p-2" : "px-3 py-2")}
           style={{ animationDelay: isMobile ? `${80 + filteredItems.length * 50}ms` : undefined }}>
-          {isAdmin && <CreateTaskDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />}
+          {hasPermission(user?.role, 'TASK_CREATE') && <CreateTaskDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />}
           <Button
             variant="ghost"
             className={cn(

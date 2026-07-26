@@ -19,6 +19,7 @@ import { apiRequest } from '@/api/apiClient';
 import GradientText from '@/components/animations/GradientText';
 import TextHighlighter from '@/components/animations/TextHighlighter';
 import { AuthContext } from '@/context/AuthContextInstance.js';
+import { hasPermission } from '@/lib/permissions';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -67,18 +68,16 @@ const TaskList = () => {
   const [taskToDelete, setTaskToDelete] = useState(null);
   const [alertOpen, setAlertOpen] = useState(false);
   const [deletingTaskId, setDeletingTaskId] = useState(null);
-  const isAdmin = user?.role === 'ADMIN';
+  const canDelete = hasPermission(user?.role, 'TASK_DELETE');
 
-  // Real-time tasks - auto-updates when any task changes
+  // Real-time tasks - single source of truth via Firestore listener
   const { tasks: realtimeTasks, loading: tasksLoading } = useRealTimeTasks(user?.uid, user?.role);
 
   // Update when real-time data changes
   useEffect(() => {
-    if (realtimeTasks) {
-      const activeTasks = realtimeTasks.filter(task => task.status !== 'completed');
-      setTasks(activeTasks);
-      setIsLoading(tasksLoading);
-    }
+    const activeTasks = (realtimeTasks || []).filter(task => task.status !== 'completed');
+    setTasks(activeTasks);
+    if (!tasksLoading) setIsLoading(false);
   }, [realtimeTasks, tasksLoading]);
 
   useEffect(() => {
@@ -91,23 +90,6 @@ const TaskList = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
-  useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        setIsLoading(true);
-        const data = await apiRequest({ endpoint: '/tasks' });
-        // Filter out completed tasks - they should only appear in Completed page
-        const activeTasks = data.filter(task => task.status !== 'completed');
-        setTasks(activeTasks);
-      } catch (error) {
-        toast.error(error.message || 'Failed to fetch tasks');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchTasks();
   }, []);
 
   const confirmDelete = (taskId) => {
@@ -204,19 +186,19 @@ return (
             <div className="absolute right-0 top-0 bottom-0 w-1 overflow-hidden">
               <div className="absolute inset-0 w-full bg-gradient-to-b from-transparent via-sky-500/40 to-transparent blur-[2px] animate-beam-vertical" />
             </div>
-            <div className={`grid w-full ${isAdmin ? 'grid-cols-[25%_10%_10%_15%_15%_20%_5%]' : 'grid-cols-[28%_12%_12%_15%_15%_30%]'}`}>
+            <div className={`grid w-full ${canDelete ? 'grid-cols-[25%_10%_10%_15%_15%_20%_5%]' : 'grid-cols-[28%_12%_12%_15%_15%_30%]'}`}>
               <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b">Task Information</div>
               <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l">Status</div>
               <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l">Priority</div>
                <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l">Assignee</div>
                <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l">Collaborator</div>
               <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l">Deadline</div>
-              {isAdmin && (
+              {canDelete && (
                 <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l flex items-center justify-center">Action</div>
               )}
             </div>
             {filteredTasks.length > 0 ? (
-              <div className={`grid w-full ${isAdmin ? 'grid-cols-[25%_10%_10%_15%_15%_20%_5%]' : 'grid-cols-[28%_12%_12%_15%_15%_30%]'}`}>
+              <div className={`grid w-full ${canDelete ? 'grid-cols-[25%_10%_10%_15%_15%_20%_5%]' : 'grid-cols-[28%_12%_12%_15%_15%_30%]'}`}>
                 {filteredTasks.map((task) => (
                   <Fragment key={task.id}>
                     <div className="px-4 py-3 border-b border-border/50 hover:bg-accent/50 cursor-pointer" onClick={() => navigate(`/tasks/${task.id}`)}>
@@ -259,7 +241,7 @@ return (
                         <span className="text-sm text-muted-foreground truncate">{formatDate(task.deadline)}</span>
                       ) : <span className="text-sm text-muted-foreground">No deadline</span>}
                     </div>
-                    {isAdmin && (
+                    {canDelete && (
                       <div className="px-4 py-3 border-b border-border/50 flex items-center justify-center">
                         <AlertDialog open={alertOpen && taskToDelete === task.id} onOpenChange={(open) => { setAlertOpen(open); if (!open) setTaskToDelete(null); }}>
                           <AlertDialogTrigger asChild>
@@ -347,7 +329,7 @@ return (
                     </div>
                   </div>
 
-                  {isAdmin && (
+                  {canDelete && (
                     <div className="mt-3 pt-3 border-t border-border/50 flex justify-end">
                       <AlertDialog open={alertOpen && taskToDelete === task.id} onOpenChange={(open) => { setAlertOpen(open); if (!open) setTaskToDelete(null); }}>
                         <AlertDialogTrigger asChild>

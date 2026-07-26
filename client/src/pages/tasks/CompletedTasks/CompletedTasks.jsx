@@ -17,6 +17,8 @@ import { apiRequest } from '@/api/apiClient';
 import GradientText from '@/components/animations/GradientText';
 import TextHighlighter from '@/components/animations/TextHighlighter';
 import { AuthContext } from '@/context/AuthContextInstance';
+import { hasPermission } from '@/lib/permissions';
+import { useRealTimeTasks } from '@/hooks/useRealtime';
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -64,7 +66,16 @@ const CompletedTasks = () => {
   const [deletingTaskId, setDeletingTaskId] = useState(null);
   const [taskToDelete, setTaskToDelete] = useState(null);
   const [alertOpen, setAlertOpen] = useState(false);
-  const isAdmin = user?.role === 'ADMIN';
+  const canDelete = hasPermission(user?.role, 'TASK_DELETE');
+
+  // Real-time tasks - single source of truth
+  const { tasks: realtimeTasks, loading: tasksLoading } = useRealTimeTasks(user?.uid, user?.role);
+
+  useEffect(() => {
+    const completedTasks = (realtimeTasks || []).filter(task => task.status === 'completed');
+    setTasks(completedTasks);
+    if (!tasksLoading) setIsLoading(false);
+  }, [realtimeTasks, tasksLoading]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -76,22 +87,6 @@ const CompletedTasks = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
-  useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        setIsLoading(true);
-        const data = await apiRequest({ endpoint: '/tasks' });
-        const completedTasks = data.filter(task => task.status === 'completed');
-        setTasks(completedTasks);
-      } catch (error) {
-        toast.error(error.message || 'Failed to fetch completed tasks');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchTasks();
   }, []);
 
   const confirmDelete = (taskId) => {
@@ -186,18 +181,18 @@ const CompletedTasks = () => {
             <div className="absolute right-0 top-0 bottom-0 w-1 overflow-hidden">
               <div className="absolute inset-0 w-full bg-gradient-to-b from-transparent via-green-500/40 to-transparent blur-[2px] animate-beam-vertical" />
             </div>
-            <div className={`grid w-full ${isAdmin ? 'grid-cols-[25%_10%_10%_15%_25%_15%]' : 'grid-cols-[28%_12%_12%_16%_32%]'}`}>
+            <div className={`grid w-full ${canDelete ? 'grid-cols-[25%_10%_10%_15%_25%_15%]' : 'grid-cols-[28%_12%_12%_16%_32%]'}`}>
               <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b">Task Information</div>
               <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l">Status</div>
               <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l">Priority</div>
                <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l">Assignee</div>
               <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l">Completed Date</div>
-              {isAdmin && (
+              {canDelete && (
                 <div className="px-4 py-3 bg-muted/50 font-medium text-xs text-muted-foreground uppercase border-b border-l flex items-center justify-center">Action</div>
               )}
             </div>
             {filteredTasks.length > 0 ? (
-              <div className={`grid w-full ${isAdmin ? 'grid-cols-[25%_10%_10%_15%_25%_15%]' : 'grid-cols-[28%_12%_12%_16%_32%]'}`}>
+              <div className={`grid w-full ${canDelete ? 'grid-cols-[25%_10%_10%_15%_25%_15%]' : 'grid-cols-[28%_12%_12%_16%_32%]'}`}>
                 {filteredTasks.map((task) => (
                   <Fragment key={task.id}>
                     <div className="px-4 py-3 border-b border-border/50 hover:bg-accent/50 cursor-pointer" onClick={() => navigate(`/tasks/${task.id}`)}>
@@ -224,7 +219,7 @@ const CompletedTasks = () => {
                       <Calendar size={14} className="shrink-0" />
                       <span className="truncate">{formatDate(task.completedAt)}</span>
                     </div>
-                    {isAdmin && (
+                    {canDelete && (
                       <div className="px-4 py-3 border-b border-border/50 flex items-center justify-center">
                         <AlertDialog open={alertOpen && taskToDelete === task.id} onOpenChange={(open) => { setAlertOpen(open); if (!open) setTaskToDelete(null); }}>
                           <AlertDialogTrigger asChild>
@@ -290,7 +285,7 @@ const CompletedTasks = () => {
                       </div>
                     </div>
                   </div>
-                  {isAdmin && (
+                  {canDelete && (
                     <div className="mt-3 pt-3 border-t border-border/50 flex justify-end">
                       <AlertDialog open={alertOpen && taskToDelete === task.id} onOpenChange={(open) => { setAlertOpen(open); if (!open) setTaskToDelete(null); }}>
                         <AlertDialogTrigger asChild>

@@ -30,11 +30,14 @@ import { useContext, useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { AuthContext } from "@/context/AuthContextInstance";
-import { loadRoles } from "@/lib/permissions";
+import { useCompany } from "@/context/CompanyContext";
+import { loadRoles, hasPermission } from "@/lib/permissions";
 
 const UserManagement = () => {
   const { user } = useContext(AuthContext);
+  const { company } = useCompany();
   const navigate = useNavigate();
+  const locationLabel = company?.locationLabel || 'Location';
 
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([]);
@@ -224,6 +227,14 @@ const UserManagement = () => {
     }
   };
 
+  if (!hasPermission(user?.role, 'USER_LIST')) {
+    return (
+      <div className="p-8 text-center text-muted-foreground">
+        You do not have permission to view this page.
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <header className="flex items-center gap-4">
@@ -265,10 +276,10 @@ const UserManagement = () => {
             </div>
             <Select value={filterLocation} onValueChange={setFilterLocation}>
               <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="All Sheds" />
+                <SelectValue placeholder={`All ${locationLabel}s`} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Sheds</SelectItem>
+                <SelectItem value="all">All {locationLabel}s</SelectItem>
                 {locations.map(loc => (
                   <SelectItem key={loc} value={loc}>{loc}</SelectItem>
                 ))}
@@ -456,10 +467,10 @@ const UserManagement = () => {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="create-location">Shed / Location</Label>
+                <Label htmlFor="create-location">{locationLabel}</Label>
                 <Input
                   id="create-location"
-                  placeholder="Shed-01"
+                  placeholder={locationLabel}
                   value={createForm.location}
                   onChange={(e) => setCreateForm({ ...createForm, location: e.target.value })}
                 />
@@ -563,7 +574,7 @@ const UserManagement = () => {
             )}
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="edit-location">Shed / Location</Label>
+                <Label htmlFor="edit-location">{locationLabel}</Label>
                 <Input
                   id="edit-location"
                   value={editForm.location}

@@ -31,6 +31,7 @@ import BlurFade from "@/components/animations/BlurFade";
 import NumberTicker from "@/components/animations/NumberTicker";
 import { AuthContext } from "@/context/AuthContextInstance";
 import { useRealTimeStats } from "@/hooks/useRealtime";
+import { hasPermission } from "@/lib/permissions";
 
 import TaskStatusChart from "@/components/dashboard/TaskStatusChart/TaskStatusChart";
 import WeeklyTrendChart from "@/components/dashboard/WeeklyTrendChart/WeeklyTrendChart";
@@ -51,7 +52,7 @@ const Dashboard = () => {
     completedTasks: 0,
   });
   
-  // Update when real-time data changes
+  // Update when real-time data changes (single source of truth)
   useEffect(() => {
     if (realtimeStats) {
       setStats({
@@ -80,26 +81,6 @@ const Dashboard = () => {
   });
   
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const data = await apiRequest({ endpoint: "/tasks" });
-        const total = data.length || 0;
-        const pending = data.filter((t) => t.status === "pending").length || 0;
-        const completed =
-          data.filter((t) => t.status === "completed").length || 0;
-        setStats({
-          totalTasks: total,
-          pendingTasks: pending,
-          completedTasks: completed,
-        });
-      } catch (err) {
-        console.error("Error fetching dashboard stats:", err);
-      }
-    };
-    fetchStats();
-  }, []);
-  
-  useEffect(() => {
     const fetchUsers = async () => {
       try {
         const data = await apiRequest({ endpoint: '/users' });
@@ -124,7 +105,7 @@ const Dashboard = () => {
         console.error('Failed to fetch users:', error);
       }
     };
-    if (user?.role === 'ADMIN') {
+    if (hasPermission(user?.role, 'TASK_CREATE')) {
       fetchUsers();
     }
   }, [user]);
@@ -179,7 +160,7 @@ const Dashboard = () => {
       <header>
         <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Dashboard</h1>
         <p className="text-muted-foreground mt-1">
-          {user?.role === 'ADMIN'
+          {hasPermission(user?.role, 'TASK_VIEW_ALL')
             ? 'Operational intelligence & analytics'
             : `Welcome back, ${user?.name || 'User'}`
           }
@@ -252,10 +233,10 @@ const Dashboard = () => {
         </BlurFade>
       </div>
 
-       {/* Quick Actions and Personnel Overview */}
-       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+       {/* Quick Actions */}
+       <div className="grid grid-cols-1 gap-6">
           <BlurFade delay={400}>
-            <Card className="border-border bg-card/50 backdrop-blur-sm h-fit w-full lg:col-span-1">
+            <Card className="border-border bg-card/50 backdrop-blur-sm h-fit w-full">
               <CardHeader>
                 <CardTitle className="text-lg font-semibold">
                   Quick Actions
@@ -265,7 +246,7 @@ const Dashboard = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col sm:flex-row sm:flex-wrap gap-3">
-                {user?.role === 'ADMIN' && (
+                {hasPermission(user?.role, 'TASK_CREATE') && (
                   <Button 
                     className="flex items-center gap-2 group cursor-pointer w-full sm:w-auto"
                     onClick={() => setIsModalOpen(true)}
@@ -285,62 +266,6 @@ const Dashboard = () => {
               </CardContent>
             </Card>
           </BlurFade>
-
- 
-         <BlurFade delay={600}>
-           <Card className="border-border bg-card/50 backdrop-blur-sm h-full lg:col-span-2 overflow-hidden">
-             <CardHeader>
-               <div className="flex flex-col">
-                 <CardTitle className="text-lg font-semibold">
-                   Personnel Overview
-                 </CardTitle>
-                 <CardDescription>
-                    Assignees and Collaborators registered in the system
-                 </CardDescription>
-               </div>
-             </CardHeader>
-             <CardContent>
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                 <div className="space-y-4">
-                    <h4 className="text-sm font-semibold text-muted-foreground mb-3">Assignees ({officers.length})</h4>
-                   <div className="space-y-2">
-                     {officers.length > 0 ? officers.map((officer) => (
-                       <div key={officer.uid || officer.userId} className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent/50">
-                         <div className="w-8 h-8 rounded-full bg-blue-400/20 flex items-center justify-center text-xs font-bold text-blue-400 shrink-0">
-                           {officer.name?.charAt(0) || 'U'}
-                         </div>
-                         <div className="flex-1 min-w-0">
-                           <p className="text-sm font-medium truncate">{officer.name}</p>
-                           <p className="text-xs text-muted-foreground truncate">{officer.email}</p>
-                         </div>
-                       </div>
-                     )) : (
-                        <p className="text-xs text-muted-foreground">No Assignees registered</p>
-                     )}
-                   </div>
-                 </div>
-                 <div className="space-y-4">
-                    <h4 className="text-sm font-semibold text-muted-foreground mb-3">Collaborators ({assistants.length})</h4>
-                   <div className="space-y-2">
-                     {assistants.length > 0 ? assistants.map((assistant) => (
-                       <div key={assistant.uid || assistant.userId} className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent/50">
-                         <div className="w-8 h-8 rounded-full bg-purple-400/20 flex items-center justify-center text-xs font-bold text-purple-400 shrink-0">
-                           {assistant.name?.charAt(0) || 'U'}
-                         </div>
-                         <div className="flex-1 min-w-0">
-                           <p className="text-sm font-medium truncate">{assistant.name}</p>
-                           <p className="text-xs text-muted-foreground truncate">{assistant.email}</p>
-                         </div>
-                       </div>
-                     )) : (
-                        <p className="text-xs text-muted-foreground">No Collaborators registered</p>
-                     )}
-                   </div>
-                 </div>
-               </div>
-             </CardContent>
-           </Card>
-         </BlurFade>
        </div>
 
 

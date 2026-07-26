@@ -6,6 +6,7 @@ import { AuthContext } from '@/context/AuthContextInstance';
 import { apiRequest } from '@/api/apiClient';
 import { useEffect, useState } from 'react';
 import { Medal, Trophy, Award } from 'lucide-react';
+import { hasPermission } from '@/lib/permissions';
 
 const UserProductivityRanking = () => {
   const { user } = useContext(AuthContext);
@@ -21,7 +22,7 @@ const UserProductivityRanking = () => {
         console.error('Failed to fetch users:', e);
       }
     };
-    if (user?.role === 'ADMIN') fetchUsers();
+    if (hasPermission(user?.role, 'PERFORMANCE_VIEW')) fetchUsers();
   }, [user?.role]);
 
   const rankings = useMemo(() => {

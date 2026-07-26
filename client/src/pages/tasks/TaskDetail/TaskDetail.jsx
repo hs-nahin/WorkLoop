@@ -76,13 +76,11 @@ const TaskDetail = () => {
   const [editDeadlineValue, setEditDeadlineValue] = useState('');
 
   // Real-time task listener - auto-updates when task changes
-  const { task: realtimeTask, loading: taskLoading } = useRealTimeTask(id);
+  const { task: realtimeTask, loading: taskLoading, error: taskError } = useRealTimeTask(id);
 
   // Update when real-time data changes
   useEffect(() => {
-    if (realtimeTask) {
-      setTask(realtimeTask);
-    }
+    setTask(realtimeTask);
     setIsLoading(taskLoading);
   }, [realtimeTask, taskLoading]);
 
@@ -240,6 +238,11 @@ const TaskDetail = () => {
     <div className="min-h-screen flex flex-col items-center justify-center gap-4 text-muted-foreground">
       <p className="text-lg font-semibold">Task not found</p>
       <p className="text-sm">This task may have been deleted or you may not have access.</p>
+      {taskError && (
+        <p className="text-xs text-red-500 max-w-md text-center font-mono">
+          {taskError.code || taskError.message || 'Permission denied or network error'}
+        </p>
+      )}
       <Button variant="outline" onClick={() => navigate('/tasks')}>Back to Tasks</Button>
     </div>
   );

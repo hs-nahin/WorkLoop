@@ -3,6 +3,7 @@ import { db } from '@/firebase/firebaseConfig';
 import { collection, onSnapshot, doc } from 'firebase/firestore';
 
 export const ALL_PERMISSIONS = [
+  { id: 'TASK_VIEW_LIST', label: 'View Task List', group: 'Task Management' },
   { id: 'TASK_CREATE', label: 'Create Task', group: 'Task Management' },
   { id: 'TASK_EDIT', label: 'Edit Task', group: 'Task Management' },
   { id: 'TASK_DELETE', label: 'Delete Task', group: 'Task Management' },
@@ -30,6 +31,9 @@ export const ALL_PERMISSIONS = [
   { id: 'USER_DELETE', label: 'Delete Users', group: 'User Management' },
   { id: 'USER_TOGGLE', label: 'Activate/Deactivate Users', group: 'User Management' },
   { id: 'USER_PASSWORD_RESET', label: 'Reset User Passwords', group: 'User Management' },
+  { id: 'ROLE_MANAGE', label: 'Manage Roles & Permissions', group: 'Administration' },
+  { id: 'NOTIFICATIONS_ADMIN_VIEW', label: 'View Admin Notifications', group: 'Notifications' },
+  { id: 'NOTIFICATIONS_OFFICER_VIEW', label: 'View Officer Notifications', group: 'Notifications' },
   { id: 'AUDIT_LOG_VIEW', label: 'View Audit Logs', group: 'System' },
   { id: 'PERFORMANCE_VIEW', label: 'View Performance Reports', group: 'System' },
   { id: 'COMPANY_SETTINGS', label: 'Manage Company Settings', group: 'System' },
@@ -49,6 +53,7 @@ export const ADMIN_FULL_PERMISSIONS = ALL_PERMISSIONS.reduce((acc, p) => {
 
 export const DEFAULT_ROLE_PERMISSIONS = {
   PROFILE_VIEW: true,
+  TASK_VIEW_LIST: true,
   COMMENT_CREATE: true,
   TASK_ADD_PROGRESS: true,
   SUBTASK_UPDATE_STATUS: true,
@@ -64,6 +69,11 @@ let changeListeners = [];
 let permissionsVersion = 0;
 let unsubRolePerms = null;
 let unsubUserPerms = null;
+let currentUserId = null;
+
+export const setCurrentUser = (uid) => {
+  currentUserId = uid;
+};
 
 export const onPermissionsChange = (fn) => {
   changeListeners.push(fn);
@@ -107,8 +117,7 @@ export const loadPermissions = async () => {
     cachedRoles = rolesList;
     return results;
   } catch (error) {
-    console.error('Failed to load permissions from server, using defaults:', error);
-    cachedPermissions = { ADMIN: { ...ADMIN_FULL_PERMISSIONS } };
+    console.error('Failed to load permissions from server, keeping existing cache:', error);
     return cachedPermissions;
   }
 };
@@ -187,6 +196,14 @@ export const hasUserPermission = (user, permission) => {
 export const hasPermission = (role, permission) => {
   const key = roleKey(role);
   if (key === 'ADMIN') return true;
+
+  if (currentUserId && cachedUserPermissions[currentUserId]) {
+    const userOverride = cachedUserPermissions[currentUserId][permission];
+    if (userOverride !== undefined) {
+      return userOverride === true;
+    }
+  }
+
   const perms = cachedPermissions || { ADMIN: { ...ADMIN_FULL_PERMISSIONS } };
   const rolePerms = perms[key];
   if (!rolePerms) {
@@ -251,4 +268,4 @@ export const unsubscribeFromPermissions = () => {
   }
 };
 
-loadPermissions();
+

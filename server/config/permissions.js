@@ -9,7 +9,9 @@ const DEFAULT_ROLE_PERMISSIONS = {
 };
 
 let rolePermissionsCache = {};
+let userPermissionsCache = {};
 let lastCacheRefresh = 0;
+let lastUserCacheRefresh = 0;
 const CACHE_TTL_MS = 60000;
 
 const refreshCache = async () => {
@@ -26,11 +28,33 @@ const refreshCache = async () => {
   }
 };
 
+const refreshUserCache = async (uid) => {
+  try {
+    const doc = await adminDb.doc(`userPermissions/${uid}`).get();
+    if (doc.exists) {
+      userPermissionsCache[uid] = doc.data();
+    } else {
+      userPermissionsCache[uid] = {};
+    }
+    lastUserCacheRefresh = Date.now();
+  } catch (error) {
+    console.error('Failed to refresh user permissions cache:', error);
+  }
+};
+
 const getRolePermissions = async (roleId) => {
   if (Date.now() - lastCacheRefresh > CACHE_TTL_MS) {
     await refreshCache();
   }
   return { ...DEFAULT_ROLE_PERMISSIONS, ...(rolePermissionsCache[roleId] || {}) };
+};
+
+const getUserPermissions = async (uid) => {
+  if (!uid) return {};
+  if (Date.now() - lastUserCacheRefresh > CACHE_TTL_MS) {
+    await refreshUserCache(uid);
+  }
+  return userPermissionsCache[uid] || {};
 };
 
 const checkPermission = (permissionName) => {
@@ -41,9 +65,18 @@ const checkPermission = (permissionName) => {
     }
     if (userRole === 'ADMIN') return next();
 
-    getRolePermissions(userRole)
-      .then(perms => {
-        if (perms[permissionName] === true) return next();
+    const uid = req.user?.uid;
+
+    Promise.all([
+      getRolePermissions(userRole),
+      uid ? getUserPermissions(uid) : Promise.resolve({}),
+    ])
+      .then(([rolePerms, userOverrides]) => {
+        if (userOverrides[permissionName] !== undefined) {
+          if (userOverrides[permissionName] === true) return next();
+          return res.status(403).json({ message: 'Insufficient permissions' });
+        }
+        if (rolePerms[permissionName] === true) return next();
         return res.status(403).json({ message: 'Insufficient permissions' });
       })
       .catch(() => {

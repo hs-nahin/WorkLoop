@@ -2,8 +2,9 @@ const express = require('express');
 const router = express.Router();
 const { adminDb } = require('../firebase-admin');
 const { verifyToken, selfOrAdmin } = require('../middleware/auth');
+const { checkPermission } = require('../config/permissions');
 
-router.get('/', verifyToken, async (req, res) => {
+router.get('/', verifyToken, checkPermission('USER_LIST'), async (req, res) => {
   try {
     const snapshot = await adminDb.collection('users').get();
     
@@ -39,7 +40,7 @@ router.get('/', verifyToken, async (req, res) => {
   }
 });
 
-router.get('/:uid', verifyToken, async (req, res) => {
+router.get('/:uid', verifyToken, checkPermission('USER_LIST'), async (req, res) => {
   try {
     const { uid } = req.params;
     const userDoc = await adminDb.doc(`users/${uid}`).get();

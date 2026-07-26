@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -7,8 +7,11 @@ import BlurFade from '@/components/animations/BlurFade';
 import MagicCard from '@/components/animations/MagicCard';
 import { toast } from 'sonner';
 import { CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { AuthContext } from '@/context/AuthContextInstance';
+import { hasPermission } from '@/lib/permissions';
 
 const AdminReview = () => {
+  const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   const [tasks, setTasks] = useState([]);
   const [feedback, setFeedback] = useState({});
@@ -60,6 +63,14 @@ const AdminReview = () => {
       toast.error(error.message || 'Rejection failed');
     }
   };
+
+  if (!hasPermission(user?.role, 'TASK_APPROVE')) {
+    return (
+      <div className="p-8 text-center text-muted-foreground">
+        You do not have permission to view this page.
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

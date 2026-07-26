@@ -2,9 +2,9 @@ const express = require('express');
 const router = express.Router();
 const { admin, adminDb } = require('../firebase-admin');
 const { verifyToken, writeAuditLog } = require('../middleware/auth');
-const { DEFAULT_ROLE_PERMISSIONS } = require('../config/permissions');
+const { checkPermission, refreshCache, DEFAULT_ROLE_PERMISSIONS } = require('../config/permissions');
 
-// ADMIN: List all roles
+// List all roles (all authenticated users need this for permission resolution)
 router.get('/', verifyToken, async (req, res) => {
   try {
     const snapshot = await adminDb.collection('roles').get();
@@ -25,7 +25,7 @@ router.get('/', verifyToken, async (req, res) => {
 });
 
 // ADMIN: Create a new role
-router.post('/', verifyToken, async (req, res) => {
+router.post('/', verifyToken, checkPermission('ROLE_MANAGE'), async (req, res) => {
   try {
     const { name, description, defaultPermissions } = req.body;
 
@@ -65,6 +65,8 @@ router.post('/', verifyToken, async (req, res) => {
       description: `Created role: ${name}`,
     });
 
+    await refreshCache();
+
     res.status(201).json({ id: roleId, ...roleData });
   } catch (error) {
     console.error('Create role error:', error);
@@ -73,7 +75,7 @@ router.post('/', verifyToken, async (req, res) => {
 });
 
 // ADMIN: Update a role's name/description
-router.put('/:id', verifyToken, async (req, res) => {
+router.put('/:id', verifyToken, checkPermission('ROLE_MANAGE'), async (req, res) => {
   try {
     const { id } = req.params;
     const { name, description } = req.body;
@@ -109,7 +111,7 @@ router.put('/:id', verifyToken, async (req, res) => {
 });
 
 // ADMIN: Save role default permissions
-router.put('/:id/permissions', verifyToken, async (req, res) => {
+router.put('/:id/permissions', verifyToken, checkPermission('ROLE_MANAGE'), async (req, res) => {
   try {
     const { id } = req.params;
     const { permissions } = req.body;
@@ -125,6 +127,8 @@ router.put('/:id/permissions', verifyToken, async (req, res) => {
 
     await adminDb.doc(`rolePermissions/${id}`).set(permissions);
 
+    await refreshCache();
+
     await writeAuditLog('role_permissions_updated', req.user, {
       targetId: id,
       targetTitle: roleDoc.data().name,
@@ -139,7 +143,7 @@ router.put('/:id/permissions', verifyToken, async (req, res) => {
 });
 
 // ADMIN: Load per-user permission overrides
-router.get('/users/:uid/permissions', verifyToken, async (req, res) => {
+router.get('/users/:uid/permissions', verifyToken, checkPermission('ROLE_MANAGE'), async (req, res) => {
   try {
     const { uid } = req.params;
     const doc = await adminDb.doc(`userPermissions/${uid}`).get();
@@ -152,7 +156,7 @@ router.get('/users/:uid/permissions', verifyToken, async (req, res) => {
 });
 
 // ADMIN: Save per-user permission overrides
-router.put('/users/:uid/permissions', verifyToken, async (req, res) => {
+router.put('/users/:uid/permissions', verifyToken, checkPermission('ROLE_MANAGE'), async (req, res) => {
   try {
     const { uid } = req.params;
     const { permissions } = req.body;
@@ -162,6 +166,8 @@ router.put('/users/:uid/permissions', verifyToken, async (req, res) => {
     }
 
     await adminDb.doc(`userPermissions/${uid}`).set(permissions);
+
+    await refreshCache();
 
     await writeAuditLog('user_permissions_updated', req.user, {
       targetId: uid,
@@ -177,7 +183,7 @@ router.put('/users/:uid/permissions', verifyToken, async (req, res) => {
 });
 
 // ADMIN: Delete a role
-router.delete('/:id', verifyToken, async (req, res) => {
+router.delete('/:id', verifyToken, checkPermission('ROLE_MANAGE'), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -195,6 +201,8 @@ router.delete('/:id', verifyToken, async (req, res) => {
     try {
       await adminDb.doc(`rolePermissions/${id}`).delete();
     } catch (_) {}
+
+    await refreshCache();
 
     await writeAuditLog('role_deleted', req.user, {
       targetId: id,

@@ -1,12 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { Button } from '@/components/ui/button';
 import { apiRequest } from '@/api/apiClient';
 import BlurFade from '@/components/animations/BlurFade';
 import MagicCard from '@/components/animations/MagicCard';
 import { AlertCircle, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router';
+import { AuthContext } from '@/context/AuthContextInstance';
+import { hasPermission } from '@/lib/permissions';
 
 const IncompleteTasks = () => {
+  const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   const [tasks, setTasks] = useState([]);
 
@@ -22,6 +25,14 @@ const IncompleteTasks = () => {
       console.error('Error fetching incomplete tasks:', error);
     }
   };
+
+  if (!hasPermission(user?.role, 'TASK_VIEW_ALL')) {
+    return (
+      <div className="p-8 text-center text-muted-foreground">
+        You do not have permission to view this page.
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

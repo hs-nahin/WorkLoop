@@ -56,7 +56,7 @@ const router = createBrowserRouter([
             ],
           },
           {
-            element: <ProtectedRoute allowedPermissions={['COMMENT_CREATE']} />,
+            element: <ProtectedRoute allowedPermissions={['TASK_VIEW_LIST']} />,
             children: [
               {
                 path: 'tasks',
@@ -85,26 +85,41 @@ const router = createBrowserRouter([
             element: <ProtectedRoute allowedPermissions={['ANNOUNCEMENT_HISTORY_VIEW']} />,
             children: [
               {
-                path: 'announcements/history',
+                path: 'announcements-history',
                 element: <ErrorBoundary><AnnouncementHistory /></ErrorBoundary>,
               },
             ],
           },
           {
-            element: <ProtectedRoute requiredRole="ADMIN" />,
+            element: <ProtectedRoute allowedPermissions={['USER_LIST']} />,
             children: [
               {
                 path: 'user-management',
                 element: <ErrorBoundary><UserManagement /></ErrorBoundary>,
               },
+            ],
+          },
+          {
+            element: <ProtectedRoute allowedPermissions={['PERFORMANCE_VIEW']} />,
+            children: [
               {
                 path: 'performance',
                 element: <ErrorBoundary><UserPerformanceDashboard /></ErrorBoundary>,
               },
+            ],
+          },
+          {
+            element: <ProtectedRoute allowedPermissions={['AUDIT_LOG_VIEW']} />,
+            children: [
               {
                 path: 'audit-logs',
                 element: <ErrorBoundary><AuditLogs /></ErrorBoundary>,
               },
+            ],
+          },
+          {
+            element: <ProtectedRoute allowedPermissions={['ROLE_MANAGE']} />,
+            children: [
               {
                 path: 'permissions',
                 element: <ErrorBoundary><PermissionsEditor /></ErrorBoundary>,

@@ -11,7 +11,9 @@ async function initFirestore() {
         logoUrl: '',
         appTitle: 'WorkLoop',
         primaryColor: '#2563eb',
-        locations: ['Shed-01', 'Shed-02', 'Shed-03', 'Office-A']
+        locations: ['Shed-01', 'Shed-02', 'Office-A'],
+        locationLabel: 'Location',
+        emailDomain: 'workloop.local',
       });
       console.log('✓ Firestore initialized with default company config');
     } else {

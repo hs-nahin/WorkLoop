@@ -7,6 +7,7 @@ import {
   loadPermissions,
   subscribeToPermissions,
   unsubscribeFromPermissions,
+  setCurrentUser,
 } from '../lib/permissions';
 import { AuthContext } from './AuthContextInstance';
 import { useContext } from 'react';
@@ -61,15 +62,17 @@ export const AuthProvider = ({ children }) => {
         } catch (error) {
           console.error('Error getting ID token:', error);
         }
-        setFirebaseUser(user);
-        const profile = await fetchFirestoreProfile(user.uid);
-        setFirestoreProfile(profile);
-        await loadPermissions();
-        subscribeToPermissions(user.uid);
+      setFirebaseUser(user);
+      const profile = await fetchFirestoreProfile(user.uid);
+      setFirestoreProfile(profile);
+      setCurrentUser(user.uid);
+      await loadPermissions();
+      subscribeToPermissions(user.uid);
       } else {
         setFirebaseUser(null);
         setFirestoreProfile(null);
         setToken(null);
+        setCurrentUser(null);
         localStorage.removeItem('firebase_token');
       }
       setLoading(false);
@@ -96,6 +99,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('firebase_token', idToken);
       const profile = await fetchFirestoreProfile(user.uid);
       setFirestoreProfile(profile);
+      setCurrentUser(user.uid);
       await loadPermissions();
       subscribeToPermissions(user.uid);
       return { user, profile };
@@ -126,6 +130,7 @@ export const AuthProvider = ({ children }) => {
       setFirebaseUser(null);
       setFirestoreProfile(null);
       setToken(null);
+      setCurrentUser(null);
       localStorage.removeItem('firebase_token');
     } catch (error) {
       console.error('Logout error:', error);

@@ -69,12 +69,13 @@ const getPriorityBeamColor = (priority) => {
 const AnnouncementBanner = () => {
   const { user } = useAuth();
   const [announcements, setAnnouncements] = useState([]);
-  const [visibleAnnouncements, setVisibleAnnouncements] = useState([]);
+  const [dismissedIds, setDismissedIds] = useState(() => {
+    try { return JSON.parse(sessionStorage.getItem('dismissedAnnouncements') || '[]'); } catch { return []; }
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchAnnouncements();
-    // Polling for updates (simple real-time simulation, or use a listener if firebase JS SDK is available)
     const interval = setInterval(fetchAnnouncements, 60000);
     return () => clearInterval(interval);
   }, []);
@@ -83,11 +84,6 @@ const AnnouncementBanner = () => {
     try {
       const data = await apiRequest({ endpoint: '/announcements' });
       setAnnouncements(data);
-      // Let the user decide which ones to hide in local state
-      setVisibleAnnouncements(prev => {
-        const currentIds = prev.map(a => a.id);
-        return data.filter(a => !currentIds.includes(a.id));
-      });
     } catch (err) {
       console.error('Banner fetch error:', err);
     } finally {
@@ -101,17 +97,23 @@ const AnnouncementBanner = () => {
         endpoint: `/announcements/${id}/read`, 
         method: 'POST' 
       });
-      setVisibleAnnouncements(prev => prev.filter(a => a.id !== id));
+      setDismissedIds(prev => {
+        const next = [...prev, id];
+        try { sessionStorage.setItem('dismissedAnnouncements', JSON.stringify(next)); } catch {}
+        return next;
+      });
     } catch (err) {
       console.error('Error marking announcement as read:', err);
     }
   };
 
   if (loading) return null;
-  if (announcements.length === 0) return null;
+
+  const visibleAnnouncements = announcements.filter(a => !dismissedIds.includes(a.id));
+  if (visibleAnnouncements.length === 0) return null;
 
   // We only show the top most critical/pinned announcement in the banner
-   const mainAnnouncement = announcements[0]; 
+   const mainAnnouncement = visibleAnnouncements[0];
 
    const style = ANNOUNCEMENT_TYPES[mainAnnouncement.type] || ANNOUNCEMENT_TYPES.general;
    const beamColor = getPriorityBeamColor(mainAnnouncement.priority);

@@ -71,7 +71,7 @@ const AttachmentPanel = ({ taskId, task }) => {
     if (!user) return false;
     return (
       user.uid === attachment.uploadedBy ||
-      user.role === 'ADMIN' ||
+      hasPermission(user.role, 'ATTACHMENT_DELETE') ||
       (task && user.uid === task.officerId)
     );
   };

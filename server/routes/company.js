@@ -9,7 +9,9 @@ const DEFAULT_COMPANY = {
   logoUrl: '',
   appTitle: 'WorkLoop',
   primaryColor: '#2563eb',
-  locations: ['Shed-01', 'Shed-02', 'Office-A']
+  locations: ['Shed-01', 'Shed-02', 'Office-A'],
+  locationLabel: 'Location',
+  emailDomain: 'workloop.local',
 };
 
 router.get('/', async (req, res) => {
@@ -27,13 +29,15 @@ router.get('/', async (req, res) => {
 
 router.put('/', verifyToken, checkPermission('COMPANY_SETTINGS'), async (req, res) => {
   try {
-    const { companyName, appTitle, primaryColor, locations } = req.body;
+    const { companyName, appTitle, primaryColor, locations, locationLabel, emailDomain } = req.body;
 
     const updateData = {};
     if (companyName) updateData.companyName = companyName;
     if (appTitle) updateData.appTitle = appTitle;
     if (primaryColor) updateData.primaryColor = primaryColor;
     if (locations) updateData.locations = locations;
+    if (locationLabel !== undefined) updateData.locationLabel = locationLabel;
+    if (emailDomain !== undefined) updateData.emailDomain = emailDomain;
 
     await adminDb.doc('company/config').set(updateData, { merge: true });
 

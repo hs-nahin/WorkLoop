@@ -29,7 +29,9 @@ export const CompanyProvider = ({ children }) => {
         companyName: 'WorkLoop',
         appTitle: 'WorkLoop',
         primaryColor: '#2563eb',
-        locations: ['Shed-01', 'Shed-02', 'Office-A']
+        locations: ['Shed-01', 'Shed-02', 'Office-A'],
+        locationLabel: 'Location',
+        emailDomain: 'workloop.local',
       });
     } finally {
       setLoading(false);

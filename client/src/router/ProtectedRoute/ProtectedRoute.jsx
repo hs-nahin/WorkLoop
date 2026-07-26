@@ -4,7 +4,7 @@ import { AuthContext } from '@/context/AuthContext';
 import { hasPermission } from '@/lib/permissions';
 
 const ProtectedRoute = ({ allowedPermissions, requiredRole }) => {
-  const { user, token, loading } = useContext(AuthContext);
+  const { user, token, loading, permissionsVersion } = useContext(AuthContext);
   const location = useLocation();
 
   if (loading) return (

@@ -15,6 +15,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [emailDomain, setEmailDomain] = useState('workloop.local');
 
   const { login, user, token, loading } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -25,7 +26,12 @@ const Login = () => {
     }
   }, [user, token, loading, navigate]);
 
-  const EMAIL_DOMAIN = 'workloop.local';
+  useEffect(() => {
+    fetch('/api/company')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => { if (data?.emailDomain) setEmailDomain(data.emailDomain); })
+      .catch(() => {});
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -35,7 +41,7 @@ const Login = () => {
     setIsLoading(true);
     try {
       const input = userId.trim();
-      const email = input.includes('@') ? input : `${input}@${EMAIL_DOMAIN}`;
+      const email = input.includes('@') ? input : `${input}@${emailDomain}`;
       const result = await login({ email, password });
 
       toast.success('Welcome back to WorkLoop!');

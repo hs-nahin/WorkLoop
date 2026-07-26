@@ -9,6 +9,7 @@ import {
   doc 
 } from 'firebase/firestore';
 import { db } from '@/firebase/firebaseConfig';
+import { hasPermission } from '@/lib/permissions';
 
 const safeUnsub = (ref) => {
   if (ref.current) {
@@ -33,7 +34,7 @@ export const useRealTimeTasks = (userId, userRole) => {
     try {
       const tasksRef = collection(db, 'tasks');
       let constraints = [];
-      if ((userRole || '').toUpperCase() !== 'ADMIN') {
+      if (!hasPermission(userRole, 'TASK_VIEW_ALL')) {
         constraints.push(where('officerId', '==', userId));
       }
       constraints.push(orderBy('createdAt', 'desc'));
@@ -81,6 +82,7 @@ export const useRealTimeTasks = (userId, userRole) => {
 export const useRealTimeTask = (taskId) => {
   const [task, setTask] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const unsubRef = useRef(null);
   const mountedRef = useRef(true);
 
@@ -89,6 +91,9 @@ export const useRealTimeTask = (taskId) => {
     if (!taskId) { setLoading(false); return; }
 
     safeUnsub(unsubRef);
+    setTask(null);
+    setLoading(true);
+    setError(null);
 
     try {
       const taskRef = doc(db, 'tasks', taskId);
@@ -100,12 +105,14 @@ export const useRealTimeTask = (taskId) => {
           } else {
             setTask(null);
           }
+          setError(null);
           setLoading(false);
         },
         (err) => {
           if (!mountedRef.current) return;
           console.error('Error fetching task:', err);
           setTask(null);
+          setError(err);
           setLoading(false);
         }
       );
@@ -113,6 +120,7 @@ export const useRealTimeTask = (taskId) => {
       console.error('Failed to initialize task listener:', err);
       if (mountedRef.current) {
         setTask(null);
+        setError(err);
         setLoading(false);
       }
     }
@@ -123,7 +131,7 @@ export const useRealTimeTask = (taskId) => {
     };
   }, [taskId]);
 
-  return { task, loading };
+  return { task, loading, error };
 };
 
 // Real-time dashboard stats - extended with analytics
@@ -152,7 +160,7 @@ export const useRealTimeStats = (userId, userRole) => {
     try {
       const tasksRef = collection(db, 'tasks');
       let constraints = [];
-      if ((userRole || '').toUpperCase() !== 'ADMIN') {
+      if (!hasPermission(userRole, 'TASK_VIEW_ALL')) {
         constraints.push(where('officerId', '==', userId));
       }
 
