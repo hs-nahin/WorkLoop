@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { adminDb } = require('../firebase-admin');
+const { admin, adminDb } = require('../firebase-admin');
 const { verifyToken, writeAuditLog } = require('../middleware/auth');
 
 const SYSTEM_ROLES = ['ADMIN', 'USER'];
