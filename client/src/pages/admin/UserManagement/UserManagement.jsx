@@ -473,35 +473,33 @@ const UserManagement = () => {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="create-displayId">Display ID (optional)</Label>
-                <Input
-                  id="create-displayId"
-                  placeholder="EMP-001"
-                  value={createForm.displayId}
-                  onChange={(e) => setCreateForm({ ...createForm, displayId: e.target.value })}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label>Role</Label>
-                <Select
-                  value={createForm.role}
-                  onValueChange={(val) => setCreateForm({ ...createForm, role: val })}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {allRoles.map((r) => (
-                      <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
-                    ))}
-                    {allRoles.length === 0 && (
-                      <SelectItem value="USER">USER</SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="grid gap-2">
+              <Label htmlFor="create-displayId">Display ID (optional)</Label>
+              <Input
+                id="create-displayId"
+                placeholder="EMP-001"
+                value={createForm.displayId}
+                onChange={(e) => setCreateForm({ ...createForm, displayId: e.target.value })}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label>Role</Label>
+              <Select
+                value={createForm.role}
+                onValueChange={(val) => setCreateForm({ ...createForm, role: val })}
+              >
+                <SelectTrigger className="w-full h-8">
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent className="z-[60]">
+                  {allRoles.map((r) => (
+                    <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+                  ))}
+                  {allRoles.length === 0 && (
+                    <SelectItem value="USER">USER</SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <DialogFooter>
@@ -531,45 +529,33 @@ const UserManagement = () => {
                 onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
               />
             </div>
+            <div className="grid gap-2">
+              <Label htmlFor="edit-displayId">Display ID</Label>
+              <Input
+                id="edit-displayId"
+                value={editForm.displayId}
+                onChange={(e) => setEditForm({ ...editForm, displayId: e.target.value })}
+              />
+            </div>
             {selectedUser?.role !== "ADMIN" && (
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="edit-displayId">Display ID</Label>
-                  <Input
-                    id="edit-displayId"
-                    value={editForm.displayId}
-                    onChange={(e) => setEditForm({ ...editForm, displayId: e.target.value })}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label>Role</Label>
-                  <Select
-                    value={editForm.role}
-                    onValueChange={(val) => setEditForm({ ...editForm, role: val })}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {allRoles.map((r) => (
-                        <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
-                      ))}
-                      {allRoles.length === 0 && (
-                        <SelectItem value="USER">USER</SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            )}
-            {selectedUser?.role === "ADMIN" && (
               <div className="grid gap-2">
-                <Label htmlFor="edit-displayId">Display ID</Label>
-                <Input
-                  id="edit-displayId"
-                  value={editForm.displayId}
-                  onChange={(e) => setEditForm({ ...editForm, displayId: e.target.value })}
-                />
+                <Label>Role</Label>
+                <Select
+                  value={editForm.role}
+                  onValueChange={(val) => setEditForm({ ...editForm, role: val })}
+                >
+                  <SelectTrigger className="w-full h-8">
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                  <SelectContent className="z-[60]">
+                    {allRoles.map((r) => (
+                      <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+                    ))}
+                    {allRoles.length === 0 && (
+                      <SelectItem value="USER">USER</SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
               </div>
             )}
             <div className="grid grid-cols-2 gap-4">
