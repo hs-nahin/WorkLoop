@@ -74,6 +74,10 @@ export const getRoleDisplayName = (role) => {
 
 export const resolveRoleName = (roleId, roles = []) => {
   if (!roleId) return 'Unknown';
-  const match = roles.find(r => r.id === roleId || r.id === roleId.toUpperCase());
+  const normalized = (roleId || '').toUpperCase().replace(/\s+/g, '_');
+  const match = roles.find(r => {
+    const rid = (r.id || '').toUpperCase();
+    return rid === normalized || rid === roleId.toUpperCase();
+  });
   return match?.name || getRoleDisplayName(roleId);
 };

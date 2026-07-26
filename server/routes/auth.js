@@ -10,9 +10,7 @@ const userIdToEmail = (userId) => `${userId}@${EMAIL_DOMAIN}`;
 
 const normalizeRole = (role) => {
   if (!role) return 'USER';
-  const r = role.toUpperCase();
-  if (r === 'IT_OFFICER') return 'IT OFFICER';
-  return r;
+  return role.toUpperCase();
 };
 
 // AUTHENTICATED: Get current user profile

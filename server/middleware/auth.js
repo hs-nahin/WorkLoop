@@ -2,9 +2,7 @@ const { admin, adminAuth, adminDb } = require('../firebase-admin');
 
 const normalizeRole = (role) => {
   if (!role) return '';
-  const r = role.toUpperCase();
-  if (r === 'IT_OFFICER') return 'IT OFFICER';
-  return r;
+  return role.toUpperCase();
 };
 
 const verifyToken = async (req, res, next) => {

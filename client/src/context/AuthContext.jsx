@@ -12,9 +12,7 @@ export { AuthContext };
 
 const normalizeRole = (role) => {
   if (!role) return 'USER';
-  const r = role.toUpperCase();
-  if (r === 'IT_OFFICER') return 'IT OFFICER';
-  return r;
+  return role.toUpperCase();
 };
 
 export const useAuth = () => {
