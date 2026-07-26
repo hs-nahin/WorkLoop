@@ -440,6 +440,7 @@ const UserManagement = () => {
                   id="create-password"
                   type={showCreatePassword ? "text" : "password"}
                   placeholder="Minimum 6 characters"
+                  autoComplete="new-password"
                   value={createForm.password}
                   onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
                   className="pr-10"
@@ -604,6 +605,7 @@ const UserManagement = () => {
                 id="reset-password"
                 type={showResetPassword ? "text" : "password"}
                 placeholder="Minimum 6 characters"
+                autoComplete="new-password"
                 value={resetPassword}
                 onChange={(e) => setResetPassword(e.target.value)}
                 className="pr-10"
