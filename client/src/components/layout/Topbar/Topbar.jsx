@@ -8,6 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Bell, LogOut, Settings, User, Trash2, Megaphone } from "lucide-react";
 import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
+import { getRoleTopbarColor, getRoleDisplayName } from "@/lib/roleUtils";
 import { apiRequest } from "../../../api/apiClient";
 import { AuthContext } from "../../../context/AuthContextInstance.js";
 import { hasPermission } from "../../../lib/permissions";
@@ -117,28 +118,9 @@ const TopBar = () => {
     return date.toLocaleDateString();
   };
 
-  const getRoleBadgeColor = (role) => {
-    const r = (role || '').toUpperCase();
-    switch(r) {
-      case "ADMIN":
-        return "bg-green-50 dark:bg-green-800";
-      case "USER":
-      case "IT OFFICER":
-      case "IT_OFFICER":
-        return "bg-blue-50 dark:bg-blue-800";
-      case "ASSISTANT":
-        return "bg-purple-50 dark:bg-purple-800";
-      default:
-        return "bg-gray-50 dark:bg-gray-800";
-    }
-  };
+  const getRoleBadgeColor = (role) => getRoleTopbarColor(role);
 
-  const getRoleDisplay = (role) => {
-    const r = (role || '').toUpperCase();
-    if (r === 'ADMIN') return 'Admin';
-    if (r === 'USER') return 'User';
-    return r;
-  };
+  const getRoleDisplay = (role) => getRoleDisplayName(role);
 
   return (
     <header className="h-16 border-b bg-card/80 backdrop-blur-md px-2 sm:px-4 md:px-6 pl-14 flex items-center justify-between sticky top-0 z-40">

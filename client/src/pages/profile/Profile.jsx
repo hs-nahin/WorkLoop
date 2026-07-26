@@ -24,6 +24,7 @@ import { useContext, useMemo, useState } from 'react';
 import { AuthContext } from '@/context/AuthContextInstance.js';
 import { toast } from 'sonner';
 import { auth } from '@/lib/firebase';
+import { getRoleBadgeColor } from '@/lib/roleUtils';
 
 const Profile = () => {
   const { user, fetchMe } = useContext(AuthContext);
@@ -108,11 +109,7 @@ const Profile = () => {
               <p className="text-sm text-muted-foreground font-medium">{user.email}</p>
             </div>
             <div className="flex justify-center gap-2">
-              <div className={`px-3 py-1 rounded-full text-[10px] font-bold border ${
-                user.role === 'ADMIN' ? 'bg-red-500/10 text-red-600 border-red-500/20' :
-                (user.role === 'IT OFFICER' || user.role === 'IT_OFFICER' || user.role === 'USER') ? 'bg-blue-500/10 text-blue-600 border-blue-500/20' :
-                'bg-purple-500/10 text-purple-600 border-purple-500/20'
-              }`}>
+              <div className={`px-3 py-1 rounded-full text-[10px] font-bold border ${getRoleBadgeColor(user.role)}`}>
                 {user.role}
               </div>
             </div>

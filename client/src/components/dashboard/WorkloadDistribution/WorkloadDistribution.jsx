@@ -18,7 +18,7 @@ const WorkloadDistribution = () => {
       try {
         const data = await apiRequest({ endpoint: '/users' });
         setUsers(Array.isArray(data) ? data.filter(u => 
-          ['IT OFFICER', 'ASSISTANT', 'USER'].includes(u.role?.toUpperCase())
+          (u.role || '').toUpperCase() !== 'ADMIN' && u.isActive !== false
         ) : []);
       } catch (e) {
         console.error('Failed to fetch users:', e);

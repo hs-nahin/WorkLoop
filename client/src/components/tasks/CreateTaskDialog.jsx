@@ -42,8 +42,9 @@ export function CreateTaskDialog({ open, onOpenChange }) {
     const fetchUsers = async () => {
       try {
         const usersData = await apiRequest({ endpoint: "/users" });
-        const officerList = usersData.filter(u => { const r = u.role?.toUpperCase(); return r === 'IT OFFICER' || r === 'IT_OFFICER' || r === 'USER'; });
-        const assistantList = usersData.filter(u => u.role?.toUpperCase() === 'ASSISTANT');
+        const activeUsers = usersData.filter(u => u.role?.toUpperCase() !== 'ADMIN' && u.isActive !== false);
+        const officerList = activeUsers.filter(u => u.role?.toUpperCase() !== 'ASSISTANT');
+        const assistantList = activeUsers.filter(u => u.role?.toUpperCase() === 'ASSISTANT');
         setOfficers(officerList);
         setAssistants(assistantList);
       } catch (error) {

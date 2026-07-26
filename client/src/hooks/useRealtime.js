@@ -33,7 +33,7 @@ export const useRealTimeTasks = (userId, userRole) => {
     try {
       const tasksRef = collection(db, 'tasks');
       let constraints = [];
-      if (userRole === 'IT OFFICER' || userRole === 'ASSISTANT' || userRole === 'USER') {
+      if ((userRole || '').toUpperCase() !== 'ADMIN') {
         constraints.push(where('officerId', '==', userId));
       }
       constraints.push(orderBy('createdAt', 'desc'));
@@ -152,7 +152,7 @@ export const useRealTimeStats = (userId, userRole) => {
     try {
       const tasksRef = collection(db, 'tasks');
       let constraints = [];
-      if (userRole === 'IT OFFICER' || userRole === 'ASSISTANT' || userRole === 'USER') {
+      if ((userRole || '').toUpperCase() !== 'ADMIN') {
         constraints.push(where('officerId', '==', userId));
       }
 

@@ -105,7 +105,7 @@ const Dashboard = () => {
         const data = await apiRequest({ endpoint: '/users' });
         const validUsers = data.filter(u => {
           const role = u.role?.toUpperCase();
-          return role && ['IT OFFICER', 'ASSISTANT', 'USER'].includes(role);
+          return role && role !== 'ADMIN' && u.isActive !== false;
         });
         
         const seen = new Set();
@@ -116,10 +116,7 @@ const Dashboard = () => {
           return true;
         });
         
-        const officerList = uniqueUsers.filter(user => {
-          const r = user.role?.toUpperCase();
-          return r === 'IT OFFICER' || r === 'IT_OFFICER' || r === 'USER';
-        });
+        const officerList = uniqueUsers.filter(user => user.role?.toUpperCase() !== 'ASSISTANT');
         setOfficers(officerList);
         const assistantList = uniqueUsers.filter(user => user.role?.toUpperCase() === 'ASSISTANT');
         setAssistants(assistantList);

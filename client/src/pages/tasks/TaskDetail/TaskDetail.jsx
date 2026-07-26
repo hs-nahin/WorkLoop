@@ -90,7 +90,7 @@ const TaskDetail = () => {
     const fetchUsers = async () => {
       try {
         const data = await apiRequest({ endpoint: '/users' });
-        const officerList = data.filter(u => { const r = (u.role || '').toUpperCase(); return r === 'IT OFFICER' || r === 'IT_OFFICER' || r === 'USER'; });
+        const officerList = data.filter(u => (u.role || '').toUpperCase() !== 'ADMIN' && u.isActive !== false);
         setOfficers(officerList);
       } catch (error) {
         console.error('Failed to fetch users:', error);

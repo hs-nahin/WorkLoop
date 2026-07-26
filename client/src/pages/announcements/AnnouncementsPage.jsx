@@ -49,17 +49,17 @@ const PRIORITY_LEVELS = [
   { id: 'critical', label: 'Critical', color: 'text-red-600' },
 ];
 
-const ROLES = ['all', 'ADMIN', 'USER', 'OFFICER', 'ASSISTANT'];
+import { loadRoles } from '@/lib/permissions';
 
 const AnnouncementsPage = () => {
   const { user } = useAuth();
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [roles, setRoles] = useState([]);
   const [formData, setFormData] = useState({
     title: '',
     message: '',
@@ -73,6 +73,7 @@ const AnnouncementsPage = () => {
 
   useEffect(() => {
     fetchAnnouncements();
+    loadRoles().then(r => setRoles(r));
   }, []);
 
   const fetchAnnouncements = async () => {
@@ -288,7 +289,7 @@ const AnnouncementsPage = () => {
               <div className="space-y-2">
                 <label className="text-sm font-medium">Target Roles</label>
                 <div className="flex flex-wrap gap-2">
-                  {ROLES.map(role => (
+                  {['all', 'ADMIN', ...roles.map(r => r.id)].map(role => (
                     <Badge 
                       key={role} 
                       variant={formData.targetRoles.includes(role) ? 'default' : 'outline'}

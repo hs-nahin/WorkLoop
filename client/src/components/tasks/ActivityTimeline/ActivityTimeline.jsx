@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '@/firebase/firebaseConfig';
 import { motion } from 'framer-motion';
+import { getRoleColor } from '@/lib/roleUtils';
 import {
   CheckCircle2,
   Clock,
@@ -93,18 +94,6 @@ const extractActor = (event) => {
 
 const extractActorRole = (event) => {
    return event.userRole || event.senderRole || '';
-};
-
-const getRoleColor = (role) => {
-   if (!role) return '';
-   switch (role) {
-     case 'ADMIN': return 'bg-red-500/20 text-red-500';
-     case 'IT_OFFICER':
-     case 'IT OFFICER': return 'bg-blue-500/20 text-blue-500';
-      case 'ASSISTANT': return 'bg-purple-500/20 text-purple-500';
-      case 'USER': return 'bg-blue-500/20 text-blue-500';
-      default: return 'bg-gray-500/20 text-gray-500';
-   }
 };
 
 const formatEventTime = (timestamp) => {

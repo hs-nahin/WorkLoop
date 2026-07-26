@@ -4,6 +4,7 @@ import { db } from '@/firebase/firebaseConfig';
 import { AuthContext } from '@/context/AuthContext';
 import { apiRequest } from '@/api/apiClient';
 import { hasPermission } from '@/lib/permissions';
+import { getRoleColor } from '@/lib/roleUtils';
 import BlurFade from '@/components/animations/BlurFade';
 import {
   Search,
@@ -192,18 +193,6 @@ const AuditLogs = () => {
     const names = new Set(logs.map(l => l.performedByName).filter(Boolean));
     return [...names];
   }, [logs]);
-
-  const getRoleColor = (role) => {
-    if (!role) return '';
-    switch (role) {
-      case 'ADMIN': return 'bg-red-500/20 text-red-500';
-      case 'IT_OFFICER':
-      case 'IT OFFICER': return 'bg-blue-500/20 text-blue-500';
-      case 'ASSISTANT': return 'bg-purple-500/20 text-purple-500';
-      case 'USER': return 'bg-blue-500/20 text-blue-500';
-      default: return 'bg-gray-500/20 text-gray-500';
-    }
-  };
 
   const resolveRole = (log) => {
     if (log.userRole) return log.userRole;

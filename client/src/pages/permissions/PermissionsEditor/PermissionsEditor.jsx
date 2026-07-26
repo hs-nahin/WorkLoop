@@ -45,6 +45,7 @@ import {
 import { Shield, Save, RotateCcw, Loader2, User, Users, Plus, Trash2, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiRequest } from '@/api/apiClient';
+import { getRoleBadgeColor } from '@/lib/roleUtils';
 
 const GROUPS = ALL_PERMISSIONS.reduce((acc, p) => {
   if (!acc[p.group]) acc[p.group] = [];
@@ -52,25 +53,7 @@ const GROUPS = ALL_PERMISSIONS.reduce((acc, p) => {
   return acc;
 }, {});
 
-const roleColors = {
-  ADMIN: 'bg-red-500/10 border-red-500/30 text-red-500',
-  USER: 'bg-blue-500/10 border-blue-500/30 text-blue-500',
-};
-
-const getRoleColor = (roleId) => {
-  if (roleColors[roleId]) return roleColors[roleId];
-  const colors = [
-    'bg-emerald-500/10 border-emerald-500/30 text-emerald-500',
-    'bg-orange-500/10 border-orange-500/30 text-orange-500',
-    'bg-cyan-500/10 border-cyan-500/30 text-cyan-500',
-    'bg-violet-500/10 border-violet-500/30 text-violet-500',
-    'bg-pink-500/10 border-pink-500/30 text-pink-500',
-    'bg-amber-500/10 border-amber-500/30 text-amber-500',
-  ];
-  let hash = 0;
-  for (let i = 0; i < roleId.length; i++) hash = roleId.charCodeAt(i) + ((hash << 5) - hash);
-  return colors[Math.abs(hash) % colors.length];
-};
+const getRoleColor = (roleId) => getRoleBadgeColor(roleId);
 
 const PermissionsEditor = () => {
   const { user } = useContext(AuthContext);

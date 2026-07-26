@@ -3,6 +3,7 @@ import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '@/firebase/firebaseConfig';
 import { useContext } from 'react';
 import { AuthContext } from '@/context/AuthContext';
+import { getRoleColor } from '@/lib/roleUtils';
 
 const MessageThread = ({ taskId }) => {
   const [messages, setMessages] = useState([]);
@@ -70,13 +71,7 @@ const MessageThread = ({ taskId }) => {
             {msg.senderRole !== 'SYSTEM' && (
               <div className="flex items-center gap-1.5 sm:gap-2 mb-1 flex-wrap">
                 <span className="text-[11px] sm:text-xs font-bold">{msg.senderName || 'Unknown'}</span>
-                <span className={`text-[9px] sm:text-xs px-1 sm:px-1.5 py-0.5 rounded ${
-                  msg.senderRole === 'ADMIN' 
-                    ? 'bg-red-600/20 text-red-600'
-                    : msg.senderRole === 'IT OFFICER' || msg.senderRole === 'USER'
-                    ? 'bg-blue-600/20 text-blue-600'
-                    : 'bg-green-600/20 text-green-600'
-                }`}>
+                <span className={`text-[9px] sm:text-xs px-1 sm:px-1.5 py-0.5 rounded ${getRoleColor(msg.senderRole)}`}>
                   {msg.senderRole}
                 </span>
               </div>
