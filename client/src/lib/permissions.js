@@ -40,6 +40,14 @@ export const ADMIN_FULL_PERMISSIONS = ALL_PERMISSIONS.reduce((acc, p) => {
   return acc;
 }, {});
 
+export const DEFAULT_ROLE_PERMISSIONS = {
+  PROFILE_VIEW: true,
+  COMMENT_CREATE: true,
+  TASK_ADD_PROGRESS: true,
+  SUBTASK_UPDATE_STATUS: true,
+  ATTACHMENT_UPLOAD: true,
+};
+
 const roleKey = (role) => (role || '').toUpperCase();
 
 let cachedPermissions = { ADMIN: { ...ADMIN_FULL_PERMISSIONS } };
@@ -83,7 +91,7 @@ export const loadPermissions = async () => {
     const rolesList = Array.isArray(roles) ? roles : [];
 
     for (const role of rolesList) {
-      results[role.id] = { ...(role.defaultPermissions || {}) };
+      results[role.id] = { ...DEFAULT_ROLE_PERMISSIONS, ...(role.defaultPermissions || {}) };
     }
 
     cachedPermissions = results;
@@ -172,7 +180,12 @@ export const hasPermission = (role, permission) => {
   if (key === 'ADMIN') return true;
   const perms = cachedPermissions || { ADMIN: { ...ADMIN_FULL_PERMISSIONS } };
   const rolePerms = perms[key];
-  if (!rolePerms) return false;
+  if (!rolePerms) {
+    return DEFAULT_ROLE_PERMISSIONS[permission] === true;
+  }
+  if (Object.keys(rolePerms).length === 0) {
+    return DEFAULT_ROLE_PERMISSIONS[permission] === true;
+  }
   return rolePerms[permission] === true;
 };
 

@@ -1,5 +1,13 @@
 const { adminDb } = require('../firebase-admin');
 
+const DEFAULT_ROLE_PERMISSIONS = {
+  PROFILE_VIEW: true,
+  COMMENT_CREATE: true,
+  TASK_ADD_PROGRESS: true,
+  SUBTASK_UPDATE_STATUS: true,
+  ATTACHMENT_UPLOAD: true,
+};
+
 let rolePermissionsCache = {};
 let lastCacheRefresh = 0;
 const CACHE_TTL_MS = 60000;
@@ -22,7 +30,7 @@ const getRolePermissions = async (roleId) => {
   if (Date.now() - lastCacheRefresh > CACHE_TTL_MS) {
     await refreshCache();
   }
-  return rolePermissionsCache[roleId] || {};
+  return { ...DEFAULT_ROLE_PERMISSIONS, ...(rolePermissionsCache[roleId] || {}) };
 };
 
 const checkPermission = (permissionName) => {
@@ -51,4 +59,4 @@ const hasRole = async (userRole, permissionName) => {
   return perms[permissionName] === true;
 };
 
-module.exports = { checkPermission, hasRole, refreshCache };
+module.exports = { checkPermission, hasRole, refreshCache, DEFAULT_ROLE_PERMISSIONS };

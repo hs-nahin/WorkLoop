@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { admin, adminDb } = require('../firebase-admin');
 const { verifyToken, writeAuditLog } = require('../middleware/auth');
+const { DEFAULT_ROLE_PERMISSIONS } = require('../config/permissions');
 
 // ADMIN: List all roles
 router.get('/', verifyToken, async (req, res) => {
@@ -12,7 +13,7 @@ router.get('/', verifyToken, async (req, res) => {
     for (const role of roles) {
       if (!role.defaultPermissions) {
         const permDoc = await adminDb.doc(`rolePermissions/${role.id}`).get();
-        role.defaultPermissions = permDoc.exists ? permDoc.data() : {};
+        role.defaultPermissions = { ...DEFAULT_ROLE_PERMISSIONS, ...(permDoc.exists ? permDoc.data() : {}) };
       }
     }
 
@@ -53,7 +54,9 @@ router.post('/', verifyToken, async (req, res) => {
     await adminDb.doc(`roles/${roleId}`).set(roleData);
 
     if (defaultPermissions && typeof defaultPermissions === 'object') {
-      await adminDb.doc(`rolePermissions/${roleId}`).set(defaultPermissions);
+      await adminDb.doc(`rolePermissions/${roleId}`).set({ ...DEFAULT_ROLE_PERMISSIONS, ...defaultPermissions });
+    } else {
+      await adminDb.doc(`rolePermissions/${roleId}`).set(DEFAULT_ROLE_PERMISSIONS);
     }
 
     await writeAuditLog('role_created', req.user, {
