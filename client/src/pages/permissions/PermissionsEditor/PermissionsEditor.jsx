@@ -501,7 +501,7 @@ const PermissionsEditor = () => {
             <div className="grid gap-2">
               <Label>Role Name *</Label>
               <Input
-                placeholder="e.g. Officer, Technician, Supervisor"
+                placeholder="e.g. Officer, Supervisor, Lead"
                 value={newRoleName}
                 onChange={(e) => setNewRoleName(e.target.value)}
               />

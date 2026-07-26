@@ -133,7 +133,7 @@ const Dashboard = () => {
     if (!newTask.title.trim()) return toast.error('Title is required');
     if (!newTask.description.trim()) return toast.error('Description is required');
     if (!newTask.location.trim()) return toast.error('Location is required');
-    if (!newTask.officerId) return toast.error('Assign an IT Officer');
+    if (!newTask.officerId) return toast.error('Assign a team member');
     if (!newTask.priority) return toast.error('Select priority');
     if (!newTask.deadlineDate) return toast.error('Set a deadline date');
     
@@ -295,14 +295,14 @@ const Dashboard = () => {
                    Personnel Overview
                  </CardTitle>
                  <CardDescription>
-                   IT Officers and Assistants registered in the system
+                    Assignees and Collaborators registered in the system
                  </CardDescription>
                </div>
              </CardHeader>
              <CardContent>
                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                  <div className="space-y-4">
-                   <h4 className="text-sm font-semibold text-muted-foreground mb-3">IT Officers ({officers.length})</h4>
+                    <h4 className="text-sm font-semibold text-muted-foreground mb-3">Assignees ({officers.length})</h4>
                    <div className="space-y-2">
                      {officers.length > 0 ? officers.map((officer) => (
                        <div key={officer.uid || officer.userId} className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent/50">
@@ -315,12 +315,12 @@ const Dashboard = () => {
                          </div>
                        </div>
                      )) : (
-                       <p className="text-xs text-muted-foreground">No IT Officers registered</p>
+                        <p className="text-xs text-muted-foreground">No Assignees registered</p>
                      )}
                    </div>
                  </div>
                  <div className="space-y-4">
-                   <h4 className="text-sm font-semibold text-muted-foreground mb-3">Assistants ({assistants.length})</h4>
+                    <h4 className="text-sm font-semibold text-muted-foreground mb-3">Collaborators ({assistants.length})</h4>
                    <div className="space-y-2">
                      {assistants.length > 0 ? assistants.map((assistant) => (
                        <div key={assistant.uid || assistant.userId} className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent/50">
@@ -333,7 +333,7 @@ const Dashboard = () => {
                          </div>
                        </div>
                      )) : (
-                       <p className="text-xs text-muted-foreground">No Assistants registered</p>
+                        <p className="text-xs text-muted-foreground">No Collaborators registered</p>
                      )}
                    </div>
                  </div>
@@ -381,14 +381,14 @@ const Dashboard = () => {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="officer">Assign IT Officer *</Label>
+              <Label htmlFor="officer">Assign To *</Label>
                <Select 
                  value={newTask.officerId} 
                  onValueChange={(v) => setNewTask({...newTask, officerId: v})}
                >
                  <SelectTrigger id="officer">
-                   <SelectValue placeholder="Select IT Officer">
-                     {officers.find(o => (o.uid || o.userId) === newTask.officerId)?.name || <span>Select IT Officer</span>}
+                    <SelectValue placeholder="Select Assignee">
+                      {officers.find(o => (o.uid || o.userId) === newTask.officerId)?.name || <span>Select Assignee</span>}
                    </SelectValue>
                  </SelectTrigger>
                  <SelectContent>
@@ -401,14 +401,14 @@ const Dashboard = () => {
                </Select>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="assistant">Assistant Technician (Optional)</Label>
+              <Label htmlFor="assistant">Collaborator (Optional)</Label>
                <Select 
                  value={newTask.assistantId} 
                  onValueChange={(v) => setNewTask({...newTask, assistantId: v})}
                >
                  <SelectTrigger id="assistant">
-                   <SelectValue placeholder="Select Assistant Technician">
-                     {assistants.find(a => (a.uid || a.userId) === newTask.assistantId)?.name || <span>Select Assistant Technician</span>}
+                    <SelectValue placeholder="Select Collaborator">
+                      {assistants.find(a => (a.uid || a.userId) === newTask.assistantId)?.name || <span>Select Collaborator</span>}
                    </SelectValue>
                  </SelectTrigger>
                  <SelectContent>

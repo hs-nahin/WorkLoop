@@ -397,7 +397,7 @@ const UserPerformanceDashboard = () => {
               <table className="w-full text-sm">
                 <thead className="bg-muted/50 border-b border-border">
                   <tr>
-                    <th className="text-left p-4 font-semibold text-muted-foreground uppercase tracking-wider">Officer</th>
+                     <th className="text-left p-4 font-semibold text-muted-foreground uppercase tracking-wider">Assignee</th>
                     <th className="text-center p-4 font-semibold text-muted-foreground uppercase tracking-wider cursor-pointer hover:text-primary" onClick={() => { setSortBy('completedCount'); setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc'); }}>
                       Completed <ArrowUpDown size={12} className="inline ml-1" />
                     </th>

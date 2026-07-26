@@ -468,7 +468,7 @@ const UserManagement = () => {
                 <Label htmlFor="create-designation">Designation</Label>
                 <Input
                   id="create-designation"
-                  placeholder="IT Officer"
+                  placeholder="e.g. Engineer, Analyst, Manager"
                   value={createForm.designation}
                   onChange={(e) => setCreateForm({ ...createForm, designation: e.target.value })}
                 />

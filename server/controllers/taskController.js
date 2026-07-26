@@ -126,7 +126,7 @@ const acceptTask = async (req, res) => {
         });
 
         // Create system message for status change
-        await createSystemMessage(id, `Task accepted by ${req.user.name || 'Officer'} - status changed to In Progress`);
+        await createSystemMessage(id, `Task accepted by ${req.user.name || 'User'} - status changed to In Progress`);
         
         // Create notifications for all admins that task has been accepted
         const allUsersSnapshot = await adminDb.collection('users').get();
@@ -141,7 +141,7 @@ const acceptTask = async (req, res) => {
                     type: 'task_accepted',
                     taskId: id,
                     taskTitle: task.title,
-                    message: `Task "${task.title}" has been accepted by ${req.user.name || 'Officer'}`,
+                    message: `Task "${task.title}" has been accepted by ${req.user.name || 'User'}`,
                     userId: adminDoc.id,
                     read: false,
                     createdAt: admin.firestore.FieldValue.serverTimestamp()
@@ -223,7 +223,7 @@ const submitTask = async (req, res) => {
         });
 
         // Create system message for status change
-        await createSystemMessage(id, `Task submitted by ${req.user.name || 'Officer'} - status changed to Submitted`);
+        await createSystemMessage(id, `Task submitted by ${req.user.name || 'User'} - status changed to Submitted`);
         
         // Create notifications for all admins
         const allUsersSnapshot = await adminDb.collection('users').get();
@@ -285,7 +285,7 @@ const incompleteTask = async (req, res) => {
         });
 
         // Create system message for status change
-        await createSystemMessage(id, `Task marked as Incomplete by ${req.user.name || 'Officer'}`);
+        await createSystemMessage(id, `Task marked as Incomplete by ${req.user.name || 'User'}`);
         
         const updatedDoc = await adminDb.collection('tasks').doc(id).get();
         res.json({ id: updatedDoc.id, ...updatedDoc.data() });

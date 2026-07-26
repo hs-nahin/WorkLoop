@@ -129,7 +129,7 @@ export function CreateTaskDialog({ open, onOpenChange }) {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="officer">Assign Officer *</Label>
+              <Label htmlFor="officer">Assign To *</Label>
               <Select
                 value={newTask.officerId}
                 onValueChange={(value) =>
@@ -137,7 +137,7 @@ export function CreateTaskDialog({ open, onOpenChange }) {
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select officer">
+                  <SelectValue placeholder="Select assignee">
                     {newTask.officerId ? officers.find(o => o.uid === newTask.officerId)?.name : null}
                   </SelectValue>
                 </SelectTrigger>
