@@ -109,6 +109,61 @@ router.put('/:id', verifyToken, async (req, res) => {
   }
 });
 
+// ADMIN: Save role default permissions
+router.put('/:id/permissions', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { permissions } = req.body;
+
+    if (!permissions || typeof permissions !== 'object') {
+      return res.status(400).json({ message: 'Permissions object is required' });
+    }
+
+    const roleDoc = await adminDb.doc(`roles/${id}`).get();
+    if (!roleDoc.exists) {
+      return res.status(404).json({ message: 'Role not found' });
+    }
+
+    await adminDb.doc(`rolePermissions/${id}`).set(permissions);
+
+    await writeAuditLog('role_permissions_updated', req.user, {
+      targetId: id,
+      targetTitle: roleDoc.data().name,
+      description: `Updated permissions for role: ${roleDoc.data().name}`,
+    });
+
+    res.json({ id, permissions });
+  } catch (error) {
+    console.error('Save role permissions error:', error);
+    res.status(500).json({ message: error.message || 'Failed to save role permissions' });
+  }
+});
+
+// ADMIN: Save per-user permission overrides
+router.put('/users/:uid/permissions', verifyToken, async (req, res) => {
+  try {
+    const { uid } = req.params;
+    const { permissions } = req.body;
+
+    if (!permissions || typeof permissions !== 'object') {
+      return res.status(400).json({ message: 'Permissions object is required' });
+    }
+
+    await adminDb.doc(`userPermissions/${uid}`).set(permissions);
+
+    await writeAuditLog('user_permissions_updated', req.user, {
+      targetId: uid,
+      targetTitle: uid,
+      description: `Updated permission overrides for user: ${uid}`,
+    });
+
+    res.json({ uid, permissions });
+  } catch (error) {
+    console.error('Save user permissions error:', error);
+    res.status(500).json({ message: error.message || 'Failed to save user permissions' });
+  }
+});
+
 // ADMIN: Delete a custom role
 router.delete('/:id', verifyToken, async (req, res) => {
   try {

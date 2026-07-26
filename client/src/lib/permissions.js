@@ -1,5 +1,6 @@
-import { doc, getDoc, setDoc, onSnapshot, collection, getDocs } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot, collection, getDocs } from 'firebase/firestore';
 import { db } from '@/firebase/firebaseConfig';
+import { apiRequest } from '@/api/apiClient';
 
 export const ALL_PERMISSIONS = [
   { id: 'TASK_CREATE', label: 'Create Task', group: 'Task Management' },
@@ -262,8 +263,11 @@ export const loadPermissions = async () => {
 
 export const savePermissions = async (role, permissions) => {
   try {
-    const docRef = doc(db, 'rolePermissions', role);
-    await setDoc(docRef, permissions);
+    await apiRequest({
+      endpoint: `/roles/${role}/permissions`,
+      method: 'PUT',
+      body: { permissions },
+    });
     if (cachedPermissions) {
       cachedPermissions[role] = permissions;
     }
@@ -280,8 +284,11 @@ export const getPermissions = () => {
 
 export const saveUserPermissions = async (uid, permissions) => {
   try {
-    const docRef = doc(db, 'userPermissions', uid);
-    await setDoc(docRef, permissions);
+    await apiRequest({
+      endpoint: `/roles/users/${uid}/permissions`,
+      method: 'PUT',
+      body: { permissions },
+    });
     cachedUserPermissions[uid] = permissions;
     return true;
   } catch (error) {
