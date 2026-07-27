@@ -1,6 +1,6 @@
 import { useEffect, useState, useContext } from 'react';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
-import { db } from '@/firebase/firebaseConfig';
+import { db } from '@/lib/firebase';
 import { AuthContext } from '@/context/AuthContext';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

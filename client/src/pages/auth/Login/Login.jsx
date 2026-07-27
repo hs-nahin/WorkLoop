@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { AuthContext } from '@/context/AuthContextInstance';
+import { AuthContext } from '@/context/AuthContext';
 import { Eye, EyeOff, Loader2, Lock, User } from 'lucide-react';
 import { useContext, useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router';

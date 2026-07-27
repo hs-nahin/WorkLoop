@@ -6,7 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { MessageSquare } from 'lucide-react';
 import { hasPermission } from '@/lib/permissions';
 
-const TaskDiscussion = ({ taskId, task }) => {
+const TaskDiscussion = ({ taskId, task, messages, messagesLoading }) => {
   const { user } = useContext(AuthContext);
 
   const isAuthorized = () => {
@@ -43,7 +43,7 @@ const TaskDiscussion = ({ taskId, task }) => {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <MessageThread taskId={taskId} />
+          <MessageThread taskId={taskId} messages={messages} loading={messagesLoading} />
           <MessageInput taskId={taskId} />
         </CardContent>
       </Card>

@@ -7,7 +7,7 @@ import BlurFade from '@/components/animations/BlurFade';
 import MagicCard from '@/components/animations/MagicCard';
 import { toast } from 'sonner';
 import { CheckCircle2, XCircle, Clock } from 'lucide-react';
-import { AuthContext } from '@/context/AuthContextInstance';
+import { AuthContext } from '@/context/AuthContext';
 import { hasPermission } from '@/lib/permissions';
 
 const AdminReview = () => {

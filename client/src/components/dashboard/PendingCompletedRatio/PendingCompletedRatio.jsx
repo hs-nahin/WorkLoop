@@ -1,15 +1,9 @@
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { useRealTimeTasks } from '@/hooks/useRealtime';
-import { useContext } from 'react';
-import { AuthContext } from '@/context/AuthContextInstance';
 import { Progress } from '@/components/ui/progress';
 import { BarChart3 } from 'lucide-react';
 
-const PendingCompletedRatio = () => {
-  const { user } = useContext(AuthContext);
-  const { tasks, loading } = useRealTimeTasks(user?.uid, user?.role);
-
+const PendingCompletedRatio = ({ tasks, loading }) => {
   const stats = useMemo(() => {
     if (!tasks) return { pending: 0, completed: 0, total: 0, ratio: 0 };
     

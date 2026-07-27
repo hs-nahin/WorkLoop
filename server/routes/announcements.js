@@ -84,7 +84,7 @@ router.post('/', verifyToken, checkPermission('ANNOUNCEMENT_CREATE'), async (req
 
         const docRef = await adminDb.collection('announcements').add(announcementData);
 
-        await writeAuditLog('ANNOUNCEMENT_CREATED', req.user, {
+        await writeAuditLog('announcement_created', req.user, {
             targetId: docRef.id,
             targetTitle: title,
             description: `Created announcement: ${title}`,
@@ -121,7 +121,7 @@ router.put('/:id', verifyToken, checkPermission('ANNOUNCEMENT_EDIT'), async (req
 
         await adminDb.collection('announcements').doc(id).update(sanitized);
 
-        await writeAuditLog('ANNOUNCEMENT_UPDATED', req.user, {
+        await writeAuditLog('announcement_updated', req.user, {
             targetId: id,
             description: `Updated announcement ${id}`,
         });
@@ -139,7 +139,7 @@ router.delete('/:id', verifyToken, checkPermission('ANNOUNCEMENT_DELETE'), async
         const { id } = req.params;
         await adminDb.collection('announcements').doc(id).delete();
 
-        await writeAuditLog('ANNOUNCEMENT_DELETED', req.user, {
+        await writeAuditLog('announcement_deleted', req.user, {
             targetId: id,
             description: `Deleted announcement ${id}`,
         });
@@ -163,7 +163,7 @@ router.patch('/:id/toggle', verifyToken, checkPermission('ANNOUNCEMENT_EDIT'), a
         const currentStatus = doc.data().active;
         await docRef.update({ active: !currentStatus });
 
-        await writeAuditLog('ANNOUNCEMENT_STATUS_TOGGLED', req.user, {
+        await writeAuditLog('announcement_status_toggled', req.user, {
             targetId: id,
             description: `Toggled status of announcement ${id} to ${!currentStatus}`,
         });

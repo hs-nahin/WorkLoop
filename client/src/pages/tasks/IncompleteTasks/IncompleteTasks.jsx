@@ -5,7 +5,7 @@ import BlurFade from '@/components/animations/BlurFade';
 import MagicCard from '@/components/animations/MagicCard';
 import { AlertCircle, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router';
-import { AuthContext } from '@/context/AuthContextInstance';
+import { AuthContext } from '@/context/AuthContext';
 import { hasPermission } from '@/lib/permissions';
 
 const IncompleteTasks = () => {

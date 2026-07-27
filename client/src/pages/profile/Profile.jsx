@@ -21,7 +21,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { useContext, useEffect, useMemo, useState } from 'react';
-import { AuthContext } from '@/context/AuthContextInstance.js';
+import { AuthContext } from '@/context/AuthContext';
 import { toast } from 'sonner';
 import { auth } from '@/lib/firebase';
 import { getRoleBadgeColor, resolveRoleName } from '@/lib/roleUtils';

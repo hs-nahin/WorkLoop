@@ -92,4 +92,20 @@ const hasRole = async (userRole, permissionName) => {
   return perms[permissionName] === true;
 };
 
-module.exports = { checkPermission, hasRole, refreshCache, DEFAULT_ROLE_PERMISSIONS };
+// Synchronous check using caches (must call refreshCache/refreshUserCache first)
+const hasPermission = (role, permissionName, uid) => {
+  const r = (role || '').toUpperCase();
+  if (r === 'ADMIN') return true;
+
+  // Check user overrides first
+  if (uid && userPermissionsCache[uid]) {
+    const userOverride = userPermissionsCache[uid][permissionName];
+    if (userOverride !== undefined) return userOverride === true;
+  }
+
+  // Check role permissions (includes defaults)
+  const rolePerms = { ...DEFAULT_ROLE_PERMISSIONS, ...(rolePermissionsCache[r] || {}) };
+  return rolePerms[permissionName] === true;
+};
+
+module.exports = { checkPermission, hasRole, hasPermission, refreshCache, refreshUserCache, DEFAULT_ROLE_PERMISSIONS };

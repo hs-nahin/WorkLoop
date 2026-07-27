@@ -1,16 +1,13 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { useRealTimeTasks } from '@/hooks/useRealtime';
-import { useContext } from 'react';
-import { AuthContext } from '@/context/AuthContextInstance';
 import { apiRequest } from '@/api/apiClient';
-import { useEffect, useState } from 'react';
-import { Medal, Trophy, Award } from 'lucide-react';
+import { Medal, Trophy } from 'lucide-react';
+import { useContext } from 'react';
+import { AuthContext } from '@/context/AuthContext';
 import { hasPermission } from '@/lib/permissions';
 
-const UserProductivityRanking = () => {
+const UserProductivityRanking = ({ tasks, loading }) => {
   const { user } = useContext(AuthContext);
-  const { tasks, loading } = useRealTimeTasks(user?.uid, user?.role);
   const [users, setUsers] = useState([]);
 
   useEffect(() => {

@@ -2,8 +2,8 @@ import { useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import { AuthContext } from '@/context/AuthContext';
 import { hasPermission } from '@/lib/permissions';
-import { db } from '@/lib/firebase';
-import { collection, onSnapshot } from 'firebase/firestore';
+import { apiRequest } from '@/api/apiClient';
+import { useRealTimeTasks } from '@/hooks/useRealtime';
 import { 
   Users, TrendingUp, AlertTriangle, CheckCircle2, 
   Search, ArrowUpDown, BarChart3, PieChart, 
@@ -55,11 +55,11 @@ const UserPerformanceDashboard = () => {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   const [users, setUsers] = useState([]);
-  const [tasks, setTasks] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('efficiency');
   const [sortOrder, setSortOrder] = useState('desc');
+
+  const { tasks, loading } = useRealTimeTasks(user?.uid, user?.role);
 
   useEffect(() => {
     if (user && !hasPermission(user.role, 'PERFORMANCE_VIEW')) {
@@ -81,38 +81,16 @@ const UserPerformanceDashboard = () => {
   }, []);
 
   useEffect(() => {
-    setLoading(true);
-    let unsubscribeUsers = () => {};
-    let unsubscribeTasks = () => {};
-
-    try {
-      unsubscribeUsers = onSnapshot(collection(db, 'users'), (snapshot) => {
-        setUsers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      }, (err) => {
-        console.error(err);
-      });
-    } catch (err) {
-      console.error('Failed to initialize users listener:', err);
-    }
-
-    try {
-      unsubscribeTasks = onSnapshot(collection(db, 'tasks'), (snapshot) => {
-        setTasks(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-        setLoading(false);
-      }, (err) => {
-        console.error(err);
-        setLoading(false);
-      });
-    } catch (err) {
-      console.error('Failed to initialize tasks listener:', err);
-      setLoading(false);
-    }
-
-    return () => {
-      try { unsubscribeUsers(); } catch (_) {}
-      try { unsubscribeTasks(); } catch (_) {}
+    const fetchUsers = async () => {
+      try {
+        const data = await apiRequest({ endpoint: '/users' });
+        setUsers(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error('Failed to fetch users:', err);
+      }
     };
-  }, [user]);
+    if (hasPermission(user?.role, 'PERFORMANCE_VIEW')) fetchUsers();
+  }, [user?.role]);
 
   // --- Analytics Computations ---
   const metrics = useMemo(() => {

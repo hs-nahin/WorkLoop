@@ -23,45 +23,58 @@ import {
   Loader2,
   Plus,
 } from "lucide-react";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 
 import BlurFade from "@/components/animations/BlurFade";
 import NumberTicker from "@/components/animations/NumberTicker";
-import { AuthContext } from "@/context/AuthContextInstance";
-import { useRealTimeStats } from "@/hooks/useRealtime";
+import { AuthContext } from "@/context/AuthContext";
+import { useRealTimeTasks } from "@/hooks/useRealtime";
 import { hasPermission } from "@/lib/permissions";
-
-import TaskStatusChart from "@/components/dashboard/TaskStatusChart/TaskStatusChart";
-import WeeklyTrendChart from "@/components/dashboard/WeeklyTrendChart/WeeklyTrendChart";
-import UserProductivityRanking from "@/components/dashboard/UserProductivityRanking/UserProductivityRanking";
-import PendingCompletedRatio from "@/components/dashboard/PendingCompletedRatio/PendingCompletedRatio";
-import WorkloadDistribution from "@/components/dashboard/WorkloadDistribution/WorkloadDistribution";
 
 const Dashboard = () => {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   
-  // Real-time stats
-  const { stats: realtimeStats, loading: statsLoading } = useRealTimeStats(user?.uid, user?.role);
-  
-  const [stats, setStats] = useState({
-    totalTasks: 0,
-    pendingTasks: 0,
-    completedTasks: 0,
-  });
-  
-  // Update when real-time data changes (single source of truth)
-  useEffect(() => {
-    if (realtimeStats) {
-      setStats({
-        totalTasks: realtimeStats.total,
-        pendingTasks: realtimeStats.pending,
-        completedTasks: realtimeStats.completed,
+  const { tasks: allTasks, loading: statsLoading } = useRealTimeTasks(user?.uid, user?.role);
+
+  const stats = useMemo(() => {
+    const pending = allTasks.filter(t => t.status === 'pending').length;
+    const inProgress = allTasks.filter(t => t.status === 'in progress').length;
+    const submitted = allTasks.filter(t => t.status === 'submitted').length;
+    const completed = allTasks.filter(t => t.status === 'completed' || t.status === 'approved').length;
+
+    const now = new Date();
+    const weeklyTrend = [];
+    for (let i = 6; i >= 0; i--) {
+      const day = new Date(now);
+      day.setDate(day.getDate() - i);
+      const dayStart = new Date(day.getFullYear(), day.getMonth(), day.getDate());
+      const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+      const dayTasks = allTasks.filter(t => {
+        const created = t.createdAt instanceof Date ? t.createdAt : new Date(t.createdAt);
+        return created >= dayStart && created < dayEnd;
+      });
+      weeklyTrend.push({
+        date: dayStart.toLocaleDateString('en-US', { weekday: 'short' }),
+        created: dayTasks.length,
+        completed: dayTasks.filter(t => t.status === 'completed' || t.status === 'approved').length,
+        submitted: dayTasks.filter(t => t.status === 'submitted').length,
       });
     }
-  }, [realtimeStats]);
+
+    return {
+      totalTasks: allTasks.length,
+      pendingTasks: pending,
+      inProgress,
+      submitted,
+      completedTasks: completed,
+      statusCounts: { pending, inProgress, submitted, completed, rejected: allTasks.filter(t => t.status === 'rejected').length },
+      weeklyTrend,
+      tasks: allTasks,
+    };
+  }, [allTasks]);
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);

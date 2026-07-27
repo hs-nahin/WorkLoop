@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext, useMemo, useRef, useCallback } from 'react';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
-import { db } from '@/firebase/firebaseConfig';
+import { db } from '@/lib/firebase';
 import { AuthContext } from '@/context/AuthContext';
 import { apiRequest } from '@/api/apiClient';
 import { hasPermission } from '@/lib/permissions';

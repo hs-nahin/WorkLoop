@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { admin, adminAuth, adminDb } = require('../firebase-admin');
 const { verifyToken, selfOrAdmin, writeAuditLog } = require('../middleware/auth');
-const { checkPermission } = require('../config/permissions');
+const { checkPermission, refreshUserCache } = require('../config/permissions');
 
 const DEFAULT_EMAIL_DOMAIN = 'workloop.local';
 
@@ -386,10 +386,11 @@ router.patch('/toggle-user/:uid', verifyToken, checkPermission('USER_TOGGLE'), a
     const userData = userDoc.data();
 
     if (userData.isSystemAdmin) {
-      return res.status(403).json({ message: 'Cannot deactivate a system administrator' });
+      return res.status(403).json({ message: 'Cannot toggle a system administrator' });
     }
 
-    const newActiveStatus = !userData.isActive;
+    const currentActive = userData.isActive !== false;
+    const newActiveStatus = !currentActive;
 
     try {
       await adminAuth.updateUser(uid, { disabled: !newActiveStatus });
@@ -400,6 +401,8 @@ router.patch('/toggle-user/:uid', verifyToken, checkPermission('USER_TOGGLE'), a
     }
 
     await adminDb.doc(`users/${uid}`).update({ isActive: newActiveStatus });
+
+    await refreshUserCache(uid);
 
     await writeAuditLog('user_toggled', req.user, {
       targetId: uid,

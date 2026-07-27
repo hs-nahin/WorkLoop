@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from '@/firebase/firebaseConfig';
+import { storage } from '@/lib/firebase';
 import { apiRequest } from '@/api/apiClient';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';

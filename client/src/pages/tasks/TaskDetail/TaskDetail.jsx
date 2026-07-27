@@ -1,22 +1,33 @@
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { useContext, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
-import { ArrowLeft, CheckCircle2, Circle, Clock, Pencil } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Circle, Clock, Pencil, Trash2 } from 'lucide-react';
 import { apiRequest } from '@/api/apiClient';
 import { hasPermission } from '@/lib/permissions';
+import { EditTaskDialog } from '@/components/tasks/EditTaskDialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import BlurFade from '@/components/animations/BlurFade';
 import GradientText from '@/components/animations/GradientText';
 import MagicCard from '@/components/animations/MagicCard';
 import TextHighlighter from '@/components/animations/TextHighlighter';
-import Confetti from '@/components/animations/Confetti';
 import { AuthContext } from '@/context/AuthContext';
 import TaskDiscussion from '@/components/tasks/TaskDiscussion/TaskDiscussion';
 import SubtaskWorkflow from '@/components/tasks/SubtaskWorkflow/SubtaskWorkflow';
 import AttachmentPanel from '@/components/tasks/Attachments/AttachmentPanel';
 import ActivityTimeline from '@/components/tasks/ActivityTimeline/ActivityTimeline';
-import { useRealTimeTask } from '@/hooks/useRealtime';
+import { useRealTimeTask, useRealTimeMessages } from '@/hooks/useRealtime';
 
 // Helper function to convert Firestore timestamp to Date
 const convertTimestamp = (timestamp) => {
@@ -65,47 +76,26 @@ const TaskDetail = () => {
   const { id } = useParams();
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
-  const [task, setTask] = useState(null);
   const [report, setReport] = useState('');
   const [feedback, setFeedback] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-  const [officers, setOfficers] = useState([]);
   const [elapsedTime, setElapsedTime] = useState(0);
-  const [timerInterval, setTimerInterval] = useState(null);
+  const timerIntervalRef = useRef(null);
   const [isEditingDeadline, setIsEditingDeadline] = useState(false);
   const [editDeadlineValue, setEditDeadlineValue] = useState('');
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  // Real-time task listener - auto-updates when task changes
-  const { task: realtimeTask, loading: taskLoading, error: taskError } = useRealTimeTask(id);
-
-  // Update when real-time data changes
-  useEffect(() => {
-    setTask(realtimeTask);
-    setIsLoading(taskLoading);
-  }, [realtimeTask, taskLoading]);
-
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const data = await apiRequest({ endpoint: '/users' });
-        const officerList = data.filter(u => (u.role || '').toUpperCase() !== 'ADMIN' && u.isActive !== false);
-        setOfficers(officerList);
-      } catch (error) {
-        console.error('Failed to fetch users:', error);
-      }
-    };
-
-    fetchUsers();
-  }, []);
+  // Real-time task listener — single source of truth, no local state duplication
+  const { task, loading: isLoading, error: taskError, refresh } = useRealTimeTask(id);
+  const { messages, loading: messagesLoading } = useRealTimeMessages(id);
 
   // Timer management for live duration tracking
   useEffect(() => {
-    // Clear existing interval
-    if (timerInterval) clearInterval(timerInterval);
+    if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
     
     if (!task) return;
 
-    // Calculate initial elapsed time
     const calculateElapsed = () => {
       const totalCompleted = task.totalDurationSeconds || 0;
       
@@ -121,35 +111,31 @@ const TaskDetail = () => {
 
     setElapsedTime(calculateElapsed());
 
-    // Set up interval for live updates if timer is running
     if (task.isTimerRunning && task.workStartedAt) {
-      const interval = setInterval(() => {
+      timerIntervalRef.current = setInterval(() => {
         setElapsedTime(calculateElapsed());
       }, 1000);
-      setTimerInterval(interval);
     }
 
-    // Cleanup interval on unmount or task change
     return () => {
-      if (timerInterval) clearInterval(timerInterval);
+      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
     };
   }, [task]);
 
-  const handleAcceptTask = async () => {
+  const handleAcceptTask = useCallback(async () => {
     try {
       await apiRequest({ 
         endpoint: `/tasks/${id}/accept`, 
         method: 'PATCH' 
       });
       toast.success('Task accepted!');
-      const data = await apiRequest({ endpoint: `/tasks/${id}` });
-      setTask(data);
+      refresh();
     } catch (error) {
       toast.error(error.message || 'Failed to accept task');
     }
-  };
+  }, [id, refresh]);
 
-  const handleCompleteTask = async () => {
+  const handleCompleteTask = useCallback(async () => {
     if (!report.trim()) return toast.error('Please provide a completion report');
     
     try {
@@ -159,29 +145,27 @@ const TaskDetail = () => {
         body: { report }, 
       });
       toast.success('Task submitted for admin review!');
-      const data = await apiRequest({ endpoint: `/tasks/${id}` });
-      setTask(data);
       setReport('');
+      refresh();
     } catch (error) {
       toast.error(error.message || 'Submission failed');
     }
-  };
+  }, [id, report, refresh]);
 
-  const handleIncompleteTask = async () => {
+  const handleIncompleteTask = useCallback(async () => {
     try {
       await apiRequest({ 
         endpoint: `/tasks/${id}/incomplete`, 
         method: 'PATCH' 
       });
       toast.error('Task marked as incomplete');
-      const data = await apiRequest({ endpoint: `/tasks/${id}` });
-      setTask(data);
+      refresh();
     } catch (error) {
       toast.error(error.message || 'Failed to mark task as incomplete');
     }
-  };
+  }, [id, refresh]);
 
-  const handleApprove = async () => {
+  const handleApprove = useCallback(async () => {
     try {
       await apiRequest({ 
         endpoint: `/tasks/${id}/approve`, 
@@ -193,9 +177,9 @@ const TaskDetail = () => {
     } catch (error) {
       toast.error(error.message || 'Approval failed');
     }
-  };
+  }, [id, feedback, navigate]);
 
-  const handleReject = async () => {
+  const handleReject = useCallback(async () => {
     if (!feedback.trim()) return toast.error('Please provide feedback for rejection');
     
     try {
@@ -209,9 +193,9 @@ const TaskDetail = () => {
     } catch (error) {
       toast.error(error.message || 'Rejection failed');
     }
-  };
+  }, [id, feedback, navigate]);
 
-  const handleUpdateDeadline = async () => {
+  const handleUpdateDeadline = useCallback(async () => {
     if (!editDeadlineValue) return;
     try {
       const newDeadline = new Date(editDeadlineValue);
@@ -222,16 +206,44 @@ const TaskDetail = () => {
       });
       setIsEditingDeadline(false);
       toast.success('Deadline updated');
+      refresh();
     } catch (error) {
       toast.error(error.message || 'Failed to update deadline');
     }
-  };
+  }, [id, editDeadlineValue, refresh]);
 
-  const handleEditDeadline = () => {
-    const current = convertTimestamp(task.deadline);
+  const handleEditDeadline = useCallback(() => {
+    const current = convertTimestamp(task?.deadline);
     setEditDeadlineValue(current ? current.toISOString().slice(0, 16) : '');
     setIsEditingDeadline(true);
-  };
+  }, [task?.deadline]);
+
+  const handleDeleteTask = useCallback(async () => {
+    try {
+      setIsDeleting(true);
+      setDeleteAlertOpen(false);
+      await apiRequest({ endpoint: `/tasks/${id}`, method: 'DELETE' });
+      toast.success('Task deleted successfully');
+      navigate('/tasks');
+    } catch (error) {
+      toast.error(error.message || 'Failed to delete task');
+    } finally {
+      setIsDeleting(false);
+    }
+  }, [id, navigate]);
+
+  const getStatusColor = useCallback((status) => {
+    switch (status) {
+      case 'approved': return 'text-green-600 dark:text-green-400 border-green-600/30 dark:border-green-400/30 bg-green-600/10 dark:bg-green-400/10';
+      case 'completed': return 'text-green-600 dark:text-green-400 border-green-600/30 dark:border-green-400/30 bg-green-600/10 dark:bg-green-400/10';
+      case 'pending': return 'text-yellow-600 dark:text-yellow-400 border-yellow-600/30 dark:border-yellow-400/30 bg-yellow-600/10 dark:bg-yellow-400/10';
+      case 'in progress': return 'text-blue-600 dark:text-blue-400 border-blue-600/30 dark:border-blue-400/30 bg-blue-600/10 dark:bg-blue-400/10';
+      case 'submitted': return 'text-purple-600 dark:text-purple-400 border-purple-600/30 dark:border-purple-400/30 bg-purple-600/10 dark:bg-purple-400/10';
+      case 'rejected': return 'text-red-600 dark:text-red-400 border-red-600/30 dark:border-red-400/30 bg-red-600/10 dark:bg-red-400/10';
+      case 'incomplete': return 'text-orange-600 dark:text-orange-400 border-orange-600/30 dark:border-orange-400/30 bg-orange-600/10 dark:bg-orange-400/10';
+      default: return 'text-gray-600 dark:text-gray-400 border-gray-600/30 dark:border-gray-400/30 bg-gray-600/10 dark:bg-gray-400/10';
+    }
+  }, []);
 
   if (isLoading) return <div className="min-h-screen flex items-center justify-center text-foreground font-mono animate-pulse">Loading Task...</div>;
   if (!task) return (
@@ -247,19 +259,6 @@ const TaskDetail = () => {
     </div>
   );
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'approved': return 'text-green-600 dark:text-green-400 border-green-600/30 dark:border-green-400/30 bg-green-600/10 dark:bg-green-400/10';
-      case 'completed': return 'text-green-600 dark:text-green-400 border-green-600/30 dark:border-green-400/30 bg-green-600/10 dark:bg-green-400/10';
-      case 'pending': return 'text-yellow-600 dark:text-yellow-400 border-yellow-600/30 dark:border-yellow-400/30 bg-yellow-600/10 dark:bg-yellow-400/10';
-      case 'in progress': return 'text-blue-600 dark:text-blue-400 border-blue-600/30 dark:border-blue-400/30 bg-blue-600/10 dark:bg-blue-400/10';
-      case 'submitted': return 'text-purple-600 dark:text-purple-400 border-purple-600/30 dark:border-purple-400/30 bg-purple-600/10 dark:bg-purple-400/10';
-      case 'rejected': return 'text-red-600 dark:text-red-400 border-red-600/30 dark:border-red-400/30 bg-red-600/10 dark:bg-red-400/10';
-      case 'incomplete': return 'text-orange-600 dark:text-orange-400 border-orange-600/30 dark:border-orange-400/30 bg-orange-600/10 dark:bg-orange-400/10';
-      default: return 'text-gray-600 dark:text-gray-400 border-gray-600/30 dark:border-gray-400/30 bg-gray-600/10 dark:bg-gray-400/10';
-    }
-  };
-
   return (
     <div className="space-y-4 sm:space-y-8 px-2 sm:px-0">
       <header className="flex items-start sm:items-end justify-between">
@@ -271,6 +270,34 @@ const TaskDetail = () => {
             <TextHighlighter text="Task Specifications" className="text-xl sm:text-3xl font-bold tracking-tight" />
             <GradientText text={`Reference ID: ${id.slice(-8).toUpperCase()}`} className="text-xs sm:text-sm opacity-70 truncate" />
           </div>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {hasPermission(user?.role, 'TASK_EDIT') && (task.status === 'pending' || task.status === 'in progress') && (
+            <Button variant="outline" size="sm" onClick={() => setEditOpen(true)} className="cursor-pointer">
+              <Pencil size={14} className="mr-1.5" /> Edit
+            </Button>
+          )}
+          {hasPermission(user?.role, 'TASK_DELETE') && (
+            <AlertDialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
+              <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700 hover:bg-red-500/10 cursor-pointer">
+                  <Trash2 size={14} className="mr-1.5" /> Delete
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="w-[90vw] max-w-md">
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Task</AlertDialogTitle>
+                  <AlertDialogDescription>Are you sure you want to delete this task? This action cannot be undone.</AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDeleteTask} disabled={isDeleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                    {isDeleting ? 'Deleting...' : 'Delete'}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
         </div>
       </header>
 
@@ -341,7 +368,7 @@ const TaskDetail = () => {
 
                 <div className="pt-6 border-t border-border grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div className="text-xs text-muted-foreground">
-                    Assigned To: <span className="text-foreground font-medium">{officers.find(o => o.userId === task.officerId)?.name || task.officerId}</span>
+                    Assigned To: <span className="text-foreground font-medium">{task.officerName || task.officerId || 'Unassigned'}</span>
                   </div>
                   {task.assistantName && (
                     <div className="text-xs text-muted-foreground">
@@ -626,7 +653,7 @@ const TaskDetail = () => {
 
             {/* Task Discussion Section */}
             <BlurFade delay={200}>
-              <TaskDiscussion taskId={id} task={task} />
+              <TaskDiscussion taskId={id} task={task} messages={messages} messagesLoading={messagesLoading} />
             </BlurFade>
 
             {/* Subtask Workflow Section */}
@@ -646,7 +673,7 @@ const TaskDetail = () => {
                   <Clock size={16} className="text-muted-foreground" />
                   Activity Timeline
                 </h3>
-                <ActivityTimeline taskId={id} />
+                <ActivityTimeline taskId={id} messages={messages} />
               </div>
             </BlurFade>
          </div>
@@ -850,6 +877,14 @@ const TaskDetail = () => {
           )}
         </div>
       </div>
+
+      {/* Edit Task Dialog */}
+      <EditTaskDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        task={task}
+        onTaskUpdated={() => { setEditOpen(false); }}
+      />
     </div>
   );
 };

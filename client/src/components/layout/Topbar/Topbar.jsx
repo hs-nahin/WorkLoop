@@ -9,73 +9,25 @@ import { Bell, LogOut, Settings, User, Trash2, Megaphone } from "lucide-react";
 import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { getRoleTopbarColor, resolveRoleName } from "@/lib/roleUtils";
-import { apiRequest } from "../../../api/apiClient";
-import { AuthContext } from "../../../context/AuthContextInstance.js";
+import { AuthContext } from "@/context/AuthContext";
 import { hasPermission, loadRoles } from "../../../lib/permissions";
-import { db } from "../../../lib/firebase";
-import { collection, query, where, orderBy, onSnapshot, updateDoc, doc, deleteDoc } from "firebase/firestore";
+import { useRealtimeNotifications } from "@/hooks/useRealtime";
 
 const TopBar = () => {
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
-  const [notifications, setNotifications] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
   const [roles, setRoles] = useState([]);
+
+  const { notifications, unreadCount, markAsRead, markAllRead, deleteNotification } = useRealtimeNotifications(user?.uid, user?.role);
 
   useEffect(() => {
     loadRoles().then(setRoles);
   }, []);
 
-  useEffect(() => {
-    if (!user?.uid) return;
-
-    let unsubscribe = () => {};
-    try {
-      const notificationsRef = collection(db, 'notifications');
-      const q = query(
-        notificationsRef,
-        where('userId', '==', user.uid)
-      );
-
-      unsubscribe = onSnapshot(q, (snapshot) => {
-        try {
-          let notifs = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          }));
-          
-          notifs = notifs.sort((a, b) => {
-            const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(0);
-            const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(0);
-            return dateB - dateA;
-          });
-          
-          setNotifications(notifs);
-          setUnreadCount(notifs.filter(n => !n.read).length);
-        } catch (err) {
-          console.error('Error processing notifications:', err);
-        }
-      }, (error) => {
-        console.error('Error listening to notifications:', error);
-      });
-    } catch (err) {
-      console.error('Failed to initialize notifications listener:', err);
-    }
-
-    return () => {
-      try { unsubscribe(); } catch (e) {}
-    };
-  }, [user?.uid]);
-
   const handleNotificationClick = async (notification) => {
     if (!notification.read) {
-      try {
-        const notificationRef = doc(db, 'notifications', notification.id);
-        await updateDoc(notificationRef, { read: true });
-      } catch (error) {
-        console.error('Error marking notification as read:', error);
-      }
+      await markAsRead(notification.id);
     }
 
     if (notification.taskId) {
@@ -86,25 +38,12 @@ const TopBar = () => {
 
    const handleDeleteNotification = async (e, notificationId) => {
      e.stopPropagation();
-     try {
-       const notificationRef = doc(db, 'notifications', notificationId);
-       await deleteDoc(notificationRef);
-     } catch (error) {
-       console.error('Error deleting notification:', error);
-     }
+     await deleteNotification(notificationId);
    };
 
    const handleMarkAllRead = async (e) => {
      e.stopPropagation();
-     try {
-       const unreadNotifications = notifications.filter(n => !n.read);
-       for (const notification of unreadNotifications) {
-         const notificationRef = doc(db, 'notifications', notification.id);
-         await updateDoc(notificationRef, { read: true });
-       }
-     } catch (error) {
-       console.error('Error marking all notifications as read:', error);
-     }
+     await markAllRead();
    };
 
   const formatTime = (timestamp) => {

@@ -1,8 +1,5 @@
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { useRealTimeStats } from '@/hooks/useRealtime';
-import { useContext } from 'react';
-import { AuthContext } from '@/context/AuthContextInstance';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
 const STATUS_COLORS = {
@@ -13,20 +10,27 @@ const STATUS_COLORS = {
   rejected: '#ef4444',
 };
 
-const TaskStatusChart = () => {
-  const { user } = useContext(AuthContext);
-  const { stats, loading } = useRealTimeStats(user?.uid, user?.role);
+const TaskStatusChart = ({ tasks, loading }) => {
+  const statusCounts = useMemo(() => {
+    if (!tasks) return { pending: 0, inProgress: 0, submitted: 0, completed: 0, rejected: 0 };
+    return {
+      pending: tasks.filter(t => t.status === 'pending').length,
+      inProgress: tasks.filter(t => t.status === 'in progress').length,
+      submitted: tasks.filter(t => t.status === 'submitted').length,
+      completed: tasks.filter(t => t.status === 'completed' || t.status === 'approved').length,
+      rejected: tasks.filter(t => t.status === 'rejected').length,
+    };
+  }, [tasks]);
 
   const chartData = useMemo(() => {
-    if (!stats?.statusCounts) return [];
     return [
-      { name: 'Pending', value: stats.statusCounts.pending || 0, color: STATUS_COLORS.pending },
-      { name: 'In Progress', value: stats.statusCounts.inProgress || 0, color: STATUS_COLORS['in progress'] },
-      { name: 'Submitted', value: stats.statusCounts.submitted || 0, color: STATUS_COLORS.submitted },
-      { name: 'Completed', value: stats.statusCounts.completed || 0, color: STATUS_COLORS.completed },
-      { name: 'Rejected', value: stats.statusCounts.rejected || 0, color: STATUS_COLORS.rejected },
+      { name: 'Pending', value: statusCounts.pending, color: STATUS_COLORS.pending },
+      { name: 'In Progress', value: statusCounts.inProgress, color: STATUS_COLORS['in progress'] },
+      { name: 'Submitted', value: statusCounts.submitted, color: STATUS_COLORS.submitted },
+      { name: 'Completed', value: statusCounts.completed, color: STATUS_COLORS.completed },
+      { name: 'Rejected', value: statusCounts.rejected, color: STATUS_COLORS.rejected },
     ].filter(item => item.value > 0);
-  }, [stats?.statusCounts]);
+  }, [statusCounts]);
 
   if (loading) {
     return (

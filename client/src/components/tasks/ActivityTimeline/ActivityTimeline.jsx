@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
-import { db } from '@/firebase/firebaseConfig';
+import { db } from '@/lib/firebase';
 import { motion } from 'framer-motion';
 import { getRoleColor } from '@/lib/roleUtils';
 import {
@@ -110,7 +110,7 @@ const formatEventTime = (timestamp) => {
   });
 };
 
-const ActivityTimeline = ({ taskId }) => {
+const ActivityTimeline = ({ taskId, messages }) => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -118,7 +118,6 @@ const ActivityTimeline = ({ taskId }) => {
     if (!taskId) return;
 
     let unsubscribeAudit = () => {};
-    let unsubscribeMessages = () => {};
     let cancelled = false;
 
     const loadEvents = () => {
@@ -156,56 +155,12 @@ const ActivityTimeline = ({ taskId }) => {
             return merged;
           });
           setLoading(false);
-        }, () => {
+        }, (err) => {
+          console.warn('Audit logs listener failed (may need composite index):', err?.message);
           if (!cancelled) setLoading(false);
         });
       } catch (err) {
         console.error('Failed to initialize audit listener:', err);
-        if (!cancelled) setLoading(false);
-      }
-
-      try {
-        const messagesQuery = query(
-          collection(db, 'tasks', taskId, 'messages'),
-          orderBy('createdAt', 'desc')
-        );
-
-        unsubscribeMessages = onSnapshot(messagesQuery, (snapshot) => {
-          if (cancelled) return;
-          const messageEvents = snapshot.docs
-            .map(doc => {
-              const data = doc.data();
-              return {
-                id: `msg-${doc.id}`,
-                source: 'message',
-                action: 'system_message',
-                details: data.text,
-                actorName: data.senderName,
-                actorUid: data.senderId,
-                timestamp: data.createdAt,
-                text: data.text,
-                senderName: data.senderName,
-                senderRole: data.senderRole || '',
-                type: data.type,
-              };
-            })
-            .filter(e => e.type === 'system');
-
-          setEvents(prev => {
-            const auditEvents = prev.filter(e => e.source === 'auditLog');
-            const merged = [...auditEvents, ...messageEvents].sort((a, b) => {
-              const ta = a.timestamp?.toDate ? a.timestamp.toDate().getTime() : new Date(a.timestamp || 0).getTime();
-              const tb = b.timestamp?.toDate ? b.timestamp.toDate().getTime() : new Date(b.timestamp || 0).getTime();
-              return tb - ta;
-            });
-            return merged;
-          });
-          setLoading(false);
-        }, () => {
-          if (!cancelled) setLoading(false);
-        });
-      } catch (err) {
-        console.error('Failed to initialize messages listener:', err);
         if (!cancelled) setLoading(false);
       }
     };
@@ -215,9 +170,38 @@ const ActivityTimeline = ({ taskId }) => {
     return () => {
       cancelled = true;
       try { unsubscribeAudit(); } catch (_) {}
-      try { unsubscribeMessages(); } catch (_) {}
     };
   }, [taskId]);
+
+  // Derive system message events from the shared messages subscription
+  useEffect(() => {
+    if (!messages) return;
+    const messageEvents = messages
+      .filter(m => m.type === 'system')
+      .map(m => ({
+        id: `msg-${m.id}`,
+        source: 'message',
+        action: 'system_message',
+        details: m.text,
+        actorName: m.senderName,
+        actorUid: m.senderId,
+        timestamp: m.createdAt,
+        text: m.text,
+        senderName: m.senderName,
+        senderRole: m.senderRole || '',
+        type: m.type,
+      }));
+
+    setEvents(prev => {
+      const auditEvents = prev.filter(e => e.source === 'auditLog');
+      const merged = [...auditEvents, ...messageEvents].sort((a, b) => {
+        const ta = a.timestamp?.toDate ? a.timestamp.toDate().getTime() : new Date(a.timestamp || 0).getTime();
+        const tb = b.timestamp?.toDate ? b.timestamp.toDate().getTime() : new Date(b.timestamp || 0).getTime();
+        return tb - ta;
+      });
+      return merged;
+    });
+  }, [messages]);
 
   if (loading) {
     return (

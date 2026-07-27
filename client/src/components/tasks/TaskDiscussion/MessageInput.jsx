@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, storage } from '@/firebase/firebaseConfig';
+import { db, storage } from '@/lib/firebase';
 import { useContext } from 'react';
 import { AuthContext } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -26,7 +26,10 @@ const MessageInput = ({ taskId }) => {
 
   const handleSend = async () => {
     if (!message.trim() && !file) return;
-    if (!user) return;
+    if (!user) {
+      toast.error('You must be logged in to send messages');
+      return;
+    }
 
     setUploading(true);
     try {
@@ -34,9 +37,22 @@ const MessageInput = ({ taskId }) => {
 
       // Upload file if exists
       if (file) {
-        const storageRef = ref(storage, `task-attachments/${taskId}/${Date.now()}_${file.name}`);
-        const snapshot = await uploadBytes(storageRef, file);
-        attachmentUrl = await getDownloadURL(snapshot.ref);
+        try {
+          const storageRef = ref(storage, `task-attachments/${taskId}/${Date.now()}_${file.name}`);
+          const snapshot = await uploadBytes(storageRef, file);
+          attachmentUrl = await getDownloadURL(snapshot.ref);
+        } catch (uploadError) {
+          console.error('File upload error:', uploadError);
+          if (uploadError.code === 'storage/unauthorized') {
+            toast.error('File upload failed: insufficient storage permissions');
+          } else if (uploadError.code === 'storage/quota-exceeded') {
+            toast.error('File upload failed: storage quota exceeded');
+          } else {
+            toast.error(`File upload failed: ${uploadError.message || 'Unknown error'}`);
+          }
+          setUploading(false);
+          return;
+        }
       }
 
       // Add message to Firestore
@@ -56,7 +72,15 @@ const MessageInput = ({ taskId }) => {
       setFile(null);
     } catch (error) {
       console.error('Error sending message:', error);
-      toast.error('Failed to send message');
+      if (error.code === 'permission-denied') {
+        toast.error('Failed to send message: Firestore security rules may need to be deployed. Run: firebase deploy --only firestore:rules');
+      } else if (error.code === 'unauthenticated') {
+        toast.error('Failed to send message: authentication expired. Please log in again.');
+      } else if (error.code === 'not-found') {
+        toast.error('Failed to send message: task not found');
+      } else {
+        toast.error(`Failed to send message: ${error.message || 'Unknown error'}`);
+      }
     } finally {
       setUploading(false);
     }

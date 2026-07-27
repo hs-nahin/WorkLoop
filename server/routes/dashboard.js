@@ -11,9 +11,9 @@ router.get('/stats', verifyToken, async (req, res) => {
     const stats = {
       totalTasks: tasks.length,
       pending: tasks.filter(t => t.status === 'pending').length,
-      inProgress: tasks.filter(t => t.status === 'in_progress').length,
+      inProgress: tasks.filter(t => t.status === 'in progress').length,
       submitted: tasks.filter(t => t.status === 'submitted').length,
-      approved: tasks.filter(t => t.status === 'approved').length,
+      approved: tasks.filter(t => t.status === 'completed').length,
       rejected: tasks.filter(t => t.status === 'rejected').length,
       revisit: tasks.filter(t => t.status === 'revisit').length,
       totalUsers: (await adminDb.collection('users').get()).size
@@ -21,12 +21,12 @@ router.get('/stats', verifyToken, async (req, res) => {
 
     const role = (req.user.role || '').toUpperCase();
     if (role !== 'ADMIN') {
-      const myTasks = tasks.filter(t => t.assignedOfficerUid === req.user.uid);
+      const myTasks = tasks.filter(t => t.officerId === req.user.uid);
       return res.json({
         myTasks: myTasks.length,
-        inProgress: myTasks.filter(t => t.status === 'in_progress').length,
+        inProgress: myTasks.filter(t => t.status === 'in progress').length,
         submitted: myTasks.filter(t => t.status === 'submitted').length,
-        approved: myTasks.filter(t => t.status === 'approved').length
+        approved: myTasks.filter(t => t.status === 'completed').length
       });
     }
 
@@ -43,7 +43,7 @@ router.get('/recent', verifyToken, async (req, res) => {
     
     const role = (req.user.role || '').toUpperCase();
     if (role !== 'ADMIN') {
-      query = query.where('assignedOfficerUid', '==', req.user.uid);
+      query = query.where('officerId', '==', req.user.uid);
     }
 
     const snapshot = await query.get();

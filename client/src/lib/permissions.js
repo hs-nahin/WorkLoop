@@ -1,5 +1,5 @@
 import { apiRequest } from '@/api/apiClient';
-import { db } from '@/firebase/firebaseConfig';
+import { db } from '@/lib/firebase';
 import { collection, onSnapshot, doc } from 'firebase/firestore';
 
 export const ALL_PERMISSIONS = [

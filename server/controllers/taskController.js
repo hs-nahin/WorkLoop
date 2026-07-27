@@ -22,8 +22,28 @@ const createSystemMessage = async (taskId, message) => {
 
 const getTasks = async (req, res) => {
     try {
-        const tasksSnapshot = await adminDb.collection('tasks').orderBy('createdAt', 'desc').get();
-        const tasks = tasksSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        let tasksSnapshot;
+        try {
+            tasksSnapshot = await adminDb.collection('tasks').orderBy('createdAt', 'desc').get();
+        } catch (indexErr) {
+            // Fallback: orderBy may fail if old tasks lack createdAt
+            console.warn('orderBy createdAt failed, fetching without ordering:', indexErr.message);
+            tasksSnapshot = await adminDb.collection('tasks').get();
+        }
+        const tasks = tasksSnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                ...data,
+                createdByName: data.createdByName || data.createdBy || 'Unknown',
+            };
+        });
+        // Sort by createdAt desc (client-side fallback if Firestore orderBy was skipped)
+        tasks.sort((a, b) => {
+            const aTime = a.createdAt?.toDate?.()?.getTime?.() || 0;
+            const bTime = b.createdAt?.toDate?.()?.getTime?.() || 0;
+            return bTime - aTime;
+        });
         res.json(tasks);
     } catch (error) {
         console.error('Error fetching tasks:', error);
@@ -35,27 +55,35 @@ const createTask = async (req, res) => {
     try {
         const { title, description, location, officerId, assistantId, priority, deadline } = req.body;
         
-        if (!title || !description || !officerId) {
-            return res.status(400).json({ message: 'Title, description and officer are required' });
+        if (!title || !officerId) {
+            return res.status(400).json({ message: 'Title and assignee are required' });
         }
 
-        // Get officer name
         let officerName = 'Unassigned';
-        if (officerId) {
-            const officerDoc = await adminDb.collection('users').doc(officerId).get();
-            officerName = officerDoc.exists ? officerDoc.data().name : 'Unknown';
-        }
-        
-        // Get assistant name if provided
         let assistantName = null;
-        if (assistantId) {
-            const assistantDoc = await adminDb.collection('users').doc(assistantId).get();
-            assistantName = assistantDoc.exists ? assistantDoc.data().name : null;
+
+        const userLookups = [adminDb.collection('users').doc(officerId).get()];
+        if (assistantId) userLookups.push(adminDb.collection('users').doc(assistantId).get());
+
+        const userDocs = await Promise.all(userLookups);
+        officerName = userDocs[0].exists ? userDocs[0].data().name : 'Unknown';
+        if (assistantId && userDocs[1]) {
+            assistantName = userDocs[1].exists ? userDocs[1].data().name : null;
         }
         
+        let deadlineTs = null;
+        if (deadline) {
+            try {
+                const d = new Date(deadline);
+                if (!isNaN(d.getTime())) {
+                    deadlineTs = admin.firestore.Timestamp.fromDate(d);
+                }
+            } catch (_) {}
+        }
+
         const newTask = {
             title,
-            description,
+            description: description || '',
             location: location || '',
             officerId,
             officerName,
@@ -63,9 +91,10 @@ const createTask = async (req, res) => {
             assistantName,
             status: 'pending',
             priority: priority || 'medium',
-            deadline: deadline || null,
+            deadline: deadlineTs,
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
             createdBy: req.user.uid,
+            createdByName: req.user.name || 'Admin',
             completionReport: null,
             adminFeedback: null,
             progressReports: [],
@@ -78,6 +107,40 @@ const createTask = async (req, res) => {
         };
         
         const docRef = await adminDb.collection('tasks').add(newTask);
+
+        // Create system message
+        await createSystemMessage(docRef.id, `Task "${title}" created by ${req.user.name || 'Admin'} and assigned to ${officerName}${assistantName ? `, collaborator: ${assistantName}` : ''}`);
+
+        // Audit trail
+        try {
+            await writeAuditLog('task_created', req.user, {
+                targetId: docRef.id,
+                targetTitle: title,
+                description: `${req.user.name || 'Admin'} created task "${title}" and assigned to ${officerName}`
+            });
+        } catch (auditError) {
+            console.error('Error writing audit log:', auditError);
+        }
+
+        // Create notifications for assigned users
+        const notifyUsers = [officerId];
+        if (assistantId) notifyUsers.push(assistantId);
+        
+        const notificationPromises = notifyUsers.map(userId =>
+            adminDb.collection('notifications').add({
+                type: 'task_assigned',
+                taskId: docRef.id,
+                taskTitle: title,
+                message: userId === officerId
+                    ? `You have been assigned a new task: "${title}"`
+                    : `You have been added as a collaborator on: "${title}"`,
+                userId,
+                read: false,
+                createdAt: admin.firestore.FieldValue.serverTimestamp()
+            })
+        );
+        await Promise.all(notificationPromises);
+
         const createdTask = { id: docRef.id, ...newTask };
         res.status(201).json(createdTask);
     } catch (error) {
@@ -94,7 +157,26 @@ const getTaskById = async (req, res) => {
         if (!taskDoc.exists) return res.status(404).json({ message: 'Task not found' });
         
         const task = { id: taskDoc.id, ...taskDoc.data() };
-        res.json(task);
+        const uid = req.user.uid;
+        const role = (req.user.role || '').toUpperCase();
+
+        // ADMIN or TASK_VIEW_ALL can see everything
+        if (role === 'ADMIN') {
+            return res.json(task);
+        }
+
+        // Check if user is officer, assistant, or creator of this task
+        if (task.officerId === uid || task.assistantId === uid || task.createdBy === uid) {
+            return res.json(task);
+        }
+
+        // Check permission
+        const { hasPermission } = require('../config/permissions');
+        if (hasPermission(role, 'TASK_VIEW_ALL', uid)) {
+            return res.json(task);
+        }
+
+        return res.status(403).json({ message: 'Access denied' });
     } catch (error) {
         console.error('Error fetching task:', error);
         res.status(500).json({ message: 'Server error' });
@@ -127,6 +209,17 @@ const acceptTask = async (req, res) => {
 
         // Create system message for status change
         await createSystemMessage(id, `Task accepted by ${req.user.name || 'User'} - status changed to In Progress`);
+
+        // Audit trail
+        try {
+            await writeAuditLog('task_accepted', req.user, {
+                targetId: id,
+                targetTitle: task.title,
+                description: `${req.user.name || 'User'} accepted task "${task.title}"`
+            });
+        } catch (auditError) {
+            console.error('Error writing audit log:', auditError);
+        }
         
         // Create notifications for all admins that task has been accepted
         const allUsersSnapshot = await adminDb.collection('users').get();
@@ -177,6 +270,45 @@ const addProgressReport = async (req, res) => {
         await adminDb.collection('tasks').doc(id).update({
             progressReports: admin.firestore.FieldValue.arrayUnion(report)
         });
+
+        // Create system message for progress report
+        await createSystemMessage(id, `Progress report added by ${req.user.name || 'User'}: "${message}"`);
+
+        // Create notifications for admins
+        const progressAllUsersSnapshot = await adminDb.collection('users').get();
+        const progressAdminDocs = progressAllUsersSnapshot.docs.filter(d => {
+            const role = (d.data().role || '').toUpperCase();
+            return role === 'ADMIN';
+        });
+
+        const progressTaskDoc = await adminDb.collection('tasks').doc(id).get();
+        const progressTaskData = progressTaskDoc.exists ? progressTaskDoc.data() : {};
+        
+        if (progressAdminDocs.length > 0) {
+            const progressNotificationPromises = progressAdminDocs.map(adminDoc => {
+                return adminDb.collection('notifications').add({
+                    type: 'progress_report',
+                    taskId: id,
+                    taskTitle: progressTaskData.title || 'Task',
+                    message: `${req.user.name || 'User'} added a progress report on "${progressTaskData.title || 'Task'}"`,
+                    userId: adminDoc.id,
+                    read: false,
+                    createdAt: admin.firestore.FieldValue.serverTimestamp()
+                });
+            });
+            await Promise.all(progressNotificationPromises);
+        }
+
+        // Audit trail
+        try {
+            await writeAuditLog('progress_added', req.user, {
+                targetId: id,
+                targetTitle: progressTaskData.title || 'Unknown',
+                description: `${req.user.name || 'User'} added progress report on task "${progressTaskData.title || 'Unknown'}"`
+            });
+        } catch (auditError) {
+            console.error('Error writing audit log:', auditError);
+        }
         
         const updatedDoc = await adminDb.collection('tasks').doc(id).get();
         res.json({ id: updatedDoc.id, ...updatedDoc.data() });
@@ -224,6 +356,17 @@ const submitTask = async (req, res) => {
 
         // Create system message for status change
         await createSystemMessage(id, `Task submitted by ${req.user.name || 'User'} - status changed to Submitted`);
+
+        // Audit trail
+        try {
+            await writeAuditLog('task_submitted', req.user, {
+                targetId: id,
+                targetTitle: task.title,
+                description: `${req.user.name || 'User'} submitted task "${task.title}" for review`
+            });
+        } catch (auditError) {
+            console.error('Error writing audit log:', auditError);
+        }
         
         // Create notifications for all admins
         const allUsersSnapshot = await adminDb.collection('users').get();
@@ -286,6 +429,39 @@ const incompleteTask = async (req, res) => {
 
         // Create system message for status change
         await createSystemMessage(id, `Task marked as Incomplete by ${req.user.name || 'User'}`);
+
+        // Audit trail
+        try {
+            await writeAuditLog('task_incomplete', req.user, {
+                targetId: id,
+                targetTitle: task.title,
+                description: `${req.user.name || 'User'} marked task "${task.title}" as incomplete`
+            });
+        } catch (auditError) {
+            console.error('Error writing audit log:', auditError);
+        }
+
+        // Create notifications for admins
+        const incompleteAllUsersSnapshot = await adminDb.collection('users').get();
+        const incompleteAdminDocs = incompleteAllUsersSnapshot.docs.filter(d => {
+            const role = (d.data().role || '').toUpperCase();
+            return role === 'ADMIN';
+        });
+
+        if (incompleteAdminDocs.length > 0) {
+            const incompleteNotificationPromises = incompleteAdminDocs.map(adminDoc => {
+                return adminDb.collection('notifications').add({
+                    type: 'task_incomplete',
+                    taskId: id,
+                    taskTitle: task.title,
+                    message: `Task "${task.title}" has been marked as incomplete by ${req.user.name || 'User'}`,
+                    userId: adminDoc.id,
+                    read: false,
+                    createdAt: admin.firestore.FieldValue.serverTimestamp()
+                });
+            });
+            await Promise.all(incompleteNotificationPromises);
+        }
         
         const updatedDoc = await adminDb.collection('tasks').doc(id).get();
         res.json({ id: updatedDoc.id, ...updatedDoc.data() });
@@ -311,24 +487,42 @@ const approveTask = async (req, res) => {
             isTimerRunning: false
         });
 
+        const task = taskDoc.data();
+
         // Create system message for status change
         await createSystemMessage(id, `Task approved by ${req.user.name || 'Admin'} - status changed to Completed`);
+
+        // Audit trail
+        try {
+            await writeAuditLog('task_approved', req.user, {
+                targetId: id,
+                targetTitle: task.title,
+                description: `${req.user.name || 'Admin'} approved task "${task.title}"`
+            });
+        } catch (auditError) {
+            console.error('Error writing audit log:', auditError);
+        }
         
-        // Create notification for officer
-        const task = taskDoc.data();
+        // Create notification for officer + collaborator
         const notificationMessage = feedback 
             ? `Task "${task.title}" has been approved. Feedback: ${feedback}`
             : `Task "${task.title}" has been approved and completed`;
         
-        await adminDb.collection('notifications').add({
-            type: 'task_approved',
-            taskId: id,
-            taskTitle: task.title,
-            message: notificationMessage,
-            userId: task.officerId,
-            read: false,
-            createdAt: admin.firestore.FieldValue.serverTimestamp()
-        });
+        const notifyUsers = [task.officerId];
+        if (task.assistantId) notifyUsers.push(task.assistantId);
+        
+        const notificationPromises = notifyUsers.map(userId =>
+            adminDb.collection('notifications').add({
+                type: 'task_approved',
+                taskId: id,
+                taskTitle: task.title,
+                message: notificationMessage,
+                userId,
+                read: false,
+                createdAt: admin.firestore.FieldValue.serverTimestamp()
+            })
+        );
+        await Promise.all(notificationPromises);
         
         const updatedDoc = await adminDb.collection('tasks').doc(id).get();
         res.json({ id: updatedDoc.id, ...updatedDoc.data() });
@@ -363,18 +557,37 @@ const rejectTask = async (req, res) => {
 
         // Create system message for status change
         await createSystemMessage(id, `Task rejected by ${req.user.name || 'Admin'} - status changed to In Progress. Feedback: ${feedback}`);
-        
-        // Create notification for officer
+
+        // Create notification for officer + collaborator
         const task = taskDoc.data();
-        await adminDb.collection('notifications').add({
-            type: 'task_rejected',
-            taskId: id,
-            taskTitle: task.title,
-            message: `Task "${task.title}" has been rejected. Feedback: ${feedback}`,
-            userId: task.officerId,
-            read: false,
-            createdAt: admin.firestore.FieldValue.serverTimestamp()
-        });
+
+        // Audit trail
+        try {
+            await writeAuditLog('task_rejected', req.user, {
+                targetId: id,
+                targetTitle: task.title,
+                description: `${req.user.name || 'Admin'} rejected task "${task.title}" with feedback: ${feedback}`
+            });
+        } catch (auditError) {
+            console.error('Error writing audit log:', auditError);
+        }
+
+        const rejectMsg = `Task "${task.title}" has been rejected. Feedback: ${feedback}`;
+        const notifyUsers = [task.officerId];
+        if (task.assistantId) notifyUsers.push(task.assistantId);
+        
+        const notificationPromises = notifyUsers.map(userId =>
+            adminDb.collection('notifications').add({
+                type: 'task_rejected',
+                taskId: id,
+                taskTitle: task.title,
+                message: rejectMsg,
+                userId,
+                read: false,
+                createdAt: admin.firestore.FieldValue.serverTimestamp()
+            })
+        );
+        await Promise.all(notificationPromises);
         
         const updatedDoc = await adminDb.collection('tasks').doc(id).get();
         res.json({ id: updatedDoc.id, ...updatedDoc.data() });
@@ -387,7 +600,22 @@ const rejectTask = async (req, res) => {
 const updateTask = async (req, res) => {
     try {
         const { id } = req.params;
-        const updates = req.body;
+        const updates = { ...req.body };
+
+        // Convert deadline string to Firestore Timestamp if present
+        if (updates.deadline) {
+            try {
+                const d = new Date(updates.deadline);
+                if (!isNaN(d.getTime())) {
+                    updates.deadline = admin.firestore.Timestamp.fromDate(d);
+                }
+            } catch (_) {}
+        }
+
+        // Prevent overwriting server-managed fields
+        delete updates.createdBy;
+        delete updates.createdAt;
+
         await adminDb.collection('tasks').doc(id).update(updates);
         const updatedDoc = await adminDb.collection('tasks').doc(id).get();
         res.json({ id: updatedDoc.id, ...updatedDoc.data() });
@@ -400,7 +628,24 @@ const updateTask = async (req, res) => {
 const deleteTask = async (req, res) => {
     try {
         const { id } = req.params;
+
+        // Get task data before deleting for audit log
+        const taskDoc = await adminDb.collection('tasks').doc(id).get();
+        const taskData = taskDoc.exists ? taskDoc.data() : null;
+
         await adminDb.collection('tasks').doc(id).delete();
+
+        // Audit trail
+        try {
+            await writeAuditLog('task_deleted', req.user, {
+                targetId: id,
+                targetTitle: taskData?.title || 'Unknown',
+                description: `${req.user.name || 'Admin'} deleted task "${taskData?.title || 'Unknown'}"`
+            });
+        } catch (auditError) {
+            console.error('Error writing audit log:', auditError);
+        }
+
         res.json({ message: 'Task deleted successfully' });
     } catch (error) {
         console.error('Error deleting task:', error);
@@ -408,31 +653,20 @@ const deleteTask = async (req, res) => {
     }
 };
 
-// Get notifications for admin
+// Get notifications for any user
 const getNotifications = async (req, res) => {
     try {
         const notificationsSnapshot = await adminDb.collection('notifications')
             .where('userId', '==', req.user.uid)
-            .orderBy('createdAt', 'desc')
             .get();
         
         const notifications = notificationsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        res.json(notifications);
-    } catch (error) {
-        console.error('Error fetching notifications:', error);
-        res.status(500).json({ message: 'Server error' });
-    }
-};
-
-// Get notifications for officer
-const getOfficerNotifications = async (req, res) => {
-    try {
-        const notificationsSnapshot = await adminDb.collection('notifications')
-            .where('userId', '==', req.user.uid)
-            .orderBy('createdAt', 'desc')
-            .get();
-        
-        const notifications = notificationsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        // Sort client-side (avoids needing a composite index)
+        notifications.sort((a, b) => {
+            const aTime = a.createdAt?.toMillis?.() || 0;
+            const bTime = b.createdAt?.toMillis?.() || 0;
+            return bTime - aTime;
+        });
         res.json(notifications);
     } catch (error) {
         console.error('Error fetching notifications:', error);
@@ -487,6 +721,19 @@ const createSubtask = async (req, res) => {
         
         // Create system message for subtask creation
         await createSystemMessage(taskId, `Subtask "${title}" created and assigned to ${userData.name || 'user'}`);
+
+        // Audit trail
+        const parentTaskDoc = await adminDb.collection('tasks').doc(taskId).get();
+        const parentTaskData = parentTaskDoc.exists ? parentTaskDoc.data() : {};
+        try {
+            await writeAuditLog('subtask_created', req.user, {
+                targetId: taskId,
+                targetTitle: parentTaskData.title || 'Unknown',
+                description: `${req.user.name || 'User'} created subtask "${title}" assigned to ${userData.name || 'user'}`
+            });
+        } catch (auditError) {
+            console.error('Error writing audit log:', auditError);
+        }
         
         const createdSubtask = { id: docRef.id, ...newSubtask };
         res.status(201).json(createdSubtask);
@@ -533,6 +780,19 @@ const updateSubtask = async (req, res) => {
             const subtaskDoc = await adminDb.collection('tasks').doc(taskId).collection('subtasks').doc(subtaskId).get();
             const subtask = subtaskDoc.data();
             await createSystemMessage(taskId, `Subtask "${subtask.title}" status changed to ${updates.status}`);
+
+            // Audit trail for subtask status change
+            const parentDoc = await adminDb.collection('tasks').doc(taskId).get();
+            const parentData = parentDoc.exists ? parentDoc.data() : {};
+            try {
+                await writeAuditLog('subtask_updated', req.user, {
+                    targetId: taskId,
+                    targetTitle: parentData.title || 'Unknown',
+                    description: `${req.user.name || 'User'} changed subtask "${subtask.title}" status to ${updates.status}`
+                });
+            } catch (auditError) {
+                console.error('Error writing audit log:', auditError);
+            }
         }
 
         const updatedDoc = await adminDb.collection('tasks').doc(taskId).collection('subtasks').doc(subtaskId).get();
@@ -555,6 +815,19 @@ const deleteSubtask = async (req, res) => {
         
         // Create system message
         await createSystemMessage(taskId, `Subtask "${subtaskTitle}" deleted`);
+
+        // Audit trail
+        const delParentDoc = await adminDb.collection('tasks').doc(taskId).get();
+        const delParentData = delParentDoc.exists ? delParentDoc.data() : {};
+        try {
+            await writeAuditLog('subtask_deleted', req.user, {
+                targetId: taskId,
+                targetTitle: delParentData.title || 'Unknown',
+                description: `${req.user.name || 'User'} deleted subtask "${subtaskTitle}"`
+            });
+        } catch (auditError) {
+            console.error('Error writing audit log:', auditError);
+        }
         
         res.json({ message: 'Subtask deleted successfully' });
     } catch (error) {
@@ -684,8 +957,8 @@ const deleteAttachment = async (req, res) => {
         
         const canDelete = 
             req.user.uid === attachmentData.uploadedBy ||
-            req.user.role === 'ADMIN' ||
-            (task && task.officerId === req.user.uid);
+            (task && task.officerId === req.user.uid) ||
+            (task && task.assistantId === req.user.uid);
         
         if (!canDelete) {
             return res.status(403).json({ message: 'Insufficient permissions to delete this attachment' });
@@ -710,6 +983,9 @@ const deleteAttachment = async (req, res) => {
     }
 };
 
+// Alias: officer notifications use the same logic (both filter by userId)
+const getOfficerNotifications = getNotifications;
+
 module.exports = { 
     getTasks, 
     createTask, 
@@ -723,7 +999,7 @@ module.exports = {
     updateTask, 
     deleteTask, 
     getNotifications, 
-    getOfficerNotifications, 
+    getOfficerNotifications,
     markNotificationRead,
     createSubtask,
     getSubtasks,

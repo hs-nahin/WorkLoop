@@ -29,15 +29,13 @@ import {
 import { useContext, useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
-import { AuthContext } from "@/context/AuthContextInstance";
-import { useCompany } from "@/context/CompanyContext";
+import { AuthContext } from "@/context/AuthContext";
 import { loadRoles, hasPermission } from "@/lib/permissions";
 
 const UserManagement = () => {
   const { user } = useContext(AuthContext);
-  const { company } = useCompany();
   const navigate = useNavigate();
-  const locationLabel = company?.locationLabel || 'Location';
+  const locationLabel = 'Location';
 
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([]);

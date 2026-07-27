@@ -18,7 +18,7 @@ import { useContext, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router";
 import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog";
 import { AppContext } from "../../../context/AppContext.jsx";
-import { AuthContext } from "../../../context/AuthContextInstance.js";
+import { AuthContext } from "@/context/AuthContext";
 import { cn } from "../../../lib/utils";
 import { hasPermission } from "../../../lib/permissions";
 

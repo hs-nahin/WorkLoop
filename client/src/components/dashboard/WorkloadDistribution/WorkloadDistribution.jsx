@@ -1,17 +1,14 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { useRealTimeTasks } from '@/hooks/useRealtime';
-import { useContext } from 'react';
-import { AuthContext } from '@/context/AuthContextInstance';
 import { apiRequest } from '@/api/apiClient';
-import { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Users } from 'lucide-react';
+import { useContext } from 'react';
+import { AuthContext } from '@/context/AuthContext';
 import { hasPermission } from '@/lib/permissions';
 
-const WorkloadDistribution = () => {
+const WorkloadDistribution = ({ tasks, loading }) => {
   const { user } = useContext(AuthContext);
-  const { tasks, loading } = useRealTimeTasks(user?.uid, user?.role);
   const [users, setUsers] = useState([]);
 
   useEffect(() => {

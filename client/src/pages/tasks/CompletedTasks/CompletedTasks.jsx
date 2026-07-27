@@ -16,7 +16,7 @@ import { toast } from 'sonner';
 import { apiRequest } from '@/api/apiClient';
 import GradientText from '@/components/animations/GradientText';
 import TextHighlighter from '@/components/animations/TextHighlighter';
-import { AuthContext } from '@/context/AuthContextInstance';
+import { AuthContext } from '@/context/AuthContext';
 import { hasPermission } from '@/lib/permissions';
 import { useRealTimeTasks } from '@/hooks/useRealtime';
 import {

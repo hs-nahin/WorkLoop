@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { AuthContext } from '@/context/AuthContextInstance.js';
+import { AuthContext } from '@/context/AuthContext';
 import { hasPermission } from '@/lib/permissions';
 
 const Settings = () => {

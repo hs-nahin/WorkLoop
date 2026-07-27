@@ -1,13 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
-import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
-import { db } from '@/firebase/firebaseConfig';
+import { useEffect, useRef } from 'react';
 import { useContext } from 'react';
 import { AuthContext } from '@/context/AuthContext';
 import { getRoleColor } from '@/lib/roleUtils';
 
-const MessageThread = ({ taskId }) => {
-  const [messages, setMessages] = useState([]);
-  const [loading, setLoading] = useState(true);
+const MessageThread = ({ taskId, messages, loading }) => {
   const messagesEndRef = useRef(null);
   const { user } = useContext(AuthContext);
 
@@ -17,35 +13,10 @@ const MessageThread = ({ taskId }) => {
   };
 
   useEffect(() => {
-    if (!taskId) return;
-
-    let unsubscribe = () => {};
-    try {
-      const q = query(
-        collection(db, 'tasks', taskId, 'messages'),
-        orderBy('createdAt', 'asc')
-      );
-
-      unsubscribe = onSnapshot(q, (snapshot) => {
-        const msgs = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          createdAt: doc.data().createdAt?.toDate ? doc.data().createdAt.toDate() : new Date()
-        }));
-        setMessages(msgs);
-        setLoading(false);
-        scrollToBottom();
-      }, (error) => {
-        console.error('Error fetching messages:', error);
-        setLoading(false);
-      });
-    } catch (err) {
-      console.error('Failed to initialize messages listener:', err);
-      setLoading(false);
+    if (messages?.length > 0) {
+      scrollToBottom();
     }
-
-    return () => { try { unsubscribe(); } catch (_) {} };
-  }, [taskId]);
+  }, [messages?.length]);
 
   if (loading) return <div className="text-center py-6 sm:py-8 text-xs sm:text-sm text-muted-foreground">Loading messages...</div>;
   if (messages.length === 0) return <div className="text-center py-6 sm:py-8 text-xs sm:text-sm text-muted-foreground px-4">No messages yet. Start the discussion!</div>;

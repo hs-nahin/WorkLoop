@@ -1,18 +1,30 @@
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { useRealTimeStats } from '@/hooks/useRealtime';
-import { useContext } from 'react';
-import { AuthContext } from '@/context/AuthContextInstance';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-const WeeklyTrendChart = () => {
-  const { user } = useContext(AuthContext);
-  const { stats, loading } = useRealTimeStats(user?.uid, user?.role);
-
+const WeeklyTrendChart = ({ tasks, loading }) => {
   const chartData = useMemo(() => {
-    if (!stats?.weeklyTrend) return [];
-    return [...stats.weeklyTrend].reverse();
-  }, [stats?.weeklyTrend]);
+    if (!tasks) return [];
+    const now = new Date();
+    const weeklyTrend = [];
+    for (let i = 6; i >= 0; i--) {
+      const day = new Date(now);
+      day.setDate(day.getDate() - i);
+      const dayStart = new Date(day.getFullYear(), day.getMonth(), day.getDate());
+      const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+      const dayTasks = tasks.filter(t => {
+        const created = t.createdAt instanceof Date ? t.createdAt : new Date(t.createdAt);
+        return created >= dayStart && created < dayEnd;
+      });
+      weeklyTrend.push({
+        date: dayStart.toLocaleDateString('en-US', { weekday: 'short' }),
+        created: dayTasks.length,
+        completed: dayTasks.filter(t => t.status === 'completed' || t.status === 'approved').length,
+        submitted: dayTasks.filter(t => t.status === 'submitted').length,
+      });
+    }
+    return weeklyTrend.reverse();
+  }, [tasks]);
 
   if (loading) {
     return (

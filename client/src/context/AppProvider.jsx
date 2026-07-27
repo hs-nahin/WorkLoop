@@ -3,7 +3,6 @@ import { AppContext } from "./AppContext";
 
 export const AppProvider = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [globalLoading, setGlobalLoading] = useState(false);
 
   const toggleSidebar = useCallback(() => {
     setSidebarOpen((prev) => !prev);
@@ -13,10 +12,8 @@ export const AppProvider = ({ children }) => {
     () => ({
       sidebarOpen,
       toggleSidebar,
-      globalLoading,
-      setGlobalLoading,
     }),
-    [sidebarOpen, toggleSidebar, globalLoading]
+    [sidebarOpen, toggleSidebar]
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

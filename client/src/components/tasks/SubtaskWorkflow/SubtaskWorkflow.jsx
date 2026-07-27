@@ -1,6 +1,6 @@
-import { useEffect, useState, useContext } from 'react';
+import { useEffect, useState, useContext, useRef } from 'react';
 import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, doc, deleteDoc, getDoc } from 'firebase/firestore';
-import { db } from '@/firebase/firebaseConfig';
+import { db } from '@/lib/firebase';
 import { AuthContext } from '@/context/AuthContext';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,8 @@ const SubtaskWorkflow = ({ taskId, task }) => {
   const [showForm, setShowForm] = useState(false);
   const [editingSubtask, setEditingSubtask] = useState(null);
   const [users, setUsers] = useState([]);
+  const usersRef = useRef([]);
+  usersRef.current = users;
 
   // Fetch users for assignment dropdown
   useEffect(() => {
@@ -50,13 +52,14 @@ const SubtaskWorkflow = ({ taskId, task }) => {
       );
 
       unsubscribe = onSnapshot(q, (snapshot) => {
+        const currentUsers = usersRef.current;
         const subs = snapshot.docs.map(doc => {
           const data = doc.data();
           let assignedUserName = data.assignedUserName;
           let assignedUserRole = data.assignedUserRole;
           
           if (!assignedUserName && data.assignedUserId) {
-            const matchedUser = users.find(u => (u.userId || u.id) === data.assignedUserId);
+            const matchedUser = currentUsers.find(u => (u.userId || u.id) === data.assignedUserId);
             if (matchedUser) {
               assignedUserName = matchedUser.name;
               assignedUserRole = matchedUser.role;
@@ -84,7 +87,7 @@ const SubtaskWorkflow = ({ taskId, task }) => {
     }
 
     return () => { try { unsubscribe(); } catch (_) {} };
-  }, [taskId, users]);
+  }, [taskId]);
 
   const canManageSubtasks = () => {
     if (!user) return false;

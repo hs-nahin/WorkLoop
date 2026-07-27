@@ -17,18 +17,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { apiRequest } from "../../api/apiClient";
 import { AuthContext } from "@/context/AuthContext";
 import { useContext } from "react";
-import { useNavigate } from "react-router";
 import { hasPermission } from "../../lib/permissions";
 
-export function CreateTaskDialog({ open, onOpenChange }) {
+export function EditTaskDialog({ open, onOpenChange, task, onTaskUpdated }) {
   const { user } = useContext(AuthContext);
-  const navigate = useNavigate();
-  const [newTask, setNewTask] = useState({
+  const [editedTask, setEditedTask] = useState({
     title: "",
     description: "",
     officerId: "",
@@ -37,64 +35,68 @@ export function CreateTaskDialog({ open, onOpenChange }) {
     deadline: "",
     location: "",
   });
-  const [isCreating, setIsCreating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [officers, setOfficers] = useState([]);
   const [assistants, setAssistants] = useState([]);
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const usersData = await apiRequest({ endpoint: "/users" });
-        const activeUsers = usersData.filter(u => u.role?.toUpperCase() !== 'ADMIN' && u.isActive !== false);
-        setOfficers(activeUsers);
-        setAssistants(activeUsers);
-      } catch (error) {
-        toast.error("Failed to fetch users");
-      }
-    };
-    if (open && hasPermission(user?.role, "TASK_CREATE")) {
+    if (open && task) {
+      setEditedTask({
+        title: task.title || "",
+        description: task.description || "",
+        officerId: task.officerId || "",
+        assistantId: task.assistantId || "",
+        priority: task.priority || "medium",
+        deadline: task.deadline ? new Date(task.deadline).toISOString().slice(0, 16) : "",
+        location: task.location || "",
+      });
+    }
+  }, [open, task]);
+
+  useEffect(() => {
+    if (open && hasPermission(user?.role, "TASK_EDIT")) {
+      const fetchUsers = async () => {
+        try {
+          const usersData = await apiRequest({ endpoint: "/users" });
+          const activeUsers = usersData.filter(u => u.role?.toUpperCase() !== 'ADMIN' && u.isActive !== false);
+          setOfficers(activeUsers);
+          setAssistants(activeUsers);
+        } catch {
+          toast.error("Failed to fetch users");
+        }
+      };
       fetchUsers();
     }
   }, [open, user?.role]);
 
-  const handleCreateTask = async (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    if (!newTask.title || !newTask.officerId) {
+    if (!editedTask.title || !editedTask.officerId) {
       toast.error("Please fill in required fields");
       return;
     }
-    setIsCreating(true);
+    setIsSaving(true);
     try {
       await apiRequest({
-        endpoint: "/tasks",
-        method: "POST",
+        endpoint: `/tasks/${task.id}`,
+        method: "PUT",
         body: {
-          title: newTask.title,
-          description: newTask.description,
-          officerId: newTask.officerId,
-          assistantId: newTask.assistantId || null,
-          priority: newTask.priority,
-          deadline: newTask.deadline || null,
-          location: newTask.location,
-          createdBy: user?.uid,
+          title: editedTask.title,
+          description: editedTask.description,
+          officerId: editedTask.officerId,
+          assistantId: editedTask.assistantId || null,
+          priority: editedTask.priority,
+          deadline: editedTask.deadline || null,
+          location: editedTask.location,
         },
       });
-      toast.success("Task created successfully");
-      setNewTask({
-        title: "",
-        description: "",
-        officerId: "",
-        assistantId: "",
-        priority: "medium",
-        deadline: "",
-        location: "",
-      });
+      toast.success("Task updated successfully");
+      if (onTaskUpdated) onTaskUpdated();
       onOpenChange(false);
-      navigate("/tasks");
     } catch (error) {
-      toast.error(error.message || "Failed to create task");
+      toast.error(error.message || "Failed to update task");
     } finally {
-      setIsCreating(false);
+      setIsSaving(false);
     }
   };
 
@@ -102,33 +104,29 @@ export function CreateTaskDialog({ open, onOpenChange }) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Create New Task</DialogTitle>
+          <DialogTitle>Edit Task</DialogTitle>
           <DialogDescription>
-            Fill in the details below to create a new task.
+            Update the task details below.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleCreateTask} className="space-y-4">
+        <form onSubmit={handleSave} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="title">Title *</Label>
+            <Label htmlFor="edit-title">Title *</Label>
             <Input
-              id="title"
-              value={newTask.title}
-              onChange={(e) =>
-                setNewTask({ ...newTask, title: e.target.value })
-              }
+              id="edit-title"
+              value={editedTask.title}
+              onChange={(e) => setEditedTask({ ...editedTask, title: e.target.value })}
               placeholder="Enter task title"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="edit-description">Description</Label>
             <Textarea
-              id="description"
-              value={newTask.description}
-              onChange={(e) =>
-                setNewTask({ ...newTask, description: e.target.value })
-              }
+              id="edit-description"
+              value={editedTask.description}
+              onChange={(e) => setEditedTask({ ...editedTask, description: e.target.value })}
               placeholder="Enter task description"
               rows={3}
             />
@@ -136,16 +134,14 @@ export function CreateTaskDialog({ open, onOpenChange }) {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="officer">Assign To *</Label>
+              <Label htmlFor="edit-officer">Assign To *</Label>
               <Select
-                value={newTask.officerId}
-                onValueChange={(value) =>
-                  setNewTask({ ...newTask, officerId: value })
-                }
+                value={editedTask.officerId}
+                onValueChange={(value) => setEditedTask({ ...editedTask, officerId: value })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select assignee">
-                    {newTask.officerId ? officers.find(o => o.uid === newTask.officerId)?.name : null}
+                    {editedTask.officerId ? officers.find(o => o.uid === editedTask.officerId)?.name : null}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
@@ -159,16 +155,14 @@ export function CreateTaskDialog({ open, onOpenChange }) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="assistant">Collaborator</Label>
+              <Label htmlFor="edit-assistant">Collaborator</Label>
               <Select
-                value={newTask.assistantId}
-                onValueChange={(value) =>
-                  setNewTask({ ...newTask, assistantId: value })
-                }
+                value={editedTask.assistantId}
+                onValueChange={(value) => setEditedTask({ ...editedTask, assistantId: value })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select collaborator">
-                    {newTask.assistantId ? assistants.find(a => a.uid === newTask.assistantId)?.name : null}
+                    {editedTask.assistantId ? assistants.find(a => a.uid === editedTask.assistantId)?.name : null}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
@@ -184,12 +178,10 @@ export function CreateTaskDialog({ open, onOpenChange }) {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="priority">Priority</Label>
+              <Label htmlFor="edit-priority">Priority</Label>
               <Select
-                value={newTask.priority}
-                onValueChange={(value) =>
-                  setNewTask({ ...newTask, priority: value })
-                }
+                value={editedTask.priority}
+                onValueChange={(value) => setEditedTask({ ...editedTask, priority: value })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select priority" />
@@ -204,26 +196,22 @@ export function CreateTaskDialog({ open, onOpenChange }) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="deadline">Deadline</Label>
+              <Label htmlFor="edit-deadline">Deadline</Label>
               <Input
-                id="deadline"
-                type="date"
-                value={newTask.deadline}
-                onChange={(e) =>
-                  setNewTask({ ...newTask, deadline: e.target.value })
-                }
+                id="edit-deadline"
+                type="datetime-local"
+                value={editedTask.deadline}
+                onChange={(e) => setEditedTask({ ...editedTask, deadline: e.target.value })}
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="location">Location</Label>
+            <Label htmlFor="edit-location">Location</Label>
             <Input
-              id="location"
-              value={newTask.location}
-              onChange={(e) =>
-                setNewTask({ ...newTask, location: e.target.value })
-              }
+              id="edit-location"
+              value={editedTask.location}
+              onChange={(e) => setEditedTask({ ...editedTask, location: e.target.value })}
               placeholder="Enter location"
             />
           </div>
@@ -239,9 +227,9 @@ export function CreateTaskDialog({ open, onOpenChange }) {
             <Button
               type="submit"
               className="bg-sky-600 hover:bg-sky-700 text-white"
-              disabled={isCreating}
+              disabled={isSaving}
             >
-              {isCreating ? "Creating..." : "Create Task"}
+              {isSaving ? "Saving..." : "Save Changes"}
             </Button>
           </div>
         </form>
